@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useReconciliation } from '../hooks/useReconciliation';
 import { ToastProvider } from '../components/Toast';
 import { getScenario } from '../utils/scenarios';
+import { isFinancialDoc, classifyFromText } from './pages/CSAnalyzingPage';
 import CSHomePage from './pages/CSHomePage';
 import CSDocViewPage from './pages/CSDocViewPage';
-import CSAnalyzingPage from './pages/CSAnalyzingPage';
 import CSDocSelectPage from './pages/CSDocSelectPage';
 import MobileConfirm from './pages/MobileConfirm';
 import MobileResults from './pages/MobileResults';
@@ -24,49 +24,72 @@ function MobileAppInner() {
 
   const [csStep, setCsStep] = useState('cs-home');
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [analysisResult, setAnalysisResult] = useState(null);
   const [showReconBtn, setShowReconBtn] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
 
-  // CS Home: user clicks a doc → go to doc view
+  // CS Home: user clicks a doc → go to doc view (no files, screenshot mode)
   const handleOpenDocument = useCallback((doc) => {
     setCsStep('cs-docview');
     setShowReconBtn(false);
+    setUploadedFiles([]);
   }, []);
 
-  // CS Home: user clicks camera → upload files → analyze
+  // CS Home: user clicks camera → upload files → go directly to docview
   const handleUploadFiles = useCallback((files) => {
     setUploadedFiles(files);
-    setCsStep('cs-analyzing');
+    setCsStep('cs-docview-with-files');
   }, []);
 
-  // Analysis done: check if financial
-  const handleAnalysisComplete = useCallback((result) => {
-    setAnalysisResult(result);
-    if (result.hasFinancial) {
-      // Financial doc detected → show doc view with 财务对账 button
-      setCsStep('cs-docview-with-recon');
-      setShowReconBtn(true);
-    } else {
-      // Not financial → just show doc view normally
-      setCsStep('cs-docview');
-      setShowReconBtn(false);
+  // Background analysis when files are loaded
+  useEffect(() => {
+    if (csStep !== 'cs-docview-with-files' || uploadedFiles.length === 0) return;
+
+    async function analyze() {
+      const results = [];
+      for (const file of uploadedFiles) {
+        let textContent = '';
+        let docType = null;
+        if (file.name) {
+          const nameClassification = classifyFromText(file.name);
+          if (nameClassification) docType = nameClassification;
+        }
+        if (file.type && file.type.includes('text')) {
+          try { textContent = await file.text(); } catch (e) { /* ignore */ }
+        }
+        if (!docType && textContent) {
+          docType = classifyFromText(textContent);
+        }
+        const isFinancial = docType !== null || isFinancialDoc(file.name + ' ' + textContent);
+        results.push({ file, textContent: textContent.slice(0, 500), docType, isFinancial });
+      }
+
+      const hasFinancial = results.some(r => r.isFinancial);
+      const financialResults = results.filter(r => r.isFinancial);
+      const docTypes = financialResults.map(r => r.docType).filter(Boolean);
+
+      setAnalysisResult({
+        results,
+        hasFinancial,
+        docTypes,
+        financialCount: financialResults.length,
+      });
+      setShowReconBtn(hasFinancial);
     }
-  }, []);
+
+    analyze();
+  }, [csStep, uploadedFiles]);
 
   // User clicks 财务对账 in doc view toolbar
   const handleStartReconciliation = useCallback(() => {
     const docTypes = analysisResult?.docTypes || [];
-    const hasMultipleTypes = docTypes.length >= 2;
     const typeSet = new Set(docTypes.map(d => d.type));
     const hasBothSides = (typeSet.has('bank_statement') && typeSet.has('company_ledger')) ||
                          (typeSet.has('invoice') && typeSet.has('contract'));
 
     if (hasBothSides || analysisResult?.results?.length >= 2) {
-      // Enough docs → load demo and go to confirm
       loadDemo('bank_recon');
       setCsStep('reconciling');
     } else {
-      // Need more docs → show select page
       setCsStep('cs-doc-select');
     }
   }, [analysisResult, loadDemo]);
@@ -110,18 +133,10 @@ function MobileAppInner() {
     );
   }
 
-  if (csStep === 'cs-analyzing') {
-    return (
-      <CSAnalyzingPage
-        files={uploadedFiles}
-        onComplete={handleAnalysisComplete}
-      />
-    );
-  }
-
-  if (csStep === 'cs-docview' || csStep === 'cs-docview-with-recon') {
+  if (csStep === 'cs-docview' || csStep === 'cs-docview-with-files') {
     return (
       <CSDocViewPage
+        files={uploadedFiles}
         showReconBtn={showReconBtn}
         onBack={handleBackToHome}
         onReconciliation={handleStartReconciliation}
@@ -133,7 +148,7 @@ function MobileAppInner() {
     return (
       <CSDocSelectPage
         uploadedFiles={uploadedFiles}
-        onCancel={() => setCsStep('cs-docview-with-recon')}
+        onCancel={() => setCsStep('cs-docview-with-files')}
         onAddMore={handleAddMoreFiles}
         onConfirm={handleDocSelectConfirm}
       />
