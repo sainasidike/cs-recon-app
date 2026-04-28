@@ -218,7 +218,7 @@ export default function ReconciliationPage({ scenario, reconciliation, matchResu
             <div className="recon-card-title">{scenario?.icon || '📊'} 匹配汇总</div>
             <div className="recon-card-row">
               <span className="recon-card-row-label">匹配笔数</span>
-              <span className="recon-card-row-value">{(matchSummary?.exactCount || 0) + (matchSummary?.fuzzyCount || 0) + (matchSummary?.semanticCount || 0) + (matchSummary?.manyToOneCount || 0)} 笔</span>
+              <span className="recon-card-row-value">{(matchSummary?.exactCount || 0) + (matchSummary?.fuzzyCount || 0) + (matchSummary?.semanticCount || 0) + (matchSummary?.manyToOneItemCount || 0)} 笔</span>
             </div>
             <div className="recon-card-row">
               <span className="recon-card-row-label">匹配金额</span>

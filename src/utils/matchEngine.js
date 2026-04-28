@@ -604,6 +604,7 @@ export function generateReconciliation(results, sideABalance, sideBBalance, scen
       fuzzyCount: results.fuzzy.length,
       semanticCount: results.semantic.length,
       manyToOneCount: (results.manyToOne || []).length,
+      manyToOneItemCount: manyToOneCount,
       unmatchedACount: results.unmatchedA.length,
       unmatchedBCount: results.unmatchedB.length,
       unmatchedCCount: results.unmatchedC?.length || 0,

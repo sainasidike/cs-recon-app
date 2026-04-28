@@ -79,7 +79,7 @@ export default function Sidebar({ collapsed, onToggle, onGoHome, onLoadHistory }
           const sc = item.scenarioId ? getScenario(item.scenarioId) : null;
           const s = item.reconciliation?.matchSummary;
           const total = s?.total || 0;
-          const matched = (s?.exactCount || 0) + (s?.fuzzyCount || 0) + (s?.semanticCount || 0);
+          const matched = (s?.exactCount || 0) + (s?.fuzzyCount || 0) + (s?.semanticCount || 0) + (s?.manyToOneItemCount || 0);
           const rate = total > 0 ? Math.round((matched / total) * 100) : 0;
 
           return (
