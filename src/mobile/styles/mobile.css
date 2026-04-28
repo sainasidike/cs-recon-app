@@ -1,27 +1,27 @@
 :root {
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #222222;
-  --bg-card: #2a2a2a;
-  --bg-card-hover: #333333;
-  --bg-input: #333333;
-  --bg-elevated: #363636;
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f0f0;
+  --bg-input: #f2f3f5;
+  --bg-elevated: #ffffff;
   --accent: #3dd598;
-  --accent-light: rgba(61, 213, 152, 0.12);
+  --accent-light: rgba(61, 213, 152, 0.1);
   --accent-hover: #32c48a;
   --accent-pressed: #28b37d;
   --accent-dim: rgba(61, 213, 152, 0.6);
-  --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  --text-tertiary: #777777;
-  --text-inverse: #1a1a1a;
-  --danger: #ff6b6b;
-  --danger-light: rgba(255, 107, 107, 0.12);
-  --warning: #ffc857;
-  --warning-light: rgba(255, 200, 87, 0.12);
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --text-inverse: #ffffff;
+  --danger: #e53935;
+  --danger-light: rgba(229, 57, 53, 0.08);
+  --warning: #f5a623;
+  --warning-light: rgba(245, 166, 35, 0.08);
+  --border: rgba(0, 0, 0, 0.06);
+  --border-strong: rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -78,7 +78,7 @@ button {
   align-items: center;
   height: 48px;
   padding: 0 16px;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border-bottom: 0.5px solid var(--border);
 }
 
@@ -101,7 +101,7 @@ button {
   height: 20px;
   stroke: var(--text-primary);
   fill: none;
-  stroke-width: 2;
+  stroke-width: 2.5;
 }
 
 .m-navbar-title {
@@ -119,6 +119,7 @@ button {
   padding: 16px;
   margin-bottom: 12px;
   border: 0.5px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .m-card-title {
@@ -218,11 +219,11 @@ button {
 
 /* Upload zone */
 .m-upload-zone {
-  border: 1.5px dashed var(--border-strong);
+  border: 1.5px dashed rgba(0, 0, 0, 0.15);
   border-radius: var(--radius-lg);
   padding: 32px 20px;
   text-align: center;
-  background: var(--bg-secondary);
+  background: var(--bg-input);
   transition: all 0.2s;
 }
 
@@ -509,7 +510,7 @@ button {
 /* Tabs */
 .m-tabs {
   display: flex;
-  background: var(--bg-secondary);
+  background: var(--bg-input);
   border-radius: var(--radius-md);
   padding: 3px;
   margin-bottom: 12px;
@@ -604,7 +605,7 @@ button {
 
 .m-match-btn.confirm:active {
   background: var(--accent);
-  color: var(--text-inverse);
+  color: #ffffff;
 }
 
 .m-match-btn.reject {
@@ -798,7 +799,7 @@ button {
 }
 
 .m-data-table th {
-  background: var(--bg-secondary);
+  background: var(--bg-input);
   padding: 8px 10px;
   text-align: left;
   font-weight: 600;
