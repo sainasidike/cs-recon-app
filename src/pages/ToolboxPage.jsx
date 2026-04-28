@@ -23,9 +23,9 @@ export default function ToolboxPage({ onEnterRecon }) {
     // "实用工具" title at y≈530-550, cards start y≈560
     // Card height (from 整理 section): ~140px
     const x = 792;
-    const y = 610;
+    const y = 600;
     const w = 242;
-    const h = 140;
+    const h = 119;
 
     setStyle({
       left: x * scale,
