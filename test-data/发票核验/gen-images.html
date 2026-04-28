@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", SimSun, sans-serif; background: #f0f0f0; }
+
+  .invoice-page {
+    width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 40px;
+    border: 2px solid #c00;
+    position: relative;
+  }
+  .invoice-page::before {
+    content: "";
+    position: absolute;
+    top: 8px; left: 8px; right: 8px; bottom: 8px;
+    border: 1px solid #c00;
+    pointer-events: none;
+  }
+
+  .inv-header {
+    text-align: center;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .inv-title {
+    font-size: 26px;
+    font-weight: bold;
+    color: #c00;
+    letter-spacing: 6px;
+    margin-bottom: 2px;
+  }
+  .inv-subtitle {
+    font-size: 14px;
+    color: #c00;
+    letter-spacing: 2px;
+  }
+  .inv-code {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 13px;
+    color: #333;
+    text-align: right;
+    line-height: 1.8;
+  }
+  .inv-code span { color: #c00; font-weight: bold; }
+
+  .inv-section {
+    border: 1px solid #999;
+    margin-bottom: 12px;
+  }
+  .inv-section-title {
+    background: #f5f5f5;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 1px solid #999;
+  }
+  .inv-row {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    font-size: 13px;
+  }
+  .inv-row:last-child { border-bottom: none; }
+  .inv-cell-label {
+    width: 100px;
+    padding: 5px 8px;
+    background: #f9f9f9;
+    color: #555;
+    border-right: 1px solid #ddd;
+    flex-shrink: 0;
+  }
+  .inv-cell-value {
+    flex: 1;
+    padding: 5px 8px;
+    color: #111;
+  }
+
+  .inv-items {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+  .inv-items th {
+    background: #f5f5f5;
+    border: 1px solid #999;
+    padding: 6px 8px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .inv-items td {
+    border: 1px solid #ddd;
+    padding: 5px 8px;
+    text-align: center;
+  }
+  .inv-items .right { text-align: right; }
+
+  .inv-total {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 0;
+    border-top: 2px solid #c00;
+    color: #c00;
+  }
+
+  .inv-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #777;
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px dashed #ccc;
+  }
+
+  .inv-stamp {
+    position: absolute;
+    bottom: 80px;
+    right: 60px;
+    width: 120px;
+    height: 120px;
+    border: 3px solid rgba(200, 0, 0, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(200, 0, 0, 0.35);
+    font-size: 14px;
+    font-weight: bold;
+    transform: rotate(-15deg);
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* 合同样式 */
+  .contract-page {
+    width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 50px 60px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    line-height: 2;
+    color: #222;
+  }
+  .contract-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    letter-spacing: 4px;
+  }
+  .contract-no {
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 24px;
+  }
+  .contract-section {
+    font-weight: bold;
+    margin-top: 16px;
+  }
+  .contract-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  .contract-table th, .contract-table td {
+    border: 1px solid #aaa;
+    padding: 8px 12px;
+  }
+  .contract-table th {
+    background: #f5f5f5;
+    font-weight: bold;
+    text-align: center;
+  }
+  .contract-sign {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    font-size: 13px;
+  }
+  .contract-sign-box {
+    width: 45%;
+  }
+  .contract-sign-line {
+    border-bottom: 1px solid #333;
+    height: 30px;
+    margin: 4px 0;
+  }
+  .contract-stamp {
+    position: relative;
+  }
+  .contract-stamp::after {
+    content: "杭州精密机械\A有限公司\A合同专用章";
+    white-space: pre;
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    width: 100px;
+    height: 100px;
+    border: 3px solid rgba(200, 0, 0, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(200, 0, 0, 0.35);
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.3;
+    transform: rotate(-8deg);
+  }
+
+  /* 入库验收单 */
+  .receipt-page {
+    width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 40px;
+    border: 1px solid #ccc;
+  }
+  .receipt-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .receipt-company {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .receipt-title {
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 6px;
+    margin-bottom: 8px;
+  }
+  .receipt-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #333;
+  }
+  .receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .receipt-table th {
+    background: #e8e8e8;
+    border: 1px solid #999;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+  }
+  .receipt-table td {
+    border: 1px solid #bbb;
+    padding: 6px 8px;
+  }
+  .receipt-table .right { text-align: right; }
+  .receipt-table .center { text-align: center; }
+  .receipt-total {
+    text-align: right;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 0;
+    border-top: 2px solid #333;
+  }
+  .receipt-sign {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    font-size: 12px;
+    color: #555;
+  }
+  .receipt-sign-item { width: 22%; }
+  .receipt-sign-line {
+    border-bottom: 1px solid #333;
+    height: 24px;
+    margin-bottom: 2px;
+  }
+  .receipt-check {
+    margin-top: 16px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+    font-size: 12px;
+  }
+  .receipt-check-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #333;
+  }
+  .receipt-check-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 3px;
+    color: #555;
+  }
+  .receipt-check-row .check { color: #2a8; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<!-- ========== 发票 1: 液压站维修 86500 (与合同82000有差异) ========== -->
+<div class="invoice-page" id="invoice1">
+  <div class="inv-header">
+    <div class="inv-title">浙 江 增 值 税 专 用 发 票</div>
+    <div class="inv-subtitle">发票联</div>
+    <div class="inv-code">
+      发票代码：<span>3301 2125 1100</span><br>
+      发票号码：<span>33012025020003</span><br>
+      开票日期：2025年02月18日
+    </div>
+  </div>
+
+  <div class="inv-section">
+    <div class="inv-section-title">购买方</div>
+    <div class="inv-row">
+      <div class="inv-cell-label">名称</div>
+      <div class="inv-cell-value">杭州精密机械有限公司</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell-label">纳税人识别号</div>
+      <div class="inv-cell-value">91330100MA2KXXXX0X</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell-label">地址、电话</div>
+      <div class="inv-cell-value">杭州市萧山区经济技术开发区机械路188号 0571-82XXXXXX</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell-label">开户行及账号</div>
+      <div class="inv-cell-value">中国银行杭州萧山支行 3801 0100 XXXX XXXX XX</div>
+    </div>
+  </div>
+
+  <table class="inv-items">
+    <thead>
+      <tr>
+        <th style="width:280px">货物或应税劳务、服务名称</th>
+        <th style="width:60px">规格型号</th>
+        <th style="width:40px">单位</th>
+        <th style="width:50px">数量</th>
+        <th style="width:90px">单价(不含税)</th>
+        <th style="width:90px">金额(不含税)</th>
+        <th style="width:50px">税率</th>
+        <th style="width:80px">税额</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align:left">*维修服务*液压站维修</td>
+        <td></td>
+        <td>项</td>
+        <td>1</td>
+        <td class="right">61,504.42</td>
+        <td class="right">61,504.42</td>
+        <td>13%</td>
+        <td class="right">7,995.58</td>
+      </tr>
+      <tr>
+        <td style="text-align:left">  其中：力士乐A10VSO45柱塞泵</td>
+        <td>A10VSO45DFR1/31R</td>
+        <td>台</td>
+        <td>1</td>
+        <td class="right">38,053.10</td>
+        <td class="right">38,053.10</td>
+        <td>13%</td>
+        <td class="right">4,946.90</td>
+      </tr>
+      <tr>
+        <td style="text-align:left">  系统调试+管路清洗+油液更换</td>
+        <td></td>
+        <td>项</td>
+        <td>1</td>
+        <td class="right">15,044.25</td>
+        <td class="right">15,044.25</td>
+        <td>13%</td>
+        <td class="right">1,955.75</td>
+      </tr>
+      <tr>
+        <td style="text-align:left">  液压油 美孚DTE25 200L</td>
+        <td>DTE 25</td>
+        <td>桶</td>
+        <td>1</td>
+        <td class="right">8,407.08</td>
+        <td class="right">8,407.08</td>
+        <td>13%</td>
+        <td class="right">1,092.92</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="inv-total">
+    价税合计（大写）：捌万陆仟伍佰圆整 &nbsp;&nbsp;&nbsp; (小写) ¥86,500.00
+  </div>
+
+  <div class="inv-section">
+    <div class="inv-section-title">销售方</div>
+    <div class="inv-row">
+      <div class="inv-cell-label">名称</div>
+      <div class="inv-cell-value">博世力士乐(北京)液压技术有限公司</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell-label">纳税人识别号</div>
+      <div class="inv-cell-value">91110000802XXXXXX</div>
+    </div>
+  </div>
+
+  <div class="inv-stamp">发票<br>专用章</div>
+
+  <div class="inv-footer">
+    <span>收款人：张丽华</span>
+    <span>复核：王建国</span>
+    <span>开票人：李敏</span>
+    <span>销售方（章）</span>
+  </div>
+</div>
+
+<!-- ========== 发票 2: 西门子PLC 74620 (合同拆分为两笔37310) ========== -->
+<div class="invoice-page" id="invoice2">
+  <div class="inv-header">
+    <div class="inv-title">浙 江 增 值 税 专 用 发 票</div>
+    <div class="inv-subtitle">发票联</div>
+    <div class="inv-code">
+      发票代码：<span>3301 2125 1100</span><br>
+      发票号码：<span>33012025030001</span><br>
+      开票日期：2025年03月03日
+    </div>
+  </div>
+
+  <div class="inv-section">
+    <div class="inv-section-title">购买方</div>
+    <div class="inv-row">
+      <div class="inv-cell-label">名称</div>
+      <div class="inv-cell-value">杭州精密机械有限公司</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell-label">纳税人识别号</div>
+      <div class="inv-cell-value">91330100MA2KXXXX0X</div>
+    </div>
+  </div>
+
+  <table class="inv-items">
+    <thead>
+      <tr>
+        <th style="width:280px">货物或应税劳务、服务名称</th>
+        <th style="width:80px">规格型号</th>
+        <th style="width:40px">单位</th>
+        <th style="width:50px">数量</th>
+        <th style="width:90px">单价(不含税)</th>
+        <th style="width:90px">金额(不含税)</th>
+        <th style="width:50px">税率</th>
+        <th style="width:80px">税额</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align:left">*自动化设备*可编程逻辑控制器</td>
+        <td>CPU1515-2PN</td>
+        <td>台</td>
+        <td>2</td>
+        <td class="right">33,017.70</td>
+        <td class="right">66,035.40</td>
+        <td>13%</td>
+        <td class="right">8,584.60</td>
+      </tr>
+      <tr>
+        <td style="text-align:left">*配件*PM190W电源模块</td>
+        <td>6ES7505-0RB00</td>
+        <td>个</td>
+        <td>2</td>
+        <td class="right">2,168.14</td>
+        <td class="right">4,336.28</td>
+        <td>13%</td>
+        <td class="right">563.72</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="inv-total">
+    价税合计（大写）：柒万肆仟陆佰贰拾圆整 &nbsp;&nbsp;&nbsp; (小写) ¥74,620.00
+  </div>
+
+  <div class="inv-section">
+    <div class="inv-section-title">销售方</div>
+    <div class="inv-row">
+      <div class="inv-cell-label">名称</div>
+      <div class="inv-cell-value">西门子(中国)有限公司</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell-label">纳税人识别号</div>
+      <div class="inv-cell-value">91310000607XXXXXX</div>
+    </div>
+  </div>
+
+  <div class="inv-stamp">发票<br>专用章</div>
+
+  <div class="inv-footer">
+    <span>收款人：陈晓燕</span>
+    <span>复核：刘明</span>
+    <span>开票人：赵华</span>
+    <span>销售方（章）</span>
+  </div>
+</div>
+
+<!-- ========== 合同: 安川焊接机器人 268000 ========== -->
+<div class="contract-page" id="contract1">
+  <div class="contract-title">设 备 采 购 合 同</div>
+  <div class="contract-no">合同编号：PO-2025-0012 &nbsp;&nbsp;&nbsp; 签订日期：2025年3月22日</div>
+
+  <p><b>甲方（买方）：</b>杭州精密机械有限公司</p>
+  <p>地址：杭州市萧山区经济技术开发区机械路188号</p>
+  <p>法定代表人：陈志远 &nbsp;&nbsp; 联系电话：0571-82XXXXXX</p>
+  <br>
+  <p><b>乙方（卖方）：</b>安川电机(中国)有限公司</p>
+  <p>地址：上海市嘉定区博园路7535号</p>
+  <p>法定代表人：小�的浩二 &nbsp;&nbsp; 联系电话：021-69XXXXXX</p>
+
+  <div class="contract-section">第一条 采购标的</div>
+  <table class="contract-table">
+    <thead>
+      <tr><th>序号</th><th>品名规格</th><th>数量</th><th>单位</th><th>单价(含税)</th><th>金额(含税)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="text-align:center">1</td><td>安川MOTOMAN GP25焊接机器人本体</td><td style="text-align:center">1</td><td style="text-align:center">台</td><td style="text-align:right">186,000.00</td><td style="text-align:right">186,000.00</td></tr>
+      <tr><td style="text-align:center">2</td><td>DX200控制柜</td><td style="text-align:center">1</td><td style="text-align:center">台</td><td style="text-align:right">42,000.00</td><td style="text-align:right">42,000.00</td></tr>
+      <tr><td style="text-align:center">3</td><td>焊枪+送丝机+清枪站</td><td style="text-align:center">1</td><td style="text-align:center">套</td><td style="text-align:right">28,000.00</td><td style="text-align:right">28,000.00</td></tr>
+      <tr><td style="text-align:center">4</td><td>安装调试+培训</td><td style="text-align:center">1</td><td style="text-align:center">项</td><td style="text-align:right">12,000.00</td><td style="text-align:right">12,000.00</td></tr>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="5" style="text-align:right;font-weight:bold">合计（人民币）</td><td style="text-align:right;font-weight:bold">¥268,000.00</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="contract-section">第二条 付款方式</div>
+  <p>合同签订后支付30%预付款（¥80,400.00），设备到货验收合格后支付60%（¥160,800.00），安装调试验收合格后支付尾款10%（¥26,800.00）。</p>
+
+  <div class="contract-section">第三条 交货期限</div>
+  <p>乙方应于合同生效之日起15个工作日内完成发货，到货后5个工作日内完成安装调试。</p>
+
+  <div class="contract-section">第四条 验收标准</div>
+  <p>按安川MOTOMAN GP25焊接机器人出厂技术规格书验收。重复定位精度≤±0.06mm，最大负载25kg，工作范围1730mm。</p>
+
+  <div class="contract-sign">
+    <div class="contract-sign-box contract-stamp">
+      <p><b>甲方（盖章）：</b></p>
+      <div class="contract-sign-line"></div>
+      <p>法定代表人或授权代表：</p>
+      <div class="contract-sign-line"></div>
+      <p>日期：2025年3月22日</p>
+    </div>
+    <div class="contract-sign-box">
+      <p><b>乙方（盖章）：</b></p>
+      <div class="contract-sign-line"></div>
+      <p>法定代表人或授权代表：</p>
+      <div class="contract-sign-line"></div>
+      <p>日期：2025年3月22日</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 入库验收单: 安川机器人 ========== -->
+<div class="receipt-page" id="receipt1">
+  <div class="receipt-header">
+    <div class="receipt-company">杭州精密机械有限公司</div>
+    <div class="receipt-title">入 库 验 收 单</div>
+  </div>
+
+  <div class="receipt-meta">
+    <span>验收单号：RCV-2025-0009</span>
+    <span>关联合同：PO-2025-0012</span>
+    <span>供应商：安川电机(中国)有限公司</span>
+    <span>验收日期：2025年3月27日</span>
+  </div>
+
+  <table class="receipt-table">
+    <thead>
+      <tr>
+        <th style="width:30px">序号</th>
+        <th>品名规格</th>
+        <th style="width:50px">单位</th>
+        <th style="width:50px">合同数量</th>
+        <th style="width:50px">实收数量</th>
+        <th style="width:100px">单价(含税)</th>
+        <th style="width:100px">金额(含税)</th>
+        <th style="width:80px">存放位置</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="center">1</td>
+        <td>安川MOTOMAN GP25焊接机器人本体<br><span style="font-size:11px;color:#888">S/N: RJ303-YR-GP25-A027</span></td>
+        <td class="center">台</td>
+        <td class="center">1</td>
+        <td class="center">1</td>
+        <td class="right">186,000.00</td>
+        <td class="right">186,000.00</td>
+        <td class="center">3#车间</td>
+      </tr>
+      <tr>
+        <td class="center">2</td>
+        <td>DX200控制柜<br><span style="font-size:11px;color:#888">S/N: DX200-3C-02851</span></td>
+        <td class="center">台</td>
+        <td class="center">1</td>
+        <td class="center">1</td>
+        <td class="right">42,000.00</td>
+        <td class="right">42,000.00</td>
+        <td class="center">3#车间</td>
+      </tr>
+      <tr>
+        <td class="center">3</td>
+        <td>焊枪+送丝机CMW-4500+清枪站</td>
+        <td class="center">套</td>
+        <td class="center">1</td>
+        <td class="center">1</td>
+        <td class="right">28,000.00</td>
+        <td class="right">28,000.00</td>
+        <td class="center">3#车间</td>
+      </tr>
+      <tr>
+        <td class="center">4</td>
+        <td>安装调试+操作培训</td>
+        <td class="center">项</td>
+        <td class="center">1</td>
+        <td class="center">-</td>
+        <td class="right">12,000.00</td>
+        <td class="right">12,000.00</td>
+        <td class="center">-</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="receipt-total">合计金额：¥268,000.00（大写：贰拾陆万捌仟圆整）</div>
+
+  <div class="receipt-check">
+    <div class="receipt-check-title">质量检验记录</div>
+    <div class="receipt-check-row">
+      <span>外包装完好：<span class="check">✓</span></span>
+      <span>外观检查：<span class="check">✓</span></span>
+      <span>通电测试：<span class="check">✓</span></span>
+      <span>精度检测：<span style="color:#c80;font-weight:bold">待安装后测</span></span>
+    </div>
+    <div class="receipt-check-row">
+      <span>随机文件齐全：<span class="check">✓</span></span>
+      <span>合格证：<span class="check">✓</span></span>
+      <span>说明书：<span class="check">✓</span></span>
+      <span>保修卡：<span class="check">✓</span></span>
+    </div>
+    <div style="margin-top:6px;color:#c80;font-size:11px">
+      备注：设备已到货并完成初步验收，安装调试预计4月5日前完成，精度验收另行安排。暂按合同全额暂估入账。
+    </div>
+  </div>
+
+  <div class="receipt-sign">
+    <div class="receipt-sign-item">
+      <div class="receipt-sign-line"></div>
+      仓库管理员
+    </div>
+    <div class="receipt-sign-item">
+      <div class="receipt-sign-line"></div>
+      质量检验员
+    </div>
+    <div class="receipt-sign-item">
+      <div class="receipt-sign-line"></div>
+      使用部门确认
+    </div>
+    <div class="receipt-sign-item">
+      <div class="receipt-sign-line"></div>
+      采购部门确认
+    </div>
+  </div>
+</div>
+
+<!-- ========== 入库验收单2: 刀柄（金额差异 15820 vs 15280） ========== -->
+<div class="receipt-page" id="receipt2">
+  <div class="receipt-header">
+    <div class="receipt-company">杭州精密机械有限公司</div>
+    <div class="receipt-title">入 库 验 收 单</div>
+  </div>
+
+  <div class="receipt-meta">
+    <span>验收单号：RCV-2025-0004</span>
+    <span>关联订单：PO-2025-0005</span>
+    <span>供应商：东莞市长安精锐五金工具商行</span>
+    <span>验收日期：2025年2月13日</span>
+  </div>
+
+  <table class="receipt-table">
+    <thead>
+      <tr>
+        <th style="width:30px">序号</th>
+        <th>品名规格</th>
+        <th style="width:50px">单位</th>
+        <th style="width:50px">订单数量</th>
+        <th style="width:50px">实收数量</th>
+        <th style="width:100px">单价(含税)</th>
+        <th style="width:100px">金额(含税)</th>
+        <th style="width:100px">备注</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="center">1</td>
+        <td>BT40-ER32-100L刀柄</td>
+        <td class="center">把</td>
+        <td class="center">10</td>
+        <td class="center">10</td>
+        <td class="right">880.00</td>
+        <td class="right">8,800.00</td>
+        <td>精度P4级</td>
+      </tr>
+      <tr>
+        <td class="center">2</td>
+        <td>ER32弹簧夹头套装（3-20mm共18只）</td>
+        <td class="center">套</td>
+        <td class="center">10</td>
+        <td class="center">9</td>
+        <td class="right">720.00</td>
+        <td class="right">6,480.00</td>
+        <td style="color:#c00;font-size:11px">少收1套<br>已通知补发</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="receipt-total">
+    实收合计金额：¥15,280.00 &nbsp;&nbsp;&nbsp;
+    <span style="font-size:12px;color:#c00">（订单金额¥15,820.00 差额¥540.00 待补货后补齐）</span>
+  </div>
+
+  <div class="receipt-check">
+    <div class="receipt-check-title">质量检验记录</div>
+    <div class="receipt-check-row">
+      <span>外包装：<span class="check">✓</span></span>
+      <span>外观检查：<span class="check">✓</span></span>
+      <span>精度抽检(3把)：<span class="check">✓ 跳动≤0.005mm</span></span>
+    </div>
+    <div style="margin-top:6px;color:#c80;font-size:11px">
+      备注：ER32夹头套装少收1套（第7箱短少），已拍照留存并通知供应商补发。本次按实收数量9套入账。
+    </div>
+  </div>
+
+  <div class="receipt-sign">
+    <div class="receipt-sign-item"><div class="receipt-sign-line"></div>仓库管理员</div>
+    <div class="receipt-sign-item"><div class="receipt-sign-line"></div>质量检验员</div>
+    <div class="receipt-sign-item"><div class="receipt-sign-line"></div>使用部门确认</div>
+    <div class="receipt-sign-item"><div class="receipt-sign-line"></div>采购部门确认</div>
+  </div>
+</div>
+
+</body>
+</html>

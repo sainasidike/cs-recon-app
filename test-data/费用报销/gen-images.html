@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", SimSun, sans-serif; background: #f0f0f0; }
+
+  /* ===== 费用报销单 ===== */
+  .expense-page {
+    width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 40px;
+    border: 1px solid #ccc;
+  }
+  .expense-header {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .expense-company {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .expense-title {
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 8px;
+    margin-bottom: 12px;
+  }
+  .expense-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #333;
+  }
+  .expense-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px 20px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+  }
+  .expense-info-item {
+    display: flex;
+  }
+  .expense-info-label {
+    color: #777;
+    width: 80px;
+    flex-shrink: 0;
+  }
+  .expense-info-value {
+    color: #222;
+    font-weight: 500;
+  }
+  .expense-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .expense-table th {
+    background: #e8e8e8;
+    border: 1px solid #999;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+  }
+  .expense-table td {
+    border: 1px solid #bbb;
+    padding: 6px 8px;
+  }
+  .expense-table .right { text-align: right; }
+  .expense-table .center { text-align: center; }
+  .expense-total-row {
+    background: #fff8e6;
+    font-weight: bold;
+  }
+  .expense-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    padding: 10px 0;
+    border-top: 2px solid #333;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 16px;
+  }
+  .expense-total-amount {
+    font-size: 18px;
+    font-weight: bold;
+    color: #c00;
+  }
+  .expense-total-cn {
+    color: #555;
+    font-size: 13px;
+  }
+  .expense-approval {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    font-size: 12px;
+    border: 1px solid #999;
+    margin-bottom: 16px;
+  }
+  .expense-approval-box {
+    padding: 8px;
+    border-right: 1px solid #999;
+    min-height: 70px;
+  }
+  .expense-approval-box:last-child {
+    border-right: none;
+  }
+  .expense-approval-title {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 4px;
+    font-size: 11px;
+    text-align: center;
+    background: #f0f0f0;
+    margin: -8px -8px 6px;
+    padding: 4px;
+    border-bottom: 1px solid #ddd;
+  }
+  .expense-approval-sign {
+    color: #1a6bc4;
+    font-size: 16px;
+    text-align: center;
+    margin: 6px 0;
+    font-style: italic;
+  }
+  .expense-approval-date {
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+  }
+  .expense-note {
+    font-size: 11px;
+    color: #888;
+    padding: 8px;
+    border: 1px dashed #ccc;
+    background: #fcfcfc;
+  }
+
+  /* ===== 出差审批单 ===== */
+  .travel-page {
+    width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 40px;
+    border: 1px solid #ccc;
+  }
+  .travel-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .travel-company {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .travel-title {
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 6px;
+    margin-bottom: 8px;
+  }
+  .travel-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #333;
+  }
+  .travel-grid {
+    display: grid;
+    grid-template-columns: 100px 1fr 100px 1fr;
+    gap: 0;
+    border: 1px solid #999;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .travel-grid-label {
+    padding: 8px 10px;
+    background: #f0f0f0;
+    font-weight: bold;
+    color: #555;
+    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+  }
+  .travel-grid-value {
+    padding: 8px 10px;
+    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #999;
+    color: #222;
+  }
+  .travel-grid-value:nth-child(4n) {
+    border-right: none;
+  }
+  .travel-itinerary {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .travel-itinerary th {
+    background: #e8e8e8;
+    border: 1px solid #999;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+  }
+  .travel-itinerary td {
+    border: 1px solid #bbb;
+    padding: 6px 8px;
+    text-align: center;
+  }
+  .travel-budget {
+    font-size: 13px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    margin-bottom: 16px;
+  }
+  .travel-budget-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  .travel-budget-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px dotted #ddd;
+  }
+  .travel-approval {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    font-size: 12px;
+    border: 1px solid #999;
+  }
+  .travel-approval-box {
+    padding: 10px;
+    border-right: 1px solid #999;
+    min-height: 80px;
+  }
+  .travel-approval-box:last-child { border-right: none; }
+  .travel-approval-title {
+    font-weight: bold;
+    color: #555;
+    font-size: 11px;
+    text-align: center;
+    background: #f0f0f0;
+    margin: -10px -10px 8px;
+    padding: 4px;
+    border-bottom: 1px solid #ddd;
+  }
+  .travel-approval-sign {
+    color: #1a6bc4;
+    font-size: 16px;
+    text-align: center;
+    margin: 8px 0;
+    font-style: italic;
+  }
+  .travel-approval-date {
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+  }
+  .travel-approval-comment {
+    font-size: 10px;
+    color: #666;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* ===== 电子发票 ===== */
+  .e-invoice-page {
+    width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 30px 40px;
+    border: 1px solid #1a6bc4;
+    position: relative;
+  }
+  .e-invoice-page::before {
+    content: "";
+    position: absolute;
+    top: 6px; left: 6px; right: 6px; bottom: 6px;
+    border: 1px solid #1a6bc4;
+    pointer-events: none;
+  }
+  .e-inv-header {
+    text-align: center;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .e-inv-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #1a6bc4;
+    letter-spacing: 4px;
+    margin-bottom: 2px;
+  }
+  .e-inv-subtitle {
+    font-size: 12px;
+    color: #1a6bc4;
+  }
+  .e-inv-code {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 12px;
+    color: #333;
+    text-align: right;
+    line-height: 1.8;
+  }
+  .e-inv-code span { color: #1a6bc4; font-weight: bold; }
+  .e-inv-qr {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 70px;
+    height: 70px;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #bbb;
+    background: #fafafa;
+  }
+  .e-inv-section {
+    border: 1px solid #99c;
+    margin-bottom: 10px;
+  }
+  .e-inv-section-title {
+    background: #eef2ff;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #336;
+    border-bottom: 1px solid #99c;
+  }
+  .e-inv-row {
+    display: flex;
+    border-bottom: 1px solid #dde;
+    font-size: 12px;
+  }
+  .e-inv-row:last-child { border-bottom: none; }
+  .e-inv-cell-label {
+    width: 90px;
+    padding: 4px 8px;
+    background: #f5f7ff;
+    color: #555;
+    border-right: 1px solid #dde;
+    flex-shrink: 0;
+  }
+  .e-inv-cell-value {
+    flex: 1;
+    padding: 4px 8px;
+    color: #111;
+  }
+  .e-inv-items {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    font-size: 11px;
+  }
+  .e-inv-items th {
+    background: #eef2ff;
+    border: 1px solid #99c;
+    padding: 5px 6px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .e-inv-items td {
+    border: 1px solid #ccd;
+    padding: 4px 6px;
+    text-align: center;
+  }
+  .e-inv-items .right { text-align: right; }
+  .e-inv-total {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 0;
+    border-top: 2px solid #1a6bc4;
+    color: #1a6bc4;
+  }
+  .e-inv-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #777;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px dashed #ccc;
+  }
+  .e-inv-stamp {
+    position: absolute;
+    bottom: 60px;
+    right: 50px;
+    width: 110px;
+    height: 110px;
+    border: 3px solid rgba(26, 107, 196, 0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(26, 107, 196, 0.3);
+    font-size: 12px;
+    font-weight: bold;
+    transform: rotate(-12deg);
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* ===== 银行回单 ===== */
+  .bank-slip {
+    width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 35px 40px;
+    border: 1px solid #c00;
+  }
+  .bank-slip-header {
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 3px double #c00;
+  }
+  .bank-slip-logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: #c00;
+    margin-bottom: 4px;
+    letter-spacing: 3px;
+  }
+  .bank-slip-title {
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 6px;
+    color: #333;
+  }
+  .bank-slip-no {
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
+  }
+  .bank-slip-grid {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    border: 1px solid #c00;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .bank-slip-label {
+    padding: 8px 12px;
+    background: #fff5f5;
+    font-weight: bold;
+    color: #666;
+    border-bottom: 1px solid #ecc;
+    border-right: 1px solid #ecc;
+  }
+  .bank-slip-value {
+    padding: 8px 12px;
+    border-bottom: 1px solid #ecc;
+    color: #222;
+  }
+  .bank-slip-amount {
+    font-size: 20px;
+    font-weight: bold;
+    color: #c00;
+  }
+  .bank-slip-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px dashed #ccc;
+  }
+  .bank-slip-stamp {
+    position: relative;
+    float: right;
+    margin-top: -30px;
+    width: 120px;
+    height: 50px;
+    border: 2px solid rgba(200, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(200, 0, 0, 0.3);
+    font-size: 11px;
+    font-weight: bold;
+    transform: rotate(-3deg);
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== 1. 费用报销单: 李敏-北京ISO外审 6350 ========== -->
+<div class="expense-page" id="expense1">
+  <div class="expense-header">
+    <div class="expense-company">杭州精密机械有限公司</div>
+    <div class="expense-title">费 用 报 销 单</div>
+  </div>
+
+  <div class="expense-meta">
+    <span>报销单号：EXP-2025-0010</span>
+    <span>报销人：李敏</span>
+    <span>部门：品质管理部</span>
+    <span>日期：2025年3月22日</span>
+  </div>
+
+  <div class="expense-info">
+    <div class="expense-info-item"><span class="expense-info-label">费用类别：</span><span class="expense-info-value">差旅费</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">出差事由：</span><span class="expense-info-value">ISO9001质量体系外审陪审</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">出差地点：</span><span class="expense-info-value">北京</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">出差日期：</span><span class="expense-info-value">2025.03.20 - 2025.03.21</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">审批单号：</span><span class="expense-info-value">TC-2025-019</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">附件张数：</span><span class="expense-info-value">8张</span></div>
+  </div>
+
+  <table class="expense-table">
+    <thead>
+      <tr>
+        <th style="width:30px">序号</th>
+        <th style="width:80px">日期</th>
+        <th style="width:80px">费用类别</th>
+        <th>摘要</th>
+        <th style="width:100px">发票号(后4位)</th>
+        <th style="width:90px">金额</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="center">1</td>
+        <td class="center">03-20</td>
+        <td class="center">交通费</td>
+        <td>杭州东→北京南 高铁二等座 G58</td>
+        <td class="center">0012</td>
+        <td class="right">622.00</td>
+      </tr>
+      <tr>
+        <td class="center">2</td>
+        <td class="center">03-21</td>
+        <td class="center">交通费</td>
+        <td>北京南→杭州东 高铁二等座 G167</td>
+        <td class="center">0012</td>
+        <td class="right">622.00</td>
+      </tr>
+      <tr>
+        <td class="center">3</td>
+        <td class="center">03-20</td>
+        <td class="center">住宿费</td>
+        <td>北京朝阳亚朵酒店 标间2晚 (3.20-3.21)</td>
+        <td class="center">0320</td>
+        <td class="right">1,760.00</td>
+      </tr>
+      <tr>
+        <td class="center">4</td>
+        <td class="center">03-20</td>
+        <td class="center">市内交通</td>
+        <td>北京南站→酒店 网约车</td>
+        <td class="center">—</td>
+        <td class="right">86.00</td>
+      </tr>
+      <tr>
+        <td class="center">5</td>
+        <td class="center">03-20</td>
+        <td class="center">市内交通</td>
+        <td>酒店→认证中心 出租车</td>
+        <td class="center">—</td>
+        <td class="right">45.00</td>
+      </tr>
+      <tr>
+        <td class="center">6</td>
+        <td class="center">03-21</td>
+        <td class="center">市内交通</td>
+        <td>认证中心→北京南站 出租车</td>
+        <td class="center">—</td>
+        <td class="right">52.00</td>
+      </tr>
+      <tr>
+        <td class="center">7</td>
+        <td class="center">03-20</td>
+        <td class="center">餐费</td>
+        <td>晚餐 (与审核老师工作餐)</td>
+        <td class="center">—</td>
+        <td class="right">186.00</td>
+      </tr>
+      <tr>
+        <td class="center">8</td>
+        <td class="center">03-21</td>
+        <td class="center">餐费</td>
+        <td>午餐+出租车零星费用</td>
+        <td class="center">—</td>
+        <td class="right">217.00</td>
+      </tr>
+      <tr>
+        <td class="center">9</td>
+        <td class="center">03-20</td>
+        <td class="center">出差补贴</td>
+        <td>北京出差伙食补贴 2天×100元/天</td>
+        <td class="center">—</td>
+        <td class="right">200.00</td>
+      </tr>
+      <tr>
+        <td class="center">10</td>
+        <td class="center">03-21</td>
+        <td class="center">其他</td>
+        <td>文件打印复印费 (体系文件)</td>
+        <td class="center">—</td>
+        <td class="right">60.00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="expense-total">
+    <div>
+      <span class="expense-total-cn">金额大写：陆仟叁佰伍拾圆整</span>
+    </div>
+    <div>
+      报销金额合计：<span class="expense-total-amount">¥6,350.00</span>
+    </div>
+  </div>
+
+  <div class="expense-approval">
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">报销人</div>
+      <div class="expense-approval-sign">李敏</div>
+      <div class="expense-approval-date">2025-03-22</div>
+    </div>
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">部门主管</div>
+      <div class="expense-approval-sign">周国平</div>
+      <div class="expense-approval-date">2025-03-22</div>
+    </div>
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">财务审核</div>
+      <div class="expense-approval-sign">张丽华</div>
+      <div class="expense-approval-date">2025-03-23</div>
+    </div>
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">总经理</div>
+      <div class="expense-approval-sign">陈志远</div>
+      <div class="expense-approval-date">2025-03-24</div>
+    </div>
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">出纳付款</div>
+      <div class="expense-approval-sign">赵华</div>
+      <div class="expense-approval-date">2025-03-26</div>
+    </div>
+  </div>
+
+  <div class="expense-note">
+    备注：①高铁票已附12306行程单电子版；②住宿费标准880元/晚×2，符合出差管理制度B级城市标准；③市内交通按实报实销；④出差补贴按公司制度100元/天执行。
+  </div>
+</div>
+
+<!-- ========== 2. 出差审批单: 陈志远-上海审计 ========== -->
+<div class="travel-page" id="travel1">
+  <div class="travel-header">
+    <div class="travel-company">杭州精密机械有限公司</div>
+    <div class="travel-title">出 差 审 批 单</div>
+  </div>
+
+  <div class="travel-meta">
+    <span>审批单号：TC-2024-089</span>
+    <span>申请日期：2024年12月28日</span>
+  </div>
+
+  <div class="travel-grid">
+    <div class="travel-grid-label">申请人</div>
+    <div class="travel-grid-value">陈志远</div>
+    <div class="travel-grid-label">部门/职务</div>
+    <div class="travel-grid-value">总经理</div>
+    <div class="travel-grid-label">出差事由</div>
+    <div class="travel-grid-value" style="grid-column: span 3">参加2024年度财务审计沟通会（会计师事务所年审），配合出具审计报告</div>
+    <div class="travel-grid-label">出差地点</div>
+    <div class="travel-grid-value">上海市（普华永道中天会计师事务所上海办公室）</div>
+    <div class="travel-grid-label">出差时间</div>
+    <div class="travel-grid-value">2025年1月4日 — 2025年1月6日（共3天）</div>
+    <div class="travel-grid-label">交通方式</div>
+    <div class="travel-grid-value">高铁</div>
+    <div class="travel-grid-label">同行人员</div>
+    <div class="travel-grid-value">张丽华（财务经理）— 单独报销</div>
+  </div>
+
+  <table class="travel-itinerary">
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>行程</th>
+        <th>事项</th>
+        <th>住宿</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1月4日(周六)</td>
+        <td>杭州→上海</td>
+        <td>下午抵达上海，与审计组负责人对接审计资料清单</td>
+        <td>上海浦东丽笙酒店</td>
+      </tr>
+      <tr>
+        <td>1月5日(周日)</td>
+        <td>上海</td>
+        <td>全天参加年度审计底稿复核、管理层访谈</td>
+        <td>上海浦东丽笙酒店</td>
+      </tr>
+      <tr>
+        <td>1月6日(周一)</td>
+        <td>上海→杭州</td>
+        <td>上午签署审计确认函，下午返回</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="travel-budget">
+    <div class="travel-budget-title">预估费用明细</div>
+    <div class="travel-budget-row"><span>往返高铁（二等座）</span><span>¥624.00</span></div>
+    <div class="travel-budget-row"><span>住宿（丽笙酒店 2晚 ×¥912/晚）</span><span>¥1,824.00</span></div>
+    <div class="travel-budget-row"><span>市内交通（预估）</span><span>¥300.00</span></div>
+    <div class="travel-budget-row"><span>餐费补贴（3天×¥150）</span><span>¥450.00</span></div>
+    <div class="travel-budget-row" style="font-weight:bold;border-top:1px solid #999;margin-top:4px;padding-top:6px"><span>预算合计</span><span>¥3,198.00</span></div>
+    <div style="font-size:11px;color:#c80;margin-top:6px">注：丽笙酒店实际入住价格可能高于预算，总经理级可适当上浮，但超出部分需在报销时说明</div>
+  </div>
+
+  <div class="travel-approval">
+    <div class="travel-approval-box">
+      <div class="travel-approval-title">申请人</div>
+      <div class="travel-approval-sign">陈志远</div>
+      <div class="travel-approval-date">2024-12-28</div>
+    </div>
+    <div class="travel-approval-box">
+      <div class="travel-approval-title">部门负责人</div>
+      <div class="travel-approval-sign">— (总经理本人)</div>
+      <div class="travel-approval-date">—</div>
+    </div>
+    <div class="travel-approval-box">
+      <div class="travel-approval-title">财务审核</div>
+      <div class="travel-approval-sign">张丽华</div>
+      <div class="travel-approval-date">2024-12-28</div>
+      <div class="travel-approval-comment">预算合理，同意</div>
+    </div>
+    <div class="travel-approval-box">
+      <div class="travel-approval-title">董事会/上级审批</div>
+      <div class="travel-approval-sign">—</div>
+      <div class="travel-approval-date">—</div>
+      <div class="travel-approval-comment">总经理出差按制度报备即可</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 3. 电子发票: 酒店住宿 ========== -->
+<div class="e-invoice-page" id="einvoice1">
+  <div class="e-inv-header">
+    <div class="e-inv-qr">扫码<br>验真</div>
+    <div class="e-inv-title">增 值 税 电 子 专 用 发 票</div>
+    <div class="e-inv-subtitle">（住宿服务）</div>
+    <div class="e-inv-code">
+      发票代码：<span>3100 2125 2200</span><br>
+      发票号码：<span>HTLBJ20250320</span><br>
+      开票日期：2025年03月22日<br>
+      校验码：<span>3829 1057 6243</span>
+    </div>
+  </div>
+
+  <div class="e-inv-section">
+    <div class="e-inv-section-title">购买方</div>
+    <div class="e-inv-row">
+      <div class="e-inv-cell-label">名称</div>
+      <div class="e-inv-cell-value">杭州精密机械有限公司</div>
+    </div>
+    <div class="e-inv-row">
+      <div class="e-inv-cell-label">纳税人识别号</div>
+      <div class="e-inv-cell-value">91330100MA2KXXXX0X</div>
+    </div>
+  </div>
+
+  <table class="e-inv-items">
+    <thead>
+      <tr>
+        <th style="width:260px">项目名称</th>
+        <th style="width:60px">规格</th>
+        <th style="width:40px">单位</th>
+        <th style="width:40px">数量</th>
+        <th style="width:90px">单价(不含税)</th>
+        <th style="width:90px">金额(不含税)</th>
+        <th style="width:40px">税率</th>
+        <th style="width:70px">税额</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align:left">*住宿服务*住宿费</td>
+        <td>标准间</td>
+        <td>间/夜</td>
+        <td>2</td>
+        <td class="right">830.19</td>
+        <td class="right">1,660.38</td>
+        <td>6%</td>
+        <td class="right">99.62</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="e-inv-total">
+    价税合计（大写）：壹仟柒佰陆拾圆整 &nbsp;&nbsp;&nbsp; (小写) ¥1,760.00
+  </div>
+
+  <div class="e-inv-section">
+    <div class="e-inv-section-title">销售方</div>
+    <div class="e-inv-row">
+      <div class="e-inv-cell-label">名称</div>
+      <div class="e-inv-cell-value">北京朝阳亚朵酒店管理有限公司</div>
+    </div>
+    <div class="e-inv-row">
+      <div class="e-inv-cell-label">纳税人识别号</div>
+      <div class="e-inv-cell-value">91110105MA01XXXXXX</div>
+    </div>
+  </div>
+
+  <div class="e-inv-stamp">电子发票<br>专用章</div>
+
+  <div class="e-inv-footer">
+    <span>开票人：系统自动</span>
+    <span>复核：李婷</span>
+    <span>此发票由增值税发票管理系统开具</span>
+    <span>发票可登录国家税务总局全国增值税发票查验平台查验</span>
+  </div>
+</div>
+
+<!-- ========== 4. 银行回单: 报销付款 ========== -->
+<div class="bank-slip" id="bankslip1">
+  <div class="bank-slip-header">
+    <div class="bank-slip-logo">中国银行</div>
+    <div class="bank-slip-title">网 上 银 行 电 子 回 单</div>
+    <div class="bank-slip-no">回单编号：ERECEIPT-2025-0324-00198 &nbsp;&nbsp; 交易流水号：PAY-2025-0324</div>
+  </div>
+
+  <div class="bank-slip-grid">
+    <div class="bank-slip-label">交易类型</div>
+    <div class="bank-slip-value">网银转账-个人</div>
+    <div class="bank-slip-label">交易日期</div>
+    <div class="bank-slip-value">2025年03月26日 &nbsp;&nbsp; 10:35:28</div>
+    <div class="bank-slip-label" style="background:#fff0f0">付款户名</div>
+    <div class="bank-slip-value" style="font-weight:bold">杭州精密机械有限公司</div>
+    <div class="bank-slip-label">付款账号</div>
+    <div class="bank-slip-value">3801 0100 **** **** 58</div>
+    <div class="bank-slip-label">付款行</div>
+    <div class="bank-slip-value">中国银行杭州萧山支行</div>
+    <div class="bank-slip-label" style="background:#fff0f0">收款户名</div>
+    <div class="bank-slip-value" style="font-weight:bold">李敏</div>
+    <div class="bank-slip-label">收款账号</div>
+    <div class="bank-slip-value">6222 0212 **** **** 3891</div>
+    <div class="bank-slip-label">收款行</div>
+    <div class="bank-slip-value">工商银行杭州城西支行</div>
+    <div class="bank-slip-label" style="background:#fff0f0">转账金额</div>
+    <div class="bank-slip-value"><span class="bank-slip-amount">¥6,350.00</span> &nbsp;&nbsp; (大写：陆仟叁佰伍拾圆整)</div>
+    <div class="bank-slip-label">用途/备注</div>
+    <div class="bank-slip-value">报销款-李敏-北京ISO外审差旅费 报销单号EXP-2025-0010</div>
+    <div class="bank-slip-label">交易状态</div>
+    <div class="bank-slip-value" style="color:#080;font-weight:bold">交易成功</div>
+  </div>
+
+  <div class="bank-slip-stamp">中国银行 电子回单专用</div>
+
+  <div class="bank-slip-footer">
+    <span>本回单仅作为银行办理业务的凭据，不作为收付款方的记账凭证</span>
+    <span>打印时间：2025-03-26 10:36:01</span>
+    <span>操作员：网银系统</span>
+  </div>
+</div>
+
+<!-- ========== 5. 费用报销单: 陈志远-上海审计出差 4860(报销) vs 4152(付款,扣超标住宿) ========== -->
+<div class="expense-page" id="expense2">
+  <div class="expense-header">
+    <div class="expense-company">杭州精密机械有限公司</div>
+    <div class="expense-title">费 用 报 销 单</div>
+  </div>
+
+  <div class="expense-meta">
+    <span>报销单号：EXP-2025-0001</span>
+    <span>报销人：陈志远</span>
+    <span>部门：总经理办公室</span>
+    <span>日期：2025年1月6日</span>
+  </div>
+
+  <div class="expense-info">
+    <div class="expense-info-item"><span class="expense-info-label">费用类别：</span><span class="expense-info-value">差旅费</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">出差事由：</span><span class="expense-info-value">2024年度财务审计沟通会</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">出差地点：</span><span class="expense-info-value">上海</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">出差日期：</span><span class="expense-info-value">2025.01.04 - 2025.01.06</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">审批单号：</span><span class="expense-info-value">TC-2024-089</span></div>
+    <div class="expense-info-item"><span class="expense-info-label">附件张数：</span><span class="expense-info-value">11张</span></div>
+  </div>
+
+  <table class="expense-table">
+    <thead>
+      <tr>
+        <th style="width:30px">序号</th>
+        <th style="width:80px">日期</th>
+        <th style="width:80px">费用类别</th>
+        <th>摘要</th>
+        <th style="width:90px">金额</th>
+        <th style="width:100px">备注</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="center">1</td>
+        <td class="center">01-04</td>
+        <td class="center">交通费</td>
+        <td>杭州东→上海虹桥 高铁二等座</td>
+        <td class="right">312.00</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="center">2</td>
+        <td class="center">01-06</td>
+        <td class="center">交通费</td>
+        <td>上海虹桥→杭州东 高铁二等座</td>
+        <td class="right">312.00</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="center">3</td>
+        <td class="center">01-04</td>
+        <td class="center">住宿费</td>
+        <td>上海浦东丽笙酒店 标间3晚</td>
+        <td class="right">2,736.00</td>
+        <td style="color:#c00;font-size:11px">912元/晚<br>超标204元/晚</td>
+      </tr>
+      <tr>
+        <td class="center">4</td>
+        <td class="center">01-04~06</td>
+        <td class="center">市内交通</td>
+        <td>上海市内出租车7次</td>
+        <td class="right">312.00</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="center">5</td>
+        <td class="center">01-04~06</td>
+        <td class="center">餐费</td>
+        <td>出差期间用餐4次</td>
+        <td class="right">480.00</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="center">6</td>
+        <td class="center">01-04~06</td>
+        <td class="center">出差补贴</td>
+        <td>出差伙食补贴 3天×¥150</td>
+        <td class="right">450.00</td>
+        <td>总经理标准</td>
+      </tr>
+      <tr>
+        <td class="center">7</td>
+        <td class="center">01-05</td>
+        <td class="center">其他</td>
+        <td>审计资料装订打印</td>
+        <td class="right">258.00</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="expense-total">
+    <div>
+      <span class="expense-total-cn">金额大写：肆仟捌佰陆拾圆整</span>
+    </div>
+    <div>
+      报销金额合计：<span class="expense-total-amount">¥4,860.00</span>
+    </div>
+  </div>
+
+  <div class="expense-approval">
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">报销人</div>
+      <div class="expense-approval-sign">陈志远</div>
+      <div class="expense-approval-date">2025-01-06</div>
+    </div>
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">部门主管</div>
+      <div class="expense-approval-sign">— (本人)</div>
+      <div class="expense-approval-date">—</div>
+    </div>
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">财务审核</div>
+      <div class="expense-approval-sign">张丽华</div>
+      <div class="expense-approval-date">2025-01-07</div>
+    </div>
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">总经理</div>
+      <div class="expense-approval-sign">— (本人)</div>
+      <div class="expense-approval-date">—</div>
+    </div>
+    <div class="expense-approval-box">
+      <div class="expense-approval-title">出纳付款</div>
+      <div class="expense-approval-sign">赵华</div>
+      <div class="expense-approval-date">2025-01-10</div>
+    </div>
+  </div>
+
+  <div class="expense-note">
+    <span style="color:#c00;font-weight:bold">财务审核意见：</span>住宿费丽笙酒店912元/晚，公司差旅制度A级城市(上海)住宿标准上限708元/晚（总经理级上浮20%后为850元/晚），仍超出62元/晚×3晚=186元。另伙食补贴3天计450元与餐费480元存在重叠，按制度二选一，扣减较低项258元（打印费单据为复印店收据非正规发票，扣减258元）。<br>
+    <span style="color:#1a6bc4;font-weight:bold">实际付款金额：¥4,152.00</span>（原报销¥4,860.00 - 超标住宿¥186 - 补贴/餐费重叠¥264 - 非正规票据¥258 = ¥4,152.00）
+  </div>
+</div>
+
+</body>
+</html>

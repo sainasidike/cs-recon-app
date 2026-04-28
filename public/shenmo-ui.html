@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能对账 · 沈墨美学</title>
+<style>
+/* ===== 沈墨设计系统 · PC版 ===== */
+:root {
+  --ink: #2c2c34;
+  --ink-light: #5a5a66;
+  --ink-muted: #8e8e9a;
+  --ink-faint: #b8b8c2;
+  --paper: #faf9f7;
+  --paper-warm: #f5f3f0;
+  --paper-deep: #eceae6;
+  --celadon: #7ba89b;
+  --celadon-light: rgba(123, 168, 155, 0.08);
+  --celadon-mid: rgba(123, 168, 155, 0.15);
+  --celadon-deep: #5d8f82;
+  --cinnabar: #c45c4a;
+  --cinnabar-light: rgba(196, 92, 74, 0.06);
+  --gold-muted: #a6893a;
+  --gold-light: rgba(166, 137, 58, 0.06);
+  --card: #ffffff;
+  --border: rgba(44, 44, 52, 0.06);
+  --border-fine: rgba(44, 44, 52, 0.04);
+  --shadow-float: 0 2px 20px rgba(44, 44, 52, 0.04), 0 0.5px 3px rgba(44, 44, 52, 0.03);
+  --shadow-hover: 0 6px 32px rgba(44, 44, 52, 0.07), 0 1px 4px rgba(44, 44, 52, 0.04);
+  --radius: 6px;
+  --radius-lg: 10px;
+  --transition: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+html { font-size: 15px; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* ===== 侧边导航 ===== */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  background: var(--card);
+  border-right: 0.5px solid var(--border);
+  padding: 32px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  padding: 0 28px;
+  margin-bottom: 36px;
+}
+
+.sidebar-title {
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--ink);
+}
+
+.sidebar-sub {
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-nav {
+  flex: 1;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 28px;
+  font-size: 0.84rem;
+  color: var(--ink-light);
+  cursor: pointer;
+  transition: all var(--transition);
+  border-left: 2px solid transparent;
+}
+.sidebar-item:hover { color: var(--ink); background: var(--paper-warm); }
+.sidebar-item.active {
+  color: var(--celadon-deep);
+  background: var(--celadon-light);
+  border-left-color: var(--celadon);
+  font-weight: 500;
+}
+.sidebar-item-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.7;
+}
+
+.sidebar-footer {
+  padding: 16px 28px;
+  border-top: 0.5px solid var(--border-fine);
+}
+.sidebar-footer-text {
+  font-size: 0.67rem;
+  color: var(--ink-faint);
+}
+
+/* ===== 主内容区 ===== */
+.main {
+  flex: 1;
+  margin-left: 240px;
+  padding: 40px 56px;
+  max-width: 1200px;
+}
+
+/* ===== 首页 ===== */
+.home-header {
+  margin-bottom: 40px;
+}
+
+.home-title {
+  font-size: 1.6rem;
+  font-weight: 300;
+  letter-spacing: 1px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.home-desc {
+  font-size: 0.87rem;
+  color: var(--ink-muted);
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+/* 上传区域 */
+.upload-zone {
+  grid-column: 1 / -1;
+  padding: 56px 40px;
+  border: 1px dashed var(--ink-faint);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: transparent;
+}
+.upload-zone:hover {
+  border-color: var(--celadon);
+  background: var(--celadon-light);
+}
+
+.upload-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 16px;
+  stroke: var(--ink-muted);
+  transition: stroke var(--transition);
+}
+.upload-zone:hover .upload-icon { stroke: var(--celadon); }
+
+.upload-text {
+  font-size: 0.93rem;
+  color: var(--ink-light);
+  margin-bottom: 6px;
+}
+
+.upload-hint {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+/* Demo 卡片 */
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.demo-card {
+  padding: 24px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  border: 0.5px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.demo-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+.demo-card:active { transform: translateY(0); }
+
+.demo-icon {
+  font-size: 1.6rem;
+  margin-bottom: 12px;
+}
+
+.demo-name {
+  font-size: 0.93rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.demo-desc {
+  font-size: 0.73rem;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+.section-label {
+  font-size: 0.73rem;
+  color: var(--ink-muted);
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+/* ===== 确认页 ===== */
+.confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.back-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.back-btn:hover { background: var(--paper-deep); }
+.back-btn svg { width: 18px; height: 18px; stroke: var(--ink-light); stroke-width: 1.5; fill: none; }
+
+.page-title {
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+.confirm-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+}
+
+.confirm-sidebar {}
+
+.stats-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.stat-item {
+  padding: 16px 18px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  border: 0.5px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: var(--ink);
+}
+
+.balance-card {
+  padding: 20px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  border: 0.5px solid var(--border);
+}
+
+.balance-title {
+  font-size: 0.73rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.input-label {
+  font-size: 0.8rem;
+  color: var(--ink-light);
+  white-space: nowrap;
+  min-width: 72px;
+}
+
+.input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: 0.87rem;
+  color: var(--ink);
+  transition: border-color var(--transition);
+  outline: none;
+}
+.input:focus { border-color: var(--celadon); background: var(--card); }
+.input::placeholder { color: var(--ink-faint); }
+
+.confirm-main {}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.tab {
+  padding: 10px 20px;
+  font-size: 0.84rem;
+  color: var(--ink-muted);
+  cursor: pointer;
+  position: relative;
+  transition: color var(--transition);
+}
+.tab:hover { color: var(--ink-light); }
+.tab.active {
+  color: var(--ink);
+  font-weight: 500;
+}
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5px;
+  left: 16px;
+  right: 16px;
+  height: 1.5px;
+  background: var(--celadon);
+  border-radius: 1px;
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 16px;
+  font-size: 0.8rem;
+  color: var(--celadon-deep);
+  border: 0.5px solid var(--celadon);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  background: transparent;
+}
+.add-btn:hover { background: var(--celadon-light); }
+
+/* 数据表格 */
+.data-table-wrap {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  border: 0.5px solid var(--border);
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.data-table th {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--ink-muted);
+  text-align: left;
+  padding: 12px 16px;
+  letter-spacing: 0.3px;
+  background: var(--paper-warm);
+  border-bottom: 0.5px solid var(--border);
+}
+.data-table th:last-child { text-align: right; }
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 0.5px solid var(--border-fine);
+  color: var(--ink-light);
+}
+.data-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+
+.data-table tr { transition: background var(--transition); cursor: pointer; }
+.data-table tbody tr:hover { background: var(--celadon-light); }
+
+.amount-out { color: var(--cinnabar); }
+.amount-in { color: var(--celadon-deep); }
+
+.manual-mark { color: var(--celadon); font-size: 0.8rem; }
+
+.table-footer {
+  text-align: center;
+  padding: 10px;
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+  border-top: 0.5px solid var(--border-fine);
+}
+
+.action-bar {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ===== 结果页 ===== */
+.results-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 32px;
+}
+
+.match-bar-wrap {
+  margin-bottom: 20px;
+}
+
+.match-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--paper-deep);
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 12px;
+}
+.match-bar-exact { background: var(--celadon); }
+.match-bar-fuzzy { background: var(--gold-muted); }
+.match-bar-unmatched { background: var(--cinnabar); opacity: 0.5; }
+
+.match-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.match-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--ink-light);
+}
+
+.match-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.match-dot.exact { background: var(--celadon); }
+.match-dot.fuzzy { background: var(--gold-muted); }
+.match-dot.unmatched { background: var(--cinnabar); opacity: 0.6; }
+
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.match-card {
+  padding: 16px 20px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  border: 0.5px solid var(--border);
+  transition: all var(--transition);
+  cursor: pointer;
+}
+.match-card:hover { box-shadow: var(--shadow-hover); }
+
+.match-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.match-confidence {
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+.confidence-high { background: var(--celadon-light); color: var(--celadon-deep); }
+.confidence-mid { background: var(--gold-light); color: var(--gold-muted); }
+
+.match-amount {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.match-detail {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  line-height: 1.7;
+}
+
+/* 右侧摘要 */
+.results-summary {
+  position: sticky;
+  top: 40px;
+}
+
+.summary-card {
+  padding: 24px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  border: 0.5px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.summary-title {
+  font-size: 0.73rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 0.84rem;
+}
+.summary-row-label { color: var(--ink-light); }
+.summary-row-value { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* ===== 调节表 ===== */
+.recon-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.recon-card {
+  padding: 24px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  border: 0.5px solid var(--border);
+}
+
+.recon-card-title {
+  font-size: 0.73rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--border-fine);
+}
+
+.recon-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  font-size: 0.87rem;
+}
+.recon-row-label { color: var(--ink-light); }
+.recon-row-value { font-variant-numeric: tabular-nums; }
+.recon-row-add { color: var(--celadon-deep); }
+.recon-row-sub { color: var(--cinnabar); }
+.recon-row-total {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 0.5px solid var(--border);
+  font-weight: 500;
+}
+
+.recon-result {
+  text-align: center;
+  padding: 32px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  border: 0.5px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.recon-result-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.recon-result-icon.balanced { background: var(--celadon-light); }
+.recon-result-icon svg { width: 20px; height: 20px; }
+
+.recon-result-text {
+  font-size: 0.93rem;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.recon-result-amount {
+  font-size: 1.4rem;
+  font-weight: 300;
+  letter-spacing: -0.5px;
+  color: var(--celadon-deep);
+}
+
+/* AI 报告 */
+.ai-card {
+  padding: 28px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  border: 0.5px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.ai-card-title {
+  font-size: 0.73rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.ai-content {
+  font-size: 0.87rem;
+  color: var(--ink-light);
+  line-height: 2;
+}
+.ai-content h4 {
+  font-size: 0.93rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 20px 0 8px;
+}
+.ai-content h4:first-child { margin-top: 0; }
+
+.ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 24px;
+  font-size: 0.84rem;
+  color: var(--celadon-deep);
+  border: 0.5px solid var(--celadon);
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.ai-btn:hover { background: var(--celadon-light); }
+
+.ai-cursor {
+  animation: blink 0.8s step-end infinite;
+  color: var(--celadon);
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ===== 通用按钮 ===== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 32px;
+  font-size: 0.87rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  color: var(--paper);
+  background: var(--celadon-deep);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-primary:hover { background: var(--celadon); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 32px;
+  font-size: 0.87rem;
+  color: var(--ink-light);
+  background: var(--card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  box-shadow: var(--shadow-float);
+  transition: all var(--transition);
+}
+.btn-outline:hover { border-color: var(--celadon); color: var(--celadon-deep); }
+
+.btn-row {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* ===== 弹窗 ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 44, 52, 0.2);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal {
+  width: 420px;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(44, 44, 52, 0.12);
+  animation: modalIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-title {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 24px;
+  color: var(--ink);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.dir-toggle {
+  display: flex;
+  gap: 8px;
+}
+.dir-btn {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 0.84rem;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--paper);
+  cursor: pointer;
+  transition: all var(--transition);
+  color: var(--ink-light);
+}
+.dir-btn.active-out {
+  border-color: var(--cinnabar);
+  background: var(--cinnabar-light);
+  color: var(--cinnabar);
+}
+.dir-btn.active-in {
+  border-color: var(--celadon);
+  background: var(--celadon-light);
+  color: var(--celadon-deep);
+}
+
+/* ===== 加载态 ===== */
+.loading {
+  text-align: center;
+  padding: 80px 0;
+}
+.loading-ring {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--paper-deep);
+  border-top-color: var(--celadon);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 0.87rem; color: var(--ink-muted); }
+
+/* ===== 页面切换 ===== */
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 时间戳 ===== */
+.meta-line {
+  font-size: 0.73rem;
+  color: var(--ink-faint);
+  text-align: center;
+  margin-bottom: 24px;
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-title">智能对账</div>
+      <div class="sidebar-sub">AI · 多轮匹配 · 调节表</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-item active" data-page="home">
+        <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l9-8 9 8M5 10v9a1 1 0 001 1h3m10-10v9a1 1 0 01-1 1h-3m-4 0v-5a1 1 0 011-1h2a1 1 0 011 1v5"/></svg>
+        首页
+      </div>
+      <div class="sidebar-item" data-page="confirm">
+        <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6m-3 7l2 2 4-4"/></svg>
+        数据确认
+      </div>
+      <div class="sidebar-item" data-page="results">
+        <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19V6l12-3v13M9 19c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2zm12-3c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2z"/></svg>
+        对账结果
+      </div>
+      <div class="sidebar-item" data-page="recon">
+        <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        调节表
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-text">CamScanner 智能对账 v2.0</div>
+    </div>
+  </aside>
+
+  <!-- 主区域 -->
+  <main class="main">
+    <!-- 首页 -->
+    <div class="page active" id="page-home">
+      <div class="home-header">
+        <h1 class="home-title">开始对账</h1>
+        <p class="home-desc">上传文件自动识别场景，或选择体验案例</p>
+      </div>
+
+      <div class="upload-zone" onclick="navTo('confirm')">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M12 16V4m0 0L8 8m4-4l4 4"/>
+          <path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+        </svg>
+        <div class="upload-text">点击或拖拽文件到此处</div>
+        <div class="upload-hint">支持 Excel / CSV / PDF / 图片</div>
+      </div>
+
+      <div class="section-label" style="margin-top:40px">体验案例</div>
+      <div class="demo-grid">
+        <div class="demo-card" onclick="navTo('confirm')">
+          <div class="demo-icon">🏦</div>
+          <div class="demo-name">银行对账</div>
+          <div class="demo-desc">18笔银行流水 vs 17笔企业账簿</div>
+        </div>
+        <div class="demo-card" onclick="navTo('confirm')">
+          <div class="demo-icon">💳</div>
+          <div class="demo-name">费用报销</div>
+          <div class="demo-desc">5笔报销单 vs 5张发票 vs 4笔银行付款</div>
+        </div>
+        <div class="demo-card" onclick="navTo('confirm')">
+          <div class="demo-icon">🧾</div>
+          <div class="demo-name">发票核验</div>
+          <div class="demo-desc">4张发票 vs 4份合同 vs 4张入库单</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 确认页 -->
+    <div class="page" id="page-confirm">
+      <div class="confirm-header">
+        <div class="back-btn" onclick="navTo('home')">
+          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <h2 class="page-title">数据确认</h2>
+      </div>
+
+      <div class="confirm-layout">
+        <div class="confirm-sidebar">
+          <div class="stats-col">
+            <div class="stat-item">
+              <span class="stat-label">银行记录</span>
+              <span class="stat-value">18</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">企业记录</span>
+              <span class="stat-value">17</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">总计</span>
+              <span class="stat-value">35</span>
+            </div>
+          </div>
+
+          <div class="balance-card">
+            <div class="balance-title">期末余额</div>
+            <div class="input-row">
+              <div class="input-group">
+                <span class="input-label">银行余额</span>
+                <input class="input" type="number" value="332710">
+              </div>
+              <div class="input-group">
+                <span class="input-label">企业余额</span>
+                <input class="input" type="number" value="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="confirm-main">
+          <div class="table-header">
+            <div class="tabs">
+              <div class="tab active">银行 (18)</div>
+              <div class="tab">企业 (17)</div>
+            </div>
+            <button class="add-btn" onclick="showModal()">+ 手动录入</button>
+          </div>
+
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:40px">#</th>
+                  <th style="width:90px">日期</th>
+                  <th>摘要</th>
+                  <th style="width:56px">对方</th>
+                  <th style="width:110px;text-align:right">金额</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>2026-04-01</td><td>转账-办公室租金4月</td><td>—</td><td class="amount-out">-28,000.00</td></tr>
+                <tr><td>2</td><td>2026-04-02</td><td>转账收入-客户A软件开发尾款</td><td>客户A</td><td class="amount-in">+85,000.00</td></tr>
+                <tr><td>3</td><td>2026-04-03</td><td>转账-阿里云服务器费用</td><td>阿里云</td><td class="amount-out">-12,600.00</td></tr>
+                <tr><td>4</td><td>2026-04-05</td><td>转账-员工工资(3月)</td><td>—</td><td class="amount-out">-156,000.00</td></tr>
+                <tr><td>5</td><td>2026-04-07</td><td>转账收入-客户B年度维护费</td><td>客户B</td><td class="amount-in">+36,000.00</td></tr>
+                <tr><td>6</td><td>2026-04-08</td><td>转账-社保公积金</td><td>—</td><td class="amount-out">-48,200.00</td></tr>
+                <tr><td>7</td><td>2026-04-10</td><td>转账-华为云API调用费</td><td>华为云</td><td class="amount-out">-3,800.00</td></tr>
+                <tr><td>8</td><td>2026-04-11</td><td>银行手续费</td><td>—</td><td class="amount-out">-50.00</td></tr>
+                <tr><td>9</td><td>2026-04-12</td><td>转账收入-客户C小程序项目首付</td><td>客户C</td><td class="amount-in">+45,000.00</td></tr>
+                <tr><td>10</td><td>2026-04-14</td><td>转账-办公用品采购</td><td>—</td><td class="amount-out">-2,860.00</td></tr>
+                <tr><td><span class="manual-mark">✎</span></td><td>2026-04-28</td><td>手动补录-快递费</td><td>—</td><td class="amount-out">-120.00</td></tr>
+              </tbody>
+            </table>
+            <div class="table-footer">显示前 11 条 / 共 18 条</div>
+          </div>
+
+          <div class="action-bar">
+            <button class="btn-primary" onclick="navTo('matching')">开始智能比对</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 匹配中 -->
+    <div class="page" id="page-matching">
+      <div class="loading">
+        <div class="loading-ring"></div>
+        <div class="loading-text">正在执行三轮智能匹配...</div>
+      </div>
+    </div>
+
+    <!-- 结果页 -->
+    <div class="page" id="page-results">
+      <div class="confirm-header">
+        <div class="back-btn" onclick="navTo('confirm')">
+          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <h2 class="page-title">对账结果</h2>
+      </div>
+
+      <div class="results-layout">
+        <div>
+          <div class="match-bar-wrap">
+            <div class="match-bar">
+              <div class="match-bar-exact" style="width:78%"></div>
+              <div class="match-bar-fuzzy" style="width:12%"></div>
+              <div class="match-bar-unmatched" style="width:10%"></div>
+            </div>
+            <div class="match-stats">
+              <span class="match-stat"><span class="match-dot exact"></span>精确匹配 14笔</span>
+              <span class="match-stat"><span class="match-dot fuzzy"></span>模糊匹配 2笔</span>
+              <span class="match-stat"><span class="match-dot unmatched"></span>未匹配 3笔</span>
+            </div>
+          </div>
+
+          <div class="section-label" style="margin-top:28px">待确认匹配</div>
+          <div class="match-list">
+            <div class="match-card">
+              <div class="match-card-header">
+                <span class="match-confidence confidence-high">92%</span>
+                <span class="match-amount">¥ 12,600.00</span>
+              </div>
+              <div class="match-detail">
+                银行：2026-04-03 转账-阿里云服务器费用<br>
+                企业：2026-04-04 阿里云服务器费-3月账单
+              </div>
+            </div>
+            <div class="match-card">
+              <div class="match-card-header">
+                <span class="match-confidence confidence-mid">85%</span>
+                <span class="match-amount">¥ 6,500.00</span>
+              </div>
+              <div class="match-detail">
+                银行：2026-04-15 转账-差旅报销(张工出差)<br>
+                企业：2026-04-16 张工-上海出差报销
+              </div>
+            </div>
+          </div>
+
+          <div class="section-label" style="margin-top:28px">未匹配项</div>
+          <div class="match-list">
+            <div class="match-card">
+              <div class="match-card-header">
+                <span style="font-size:0.73rem;color:var(--ink-muted)">银行 · 无对应企业记录</span>
+                <span class="match-amount amount-out">¥ 50.00</span>
+              </div>
+              <div class="match-detail">2026-04-11 银行手续费</div>
+            </div>
+            <div class="match-card">
+              <div class="match-card-header">
+                <span style="font-size:0.73rem;color:var(--ink-muted)">银行 · 无对应企业记录</span>
+                <span class="match-amount amount-in">¥ 320.00</span>
+              </div>
+              <div class="match-detail">2026-04-24 利息收入</div>
+            </div>
+            <div class="match-card">
+              <div class="match-card-header">
+                <span style="font-size:0.73rem;color:var(--ink-muted)">企业 · 无对应银行记录</span>
+                <span class="match-amount amount-out">¥ 680.00</span>
+              </div>
+              <div class="match-detail">2026-04-20 办公设备维修</div>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button class="btn-primary" onclick="navTo('recon')">生成调节表</button>
+          </div>
+        </div>
+
+        <div class="results-summary">
+          <div class="summary-card">
+            <div class="summary-title">对账摘要</div>
+            <div class="summary-row"><span class="summary-row-label">银行总笔数</span><span class="summary-row-value">18</span></div>
+            <div class="summary-row"><span class="summary-row-label">企业总笔数</span><span class="summary-row-value">17</span></div>
+            <div class="summary-row" style="border-top:0.5px solid var(--border-fine);margin-top:8px;padding-top:8px"><span class="summary-row-label">匹配率</span><span class="summary-row-value" style="color:var(--celadon-deep)">84.2%</span></div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">匹配明细</div>
+            <div class="summary-row"><span class="summary-row-label">精确匹配</span><span class="summary-row-value">14 笔</span></div>
+            <div class="summary-row"><span class="summary-row-label">模糊匹配</span><span class="summary-row-value">2 笔</span></div>
+            <div class="summary-row"><span class="summary-row-label">未匹配(银行)</span><span class="summary-row-value" style="color:var(--cinnabar)">2 笔</span></div>
+            <div class="summary-row"><span class="summary-row-label">未匹配(企业)</span><span class="summary-row-value" style="color:var(--cinnabar)">1 笔</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 调节表 -->
+    <div class="page" id="page-recon">
+      <div class="confirm-header">
+        <div class="back-btn" onclick="navTo('results')">
+          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <h2 class="page-title">银行余额调节表</h2>
+      </div>
+
+      <div class="meta-line">对账期间：2026-04-01 ~ 2026-04-28 &nbsp;|&nbsp; 生成时间：2026-04-28 14:30</div>
+
+      <div class="recon-result">
+        <div class="recon-result-icon balanced">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--celadon-deep)" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div class="recon-result-text">调节后余额一致</div>
+        <div class="recon-result-amount">¥ 333,390.00</div>
+      </div>
+
+      <div class="recon-layout">
+        <div class="recon-card">
+          <div class="recon-card-title">银行对账单</div>
+          <div class="recon-row"><span class="recon-row-label">银行余额</span><span class="recon-row-value">¥ 332,710.00</span></div>
+          <div class="recon-row"><span class="recon-row-label recon-row-add">+ 企业已记银行未记</span><span class="recon-row-value recon-row-add">+ ¥ 680.00</span></div>
+          <div class="recon-row"><span class="recon-row-label recon-row-sub">- 企业已扣银行未扣</span><span class="recon-row-value recon-row-sub">- ¥ 0.00</span></div>
+          <div class="recon-row recon-row-total"><span class="recon-row-label">调节后余额</span><span class="recon-row-value">¥ 333,390.00</span></div>
+        </div>
+        <div class="recon-card">
+          <div class="recon-card-title">企业账面</div>
+          <div class="recon-row"><span class="recon-row-label">企业余额</span><span class="recon-row-value">¥ 333,020.00</span></div>
+          <div class="recon-row"><span class="recon-row-label recon-row-add">+ 银行已记企业未记</span><span class="recon-row-value recon-row-add">+ ¥ 370.00</span></div>
+          <div class="recon-row"><span class="recon-row-label recon-row-sub">- 银行已扣企业未扣</span><span class="recon-row-value recon-row-sub">- ¥ 0.00</span></div>
+          <div class="recon-row recon-row-total"><span class="recon-row-label">调节后余额</span><span class="recon-row-value">¥ 333,390.00</span></div>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ai-card-title">AI 对账分析</div>
+        <div class="ai-content" id="ai-content">
+          <button class="ai-btn" onclick="simulateAI()">生成 AI 分析报告</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-outline" onclick="alert('导出 Excel')">导出 Excel</button>
+        <button class="btn-primary" onclick="navTo('home')">完成对账</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="hideModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">手动录入</div>
+    <div class="input-row">
+      <div class="input-group">
+        <span class="input-label">日期</span>
+        <input class="input" type="date" value="2026-04-28">
+      </div>
+      <div class="input-group">
+        <span class="input-label">金额</span>
+        <input class="input" type="number" placeholder="请输入金额">
+      </div>
+      <div class="input-group">
+        <span class="input-label">方向</span>
+        <div class="dir-toggle">
+          <div class="dir-btn active-out">借 / 支出</div>
+          <div class="dir-btn">贷 / 收入</div>
+        </div>
+      </div>
+      <div class="input-group">
+        <span class="input-label">摘要</span>
+        <input class="input" type="text" placeholder="交易说明">
+      </div>
+      <div class="input-group">
+        <span class="input-label">对方</span>
+        <input class="input" type="text" placeholder="对方名称（可选）">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-outline" style="padding:10px 24px" onclick="hideModal()">取消</button>
+      <button class="btn-primary" style="padding:10px 24px" onclick="hideModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function navTo(page) {
+  if (page === 'matching') {
+    showPage('matching');
+    setTimeout(() => showPage('results'), 1800);
+    return;
+  }
+  showPage(page);
+  // Update sidebar
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.page === page);
+  });
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + id);
+  if (el) {
+    el.classList.add('active');
+  }
+}
+
+function showModal() { document.getElementById('modal').style.display = 'flex'; }
+function hideModal() { document.getElementById('modal').style.display = 'none'; }
+
+// Sidebar click
+document.querySelectorAll('.sidebar-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const page = item.dataset.page;
+    if (page) navTo(page);
+  });
+});
+
+// Dir toggle
+document.querySelectorAll('.dir-toggle').forEach(toggle => {
+  toggle.addEventListener('click', e => {
+    const btn = e.target.closest('.dir-btn');
+    if (!btn) return;
+    toggle.querySelectorAll('.dir-btn').forEach(b => b.className = 'dir-btn');
+    if (btn.textContent.includes('支出')) btn.classList.add('active-out');
+    else btn.classList.add('active-in');
+  });
+});
+
+function simulateAI() {
+  const container = document.getElementById('ai-content');
+  const lines = [
+    '<h4>一、对账结论</h4>',
+    '<p>本次银行对账结果显示，经调节后双方余额一致（¥333,390.00），对账整体质量较高。精确匹配率达78%，模糊匹配项均为时间差异导致，无金额异常。</p>',
+    '<h4>二、匹配分析</h4>',
+    '<p>精确匹配14笔，占比78%，匹配质量优异。2笔模糊匹配均为入账时间差1-2天，金额完全一致，判定为正常在途款项。无语义匹配项，说明双方记账规范程度高。</p>',
+    '<h4>三、未达账项分析</h4>',
+    '<p><strong>银行手续费 ¥50</strong> — 银行已扣企业未记，属月末常见未达项，建议补做凭证。</p>',
+    '<p><strong>利息收入 ¥320</strong> — 银行已入企业未记，通常月初补记，无风险。</p>',
+    '<p><strong>办公设备维修 ¥680</strong> — 企业已记银行未付，核实是否已开具支票在途。</p>',
+    '<h4>四、处理建议</h4>',
+    '<p>1. 补做银行手续费凭证：借 管理费用-手续费 50，贷 银行存款 50</p>',
+    '<p>2. 补做利息收入凭证：借 银行存款 320，贷 财务费用-利息收入 320</p>',
+    '<p>3. 核实办公设备维修款项支付方式，确认是否在途。</p>',
+  ];
+
+  container.innerHTML = '<span class="ai-cursor">▊</span>';
+  let i = 0;
+  const interval = setInterval(() => {
+    i++;
+    if (i > lines.length) {
+      container.innerHTML = lines.join('');
+      clearInterval(interval);
+      return;
+    }
+    container.innerHTML = lines.slice(0, i).join('') + '<span class="ai-cursor">▊</span>';
+  }, 400);
+}
+</script>
+</body>
+</html>
