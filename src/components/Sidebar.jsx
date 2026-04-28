@@ -36,6 +36,7 @@ export default function Sidebar({ collapsed, onToggle, onGoHome, onLoadHistory, 
   if (collapsed) {
     return (
       <aside className="sidebar sidebar-collapsed">
+        <div className="sidebar-collapsed-spacer" />
         <button className="sidebar-toggle" onClick={onToggle} title="展开侧边栏">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M9 18l6-6-6-6" />
@@ -47,16 +48,20 @@ export default function Sidebar({ collapsed, onToggle, onGoHome, onLoadHistory, 
 
   return (
     <aside className="sidebar">
+      {onBackToToolbox && (
+        <div className="sidebar-back-toolbox" onClick={onBackToToolbox}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          返回工具箱
+        </div>
+      )}
+
       <div className="sidebar-top">
         <div className="sidebar-brand" onClick={onGoHome}>
           <div className="sidebar-title">智能对账</div>
           <div className="sidebar-sub">AI · 多轮匹配 · 调节表</div>
         </div>
-        <button className="sidebar-toggle" onClick={onToggle} title="收起侧边栏">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
       </div>
 
       <div className="sidebar-home-btn" onClick={onGoHome}>
@@ -102,16 +107,12 @@ export default function Sidebar({ collapsed, onToggle, onGoHome, onLoadHistory, 
         })}
       </div>
 
-      {onBackToToolbox && (
-        <div className="sidebar-back-toolbox" onClick={onBackToToolbox}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
+      <div className="sidebar-bottom">
+        <button className="sidebar-toggle" onClick={onToggle} title="收起侧边栏">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M15 18l-6-6 6-6" />
           </svg>
-          返回工具箱
-        </div>
-      )}
-      <div className="sidebar-footer">
-        <div className="sidebar-footer-text">CamScanner 智能对账 v2.0</div>
+        </button>
       </div>
     </aside>
   );
