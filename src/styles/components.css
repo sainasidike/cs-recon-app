@@ -2031,8 +2031,8 @@
   padding: 9px 0;
   font-size: 0.87rem;
 }
-.recon-card-row-label { color: var(--text-secondary); }
-.recon-card-row-value { font-variant-numeric: tabular-nums; }
+.recon-card-row-label { color: var(--text-secondary); flex: 1; min-width: 0; }
+.recon-card-row-value { font-variant-numeric: tabular-nums; flex-shrink: 0; text-align: right; white-space: nowrap; }
 .recon-card-row-add { color: var(--accent-pressed); }
 .recon-card-row-sub { color: var(--danger); }
 .recon-card-row-total {
@@ -2097,4 +2097,54 @@
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 24px 16px;
+  }
+  .layout-collapsed .main-content {
+    margin-left: 0;
+  }
+  .cs-bottom-bar {
+    left: 0 !important;
+  }
+  .results-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .results-summary {
+    position: static;
+  }
+  .recon-layout {
+    grid-template-columns: 1fr;
+  }
+  .recon-card {
+    padding: 16px;
+  }
+  .recon-card-row {
+    font-size: 0.82rem;
+  }
+  .stats-grid {
+    gap: 8px;
+  }
+  .stat-card {
+    padding: 12px 8px;
+  }
+  .stat-card-value {
+    font-size: 1.2rem;
+  }
+  .btn-row {
+    flex-direction: column;
+  }
+  .pc-page-header {
+    padding: 0 0 16px;
+  }
+  .cs-home-demo-grid {
+    grid-template-columns: 1fr;
+  }
 }
