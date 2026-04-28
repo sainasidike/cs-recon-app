@@ -1047,21 +1047,22 @@ button {
 }
 
 /* ============================================
-   CamScanner Home Page
+   CamScanner Home Page — 1:1 match original
    ============================================ */
 .cs-home {
   min-height: 100vh;
   background: #f5f5f5;
-  padding-bottom: calc(64px + var(--safe-bottom));
+  padding-bottom: calc(70px + var(--safe-bottom));
 }
 
+/* Green header */
 .cs-header {
-  background: #3DD598;
+  background: linear-gradient(180deg, #3BB88A 0%, #3DD598 100%);
   padding-top: env(safe-area-inset-top, 0px);
 }
 
 .cs-header-inner {
-  height: 56px;
+  height: 52px;
   display: flex;
   align-items: center;
   padding: 0 16px;
@@ -1070,78 +1071,88 @@ button {
 .cs-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .cs-logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   background: #fff;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .cs-logo-text {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   color: #3DD598;
   letter-spacing: -0.5px;
 }
 
 .cs-brand {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: #fff;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .cs-brand sup {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 400;
+  vertical-align: super;
 }
 
-.cs-body {
-  padding: 0 16px;
+/* Search bar sits inside the green header */
+.cs-header-search {
+  padding: 0 16px 14px;
 }
 
-/* Search */
+/* Content area below header (features + docs) */
+.cs-content-area {
+  background: #fff;
+  padding: 0 16px 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Search - white pill on green background */
 .cs-search {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 14px;
-  background: #fff;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  background: rgba(255,255,255,0.95);
   border-radius: 10px;
-  margin-top: 12px;
-  font-size: 14px;
-  color: #999;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  font-size: 15px;
+  color: #bbb;
 }
 
 /* Feature grid */
 .cs-features {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-  margin-top: 16px;
-  padding: 8px 0;
+  padding: 4px 0 0;
+}
+
+.cs-features-row {
+  display: flex;
+  justify-content: space-around;
 }
 
 .cs-feature-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 4px;
+  gap: 8px;
+  padding: 14px 0 10px;
+  width: 25%;
 }
 
 .cs-feature-icon-wrap {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1149,64 +1160,81 @@ button {
 
 .cs-feature-hot {
   position: absolute;
-  top: -4px;
-  right: -8px;
+  top: -2px;
+  right: -6px;
   font-size: 8px;
   font-weight: 700;
   color: #fff;
   background: #E53935;
-  padding: 1px 4px;
+  padding: 1px 5px;
   border-radius: 6px;
-  line-height: 1.2;
+  line-height: 1.3;
+  letter-spacing: 0.3px;
 }
 
 .cs-feature-label {
-  font-size: 11px;
+  font-size: 12px;
   color: #333;
   text-align: center;
   white-space: nowrap;
+  font-weight: 400;
 }
 
-/* Section header */
+/* Divider between features and doc list */
+.cs-divider {
+  height: 1px;
+  background: rgba(0,0,0,0.06);
+  margin: 0 16px;
+}
+
+/* Document section */
+.cs-doc-section {
+  background: #fff;
+  padding: 0 16px;
+}
+
 .cs-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
-  margin-bottom: 12px;
+  padding: 16px 0 12px;
 }
 
 .cs-section-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: #1a1a1a;
 }
 
 .cs-section-more {
-  font-size: 12px;
+  font-size: 13px;
   color: #999;
   display: flex;
   align-items: center;
   gap: 2px;
 }
 
-/* Document list */
+/* Doc list */
 .cs-doc-list {
   padding-bottom: 20px;
 }
 
-.cs-doc-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 0;
+.cs-doc-list-item {
   border-bottom: 0.5px solid rgba(0,0,0,0.06);
 }
 
+.cs-doc-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+/* Thumbnails - match CS original size ~60x72 aspect */
 .cs-doc-thumb {
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
+  width: 60px;
+  height: 72px;
+  border-radius: 6px;
   overflow: hidden;
   flex-shrink: 0;
   display: flex;
@@ -1215,31 +1243,34 @@ button {
 }
 
 .cs-thumb-scan {
-  background: #f9f9f9;
+  background: #f7f7f7;
   border: 0.5px solid rgba(0,0,0,0.08);
-  padding: 8px;
+  padding: 6px 8px;
 }
 
-.cs-thumb-lines {
+.cs-thumb-preview {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
-.cs-thumb-lines div {
-  height: 3px;
+.cs-thumb-text-line {
+  height: 2.5px;
   background: #ddd;
   border-radius: 1px;
 }
 
-.cs-thumb-lines div:nth-child(1) { width: 90%; }
-.cs-thumb-lines div:nth-child(2) { width: 100%; }
-.cs-thumb-lines div:nth-child(3) { width: 80%; }
-.cs-thumb-lines div:nth-child(4) { width: 60%; }
+.cs-thumb-text-line.w100 { width: 100%; }
+.cs-thumb-text-line.w90 { width: 90%; }
+.cs-thumb-text-line.w85 { width: 85%; }
+.cs-thumb-text-line.w70 { width: 70%; }
+.cs-thumb-text-line.w60 { width: 60%; }
+.cs-thumb-text-line.w95 { width: 95%; }
 
-.cs-thumb-excel { background: rgba(33,115,70,0.08); }
-.cs-thumb-word { background: rgba(43,87,154,0.08); }
+.cs-thumb-file {
+  background: transparent;
+}
 
 .cs-doc-info {
   flex: 1;
@@ -1247,12 +1278,13 @@ button {
 }
 
 .cs-doc-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: #1a1a1a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
 }
 
 .cs-doc-meta {
@@ -1261,31 +1293,36 @@ button {
   margin-top: 4px;
 }
 
-.cs-doc-pages {
-  color: #999;
-}
-
-.cs-doc-check-placeholder {
-  width: 22px;
-  height: 22px;
+/* Checkbox on right side */
+.cs-doc-checkbox {
   flex-shrink: 0;
+  width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Doc quick actions row */
+.cs-checkbox-box {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid #ccc;
+  border-radius: 3px;
+}
+
+/* Quick action buttons under first doc */
 .cs-doc-actions {
   display: flex;
-  gap: 8px;
-  padding: 8px 0 14px;
-  border-bottom: 0.5px solid rgba(0,0,0,0.06);
+  gap: 10px;
+  padding: 0 0 14px;
 }
 
-.cs-doc-action-btn {
+.cs-action-btn {
   flex: 1;
-  height: 36px;
+  height: 38px;
   border-radius: 8px;
   border: 0.5px solid rgba(0,0,0,0.1);
   background: #fff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: #333;
   display: flex;
@@ -1294,25 +1331,24 @@ button {
   gap: 4px;
 }
 
-.cs-doc-action-ai {
-  background: rgba(61,213,152,0.06);
-  border-color: rgba(61,213,152,0.2);
-  color: #333;
+.cs-action-ai {
+  background: rgba(61,213,152,0.04);
+  border-color: rgba(61,213,152,0.25);
 }
 
-/* Tab bar */
+/* ── Tab bar ── */
 .cs-tabbar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(64px + var(--safe-bottom));
+  height: calc(70px + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
   background: #fff;
-  border-top: 0.5px solid rgba(0,0,0,0.08);
+  border-top: 0.5px solid rgba(0,0,0,0.06);
   display: flex;
-  align-items: flex-start;
-  z-index: 100;
+  align-items: stretch;
+  z-index: 200;
 }
 
 .cs-tab {
@@ -1320,60 +1356,60 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
+  justify-content: flex-start;
   padding-top: 8px;
+}
+
+.cs-tab-icon-wrap {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cs-tab-label {
   font-size: 10px;
   color: #999;
+  margin-top: 3px;
 }
 
-.cs-tab.active {
+.cs-tab-label-active {
   color: #3DD598;
 }
 
-.cs-tab.active span {
-  color: #3DD598;
-}
-
-.cs-tab-icon-home {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cs-tab-cs-icon {
-  width: 22px;
-  height: 22px;
+.cs-tab-cs-badge {
+  width: 26px;
+  height: 26px;
   background: #3DD598;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.cs-tab-cs-icon span {
-  font-size: 9px;
+.cs-tab-cs-badge span {
+  font-size: 10px;
   font-weight: 800;
-  color: #fff !important;
+  color: #fff;
   letter-spacing: -0.5px;
 }
 
-.cs-tab-camera {
+.cs-tab-center {
   position: relative;
-  margin-top: -16px;
+  justify-content: flex-start;
+  padding-top: 0;
+  margin-top: -18px;
 }
 
 .cs-camera-btn {
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background: #3DD598;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 12px rgba(61,213,152,0.4);
+  box-shadow: 0 4px 16px rgba(61,213,152,0.35);
 }
 
 /* ============================================
