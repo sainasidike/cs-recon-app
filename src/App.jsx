@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useReconciliation } from './hooks/useReconciliation';
 import { ToastProvider } from './components/Toast';
 import Sidebar from './components/Sidebar';
+import ToolboxPage from './pages/ToolboxPage';
 import HomePage from './pages/HomePage';
 import ConfirmPage from './pages/ConfirmPage';
 import ResultsPage from './pages/ResultsPage';
@@ -10,6 +11,7 @@ import CompletePage from './pages/CompletePage';
 import { getScenario } from './utils/scenarios';
 import './styles/theme.css';
 import './styles/components.css';
+import './styles/toolbox.css';
 
 function AppInner() {
   const {
@@ -22,9 +24,14 @@ function AppInner() {
   } = useReconciliation();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showToolbox, setShowToolbox] = useState(true);
 
   const { step } = state;
   const scenario = state.scenarioId ? getScenario(state.scenarioId) : null;
+
+  if (showToolbox) {
+    return <ToolboxPage onEnterRecon={() => setShowToolbox(false)} />;
+  }
 
   const renderPage = () => {
     if (step === 'home' || step === 'scenario') {
