@@ -22,12 +22,10 @@ export default function CSHomePage({ onOpenDocument, onUploadFiles }) {
         onClick={() => onOpenDocument({ id: 'doc1', name: '扫描全能王 2026-4-10 12.11' })}
       />
 
-      {/* Clickable: camera button → upload files */}
-      <div
-        className="cs-hotzone cs-hotzone-round"
-        style={{ bottom: '2.2%', left: '50%', transform: 'translateX(-50%)', width: '58px', height: '58px' }}
-        onClick={() => fileInputRef.current?.click()}
-      />
+      {/* Fixed camera button at screen bottom center */}
+      <div className="cs-fixed-camera" onClick={() => fileInputRef.current?.click()}>
+        <div className="cs-fixed-camera-inner" />
+      </div>
 
       <input
         ref={fileInputRef}
