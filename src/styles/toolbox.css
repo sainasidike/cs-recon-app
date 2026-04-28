@@ -1,356 +1,66 @@
-/* ===== Toolbox Layout (CamScanner /tools/main replica) ===== */
-.tb-layout {
-  display: flex;
+/* Toolbox page — screenshot as background with hotspot overlay */
+.tb-page {
+  position: relative;
+  width: 100%;
   min-height: 100vh;
+  overflow: hidden;
   background: #f7f8fa;
 }
 
-/* Sidebar */
-.tb-sidebar {
-  width: 200px;
-  background: #ffffff;
-  border-right: 1px solid #eee;
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  z-index: 50;
-}
-
-.tb-sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 20px 16px 24px;
-}
-
-.tb-sidebar-brand {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.tb-sidebar-nav {
-  flex: 1;
-  padding: 0 8px;
-  overflow-y: auto;
-}
-
-.tb-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-  transition: background 0.15s;
-  position: relative;
-}
-
-.tb-nav-item:hover {
-  background: #f5f5f5;
-}
-
-.tb-nav-item.tb-nav-active {
-  color: #3ECF8E;
-  font-weight: 500;
-}
-
-.tb-nav-expandable .tb-nav-arrow {
-  margin-left: auto;
-  opacity: 0.4;
-}
-
-.tb-nav-sub {
-  padding-left: 40px;
-  margin-bottom: 4px;
-}
-
-.tb-nav-sub-item {
-  padding: 6px 12px;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.tb-nav-sub-item:hover {
-  background: #f5f5f5;
-}
-
-.tb-sidebar-bottom {
-  padding: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.tb-desktop-btn {
+.tb-bg {
   width: 100%;
-  padding: 10px;
-  border: 1.5px solid #3ECF8E;
-  border-radius: 20px;
-  color: #3ECF8E;
-  font-size: 13px;
-  font-weight: 500;
-  background: transparent;
+  height: auto;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Hotspot: positioned over the area right of "银行流水识别" in 实用工具 section */
+.tb-recon-hotspot {
+  position: absolute;
+  /* Based on 1610x1011 image:
+     实用工具 row is at roughly y=56% of image height
+     Third card slot starts at x=55.5% */
+  top: 55.5%;
+  left: 55.2%;
+  width: 17.8%;
+  height: 13%;
   cursor: pointer;
-  transition: all 0.15s;
-  margin-bottom: 12px;
+  z-index: 10;
 }
 
-.tb-desktop-btn:hover {
-  background: rgba(62, 207, 142, 0.05);
-}
-
-.tb-storage {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.tb-storage-bar {
+.tb-recon-card {
   width: 100%;
-  height: 4px;
-  background: #e8e8e8;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 4px;
-}
-
-.tb-storage-used {
   height: 100%;
-  background: #3ECF8E;
-  border-radius: 2px;
-}
-
-.tb-storage-text {
-  font-size: 11px;
-  color: #999;
-}
-
-.tb-storage-expand {
-  font-size: 11px;
-  color: #3ECF8E;
-  cursor: pointer;
-  margin-left: auto;
-}
-
-/* Main content area */
-.tb-main {
-  flex: 1;
-  margin-left: 200px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Top bar */
-.tb-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 32px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-  position: sticky;
-  top: 0;
-  z-index: 40;
-}
-
-.tb-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #f5f5f5;
-  border-radius: 20px;
-  width: 320px;
-}
-
-.tb-search input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  color: #333;
-  outline: none;
-}
-
-.tb-search input::placeholder {
-  color: #bbb;
-}
-
-.tb-topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.tb-topbar-lang {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
-}
-
-.tb-topbar-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #666;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.tb-topbar-icon:hover {
-  background: #f5f5f5;
-}
-
-.tb-topbar-avatar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #333;
-  cursor: pointer;
-}
-
-.tb-avatar-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #f5a623;
-}
-
-/* Content */
-.tb-content {
-  padding: 32px;
-  max-width: 1200px;
-}
-
-.tb-section {
-  margin-bottom: 32px;
-}
-
-.tb-section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 16px;
-}
-
-/* Tool grid */
-.tb-tool-grid {
-  display: grid;
-  gap: 16px;
-}
-
-.tb-grid-5 {
-  grid-template-columns: repeat(5, 1fr);
-}
-
-.tb-grid-3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.tb-tool-card {
   background: #fff;
   border: 1px solid #eee;
   border-radius: 12px;
-  padding: 24px 20px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
   transition: all 0.2s;
-  position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
-.tb-tool-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  border-color: #ddd;
-}
-
-.tb-tool-card-highlight {
-  border-color: rgba(124, 77, 255, 0.3);
-  background: rgba(124, 77, 255, 0.02);
-}
-
-.tb-tool-card-highlight:hover {
+.tb-recon-card:hover {
   border-color: #7C4DFF;
-  box-shadow: 0 4px 16px rgba(124, 77, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(124, 77, 255, 0.12);
 }
 
-.tb-tool-icon {
-  margin-bottom: 4px;
+.tb-recon-icon {
+  margin-bottom: 2px;
 }
 
-.tb-tool-name {
+.tb-recon-name {
   font-size: 15px;
   font-weight: 600;
   color: #1a1a1a;
 }
 
-.tb-tool-desc {
+.tb-recon-desc {
   font-size: 12px;
   color: #999;
   line-height: 1.5;
-}
-
-.tb-app-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #e3f2fd;
-  color: #1976d2;
-  font-weight: 500;
-}
-
-/* Image OCR label */
-.tb-tool-card .tb-ocr-label {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: rgba(62, 207, 142, 0.1);
-  color: #3ECF8E;
-  font-weight: 500;
-}
-
-@media (max-width: 1100px) {
-  .tb-grid-5 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .tb-sidebar {
-    display: none;
-  }
-  .tb-main {
-    margin-left: 0;
-  }
-  .tb-grid-5,
-  .tb-grid-3 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .tb-content {
-    padding: 16px;
-  }
-  .tb-topbar {
-    padding: 12px 16px;
-  }
-  .tb-search {
-    width: 200px;
-  }
 }
