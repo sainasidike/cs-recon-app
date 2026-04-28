@@ -64,14 +64,18 @@ export default function CSAnalyzingPage({ files, onComplete }) {
 
   useEffect(() => {
     let cancelled = false;
+    const startTime = Date.now();
+    const MIN_DISPLAY_MS = 3000;
 
     const progressTimer = setInterval(() => {
-      setProgress(prev => Math.min(prev + 1.5, 95));
-    }, 40);
+      const elapsed = Date.now() - startTime;
+      const naturalProgress = Math.min((elapsed / MIN_DISPLAY_MS) * 100, 95);
+      setProgress(naturalProgress);
+    }, 50);
 
     const stepTimer = setInterval(() => {
       setStepIdx(prev => Math.min(prev + 1, OCR_STEPS.length - 1));
-    }, 600);
+    }, 700);
 
     async function analyze() {
       const results = [];
@@ -105,7 +109,9 @@ export default function CSAnalyzingPage({ files, onComplete }) {
         });
       }
 
-      await new Promise(r => setTimeout(r, 800));
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(MIN_DISPLAY_MS - elapsed, 0);
+      await new Promise(r => setTimeout(r, remaining));
 
       if (cancelled) return;
 
@@ -126,7 +132,7 @@ export default function CSAnalyzingPage({ files, onComplete }) {
             financialCount: financialResults.length,
           });
         }
-      }, 400);
+      }, 500);
     }
 
     analyze();
