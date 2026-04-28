@@ -1,10 +1,9 @@
-/* Toolbox page — screenshot as background with hotspot overlay */
+/* Toolbox page — screenshot background + scaled overlay */
 .tb-page {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  overflow: hidden;
-  background: #f7f8fa;
+  line-height: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif;
 }
 
 .tb-bg {
@@ -15,16 +14,7 @@
   pointer-events: none;
 }
 
-/* Hotspot: positioned over the area right of "银行流水识别" in 实用工具 section */
 .tb-recon-hotspot {
-  position: absolute;
-  /* Based on 1610x1011 image:
-     实用工具 row is at roughly y=56% of image height
-     Third card slot starts at x=55.5% */
-  top: 55.5%;
-  left: 55.2%;
-  width: 17.8%;
-  height: 13%;
   cursor: pointer;
   z-index: 10;
 }
@@ -34,33 +24,38 @@
   height: 100%;
   background: #fff;
   border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 20px 16px;
+  border-radius: 0.8em;
+  padding: 1em 0.9em;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 0.2em;
   transition: all 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  line-height: 1.5;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .tb-recon-card:hover {
-  border-color: #7C4DFF;
-  box-shadow: 0 4px 16px rgba(124, 77, 255, 0.12);
+  border-color: #3ECF8E;
+  box-shadow: 0 4px 16px rgba(62, 207, 142, 0.15);
 }
 
 .tb-recon-icon {
-  margin-bottom: 2px;
+  margin-bottom: 0.2em;
+  flex-shrink: 0;
 }
 
 .tb-recon-name {
-  font-size: 15px;
+  font-size: 1em;
   font-weight: 600;
   color: #1a1a1a;
+  white-space: nowrap;
 }
 
 .tb-recon-desc {
-  font-size: 12px;
+  font-size: 0.75em;
   color: #999;
-  line-height: 1.5;
+  line-height: 1.4;
 }

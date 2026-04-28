@@ -23,66 +23,89 @@ function MobileAppInner() {
   } = useReconciliation();
 
   const [csStep, setCsStep] = useState('cs-home');
-  const [currentDoc, setCurrentDoc] = useState(null);
-  const [extraDocs, setExtraDocs] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [showReconBtn, setShowReconBtn] = useState(false);
 
+  // CS Home: user clicks a doc → go to doc view
   const handleOpenDocument = useCallback((doc) => {
-    setCurrentDoc(doc);
     setCsStep('cs-docview');
+    setShowReconBtn(false);
   }, []);
 
-  const handleBackToHome = useCallback(() => {
-    setCsStep('cs-home');
-    setCurrentDoc(null);
-  }, []);
-
-  const handleStartReconciliation = useCallback(() => {
+  // CS Home: user clicks camera → upload files → analyze
+  const handleUploadFiles = useCallback((files) => {
+    setUploadedFiles(files);
     setCsStep('cs-analyzing');
   }, []);
 
-  const handleAnalysisComplete = useCallback(() => {
-    if (currentDoc?.sufficient) {
+  // Analysis done: check if financial
+  const handleAnalysisComplete = useCallback((result) => {
+    setAnalysisResult(result);
+    if (result.hasFinancial) {
+      // Financial doc detected → show doc view with 财务对账 button
+      setCsStep('cs-docview-with-recon');
+      setShowReconBtn(true);
+    } else {
+      // Not financial → just show doc view normally
+      setCsStep('cs-docview');
+      setShowReconBtn(false);
+    }
+  }, []);
+
+  // User clicks 财务对账 in doc view toolbar
+  const handleStartReconciliation = useCallback(() => {
+    const docTypes = analysisResult?.docTypes || [];
+    const hasMultipleTypes = docTypes.length >= 2;
+    const typeSet = new Set(docTypes.map(d => d.type));
+    const hasBothSides = (typeSet.has('bank_statement') && typeSet.has('company_ledger')) ||
+                         (typeSet.has('invoice') && typeSet.has('contract'));
+
+    if (hasBothSides || analysisResult?.results?.length >= 2) {
+      // Enough docs → load demo and go to confirm
       loadDemo('bank_recon');
       setCsStep('reconciling');
     } else {
+      // Need more docs → show select page
       setCsStep('cs-doc-select');
     }
-  }, [currentDoc, loadDemo]);
+  }, [analysisResult, loadDemo]);
 
-  const handleDocSelectCancel = useCallback(() => {
-    setCsStep('cs-docview');
+  // Doc select: user adds more files
+  const handleAddMoreFiles = useCallback((files) => {
+    setUploadedFiles(prev => [...prev, ...files]);
   }, []);
 
-  const handleDocSelectConfirm = useCallback((docs) => {
-    setExtraDocs(docs);
-    setCsStep('cs-analyzing-2');
-  }, []);
-
-  const handleAnalysis2Complete = useCallback(() => {
+  // Doc select: confirm → re-analyze with all files then proceed
+  const handleDocSelectConfirm = useCallback(() => {
     loadDemo('bank_recon');
     setCsStep('reconciling');
   }, [loadDemo]);
 
+  const handleBackToHome = useCallback(() => {
+    setCsStep('cs-home');
+    setUploadedFiles([]);
+    setAnalysisResult(null);
+    setShowReconBtn(false);
+  }, []);
+
   const handleResetToCS = useCallback(() => {
     reset();
     setCsStep('cs-home');
-    setCurrentDoc(null);
-    setExtraDocs([]);
+    setUploadedFiles([]);
+    setAnalysisResult(null);
+    setShowReconBtn(false);
   }, [reset]);
 
   const { step } = state;
   const scenario = state.scenarioId ? getScenario(state.scenarioId) : null;
 
+  // CS flow pages
   if (csStep === 'cs-home') {
-    return <CSHomePage onOpenDocument={handleOpenDocument} />;
-  }
-
-  if (csStep === 'cs-docview') {
     return (
-      <CSDocViewPage
-        document={currentDoc}
-        onBack={handleBackToHome}
-        onReconciliation={handleStartReconciliation}
+      <CSHomePage
+        onOpenDocument={handleOpenDocument}
+        onUploadFiles={handleUploadFiles}
       />
     );
   }
@@ -90,8 +113,18 @@ function MobileAppInner() {
   if (csStep === 'cs-analyzing') {
     return (
       <CSAnalyzingPage
-        document={currentDoc}
+        files={uploadedFiles}
         onComplete={handleAnalysisComplete}
+      />
+    );
+  }
+
+  if (csStep === 'cs-docview' || csStep === 'cs-docview-with-recon') {
+    return (
+      <CSDocViewPage
+        showReconBtn={showReconBtn}
+        onBack={handleBackToHome}
+        onReconciliation={handleStartReconciliation}
       />
     );
   }
@@ -99,22 +132,15 @@ function MobileAppInner() {
   if (csStep === 'cs-doc-select') {
     return (
       <CSDocSelectPage
-        currentDocId={currentDoc?.id}
-        onCancel={handleDocSelectCancel}
+        uploadedFiles={uploadedFiles}
+        onCancel={() => setCsStep('cs-docview-with-recon')}
+        onAddMore={handleAddMoreFiles}
         onConfirm={handleDocSelectConfirm}
       />
     );
   }
 
-  if (csStep === 'cs-analyzing-2') {
-    return (
-      <CSAnalyzingPage
-        document={currentDoc}
-        onComplete={handleAnalysis2Complete}
-      />
-    );
-  }
-
+  // Reconciliation flow
   if (csStep === 'reconciling') {
     if (step === 'confirm') {
       return (
