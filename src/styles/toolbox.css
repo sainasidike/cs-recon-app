@@ -1,9 +1,6 @@
-/* Toolbox page — screenshot background + scaled overlay */
 .tb-page {
-  position: relative;
-  width: 100%;
+  cursor: pointer;
   line-height: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif;
 }
 
 .tb-bg {
@@ -11,51 +8,4 @@
   height: auto;
   display: block;
   user-select: none;
-  pointer-events: none;
-}
-
-.tb-recon-hotspot {
-  cursor: pointer;
-  z-index: 10;
-}
-
-.tb-recon-card {
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 0.8em;
-  padding: 1em 0.9em;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.2em;
-  transition: all 0.2s;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  line-height: 1.5;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.tb-recon-card:hover {
-  border-color: #3ECF8E;
-  box-shadow: 0 4px 16px rgba(62, 207, 142, 0.15);
-}
-
-.tb-recon-icon {
-  margin-bottom: 0.2em;
-  flex-shrink: 0;
-}
-
-.tb-recon-name {
-  font-size: 1em;
-  font-weight: 600;
-  color: #1a1a1a;
-  white-space: nowrap;
-}
-
-.tb-recon-desc {
-  font-size: 0.75em;
-  color: #999;
-  line-height: 1.4;
 }
