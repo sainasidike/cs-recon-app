@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useReconciliation } from '../hooks/useReconciliation';
 import { ToastProvider } from '../components/Toast';
 import { getScenario } from '../utils/scenarios';
-import MobileHome from './pages/MobileHome';
+import CSHomePage from './pages/CSHomePage';
+import CSDocViewPage from './pages/CSDocViewPage';
+import CSAnalyzingPage from './pages/CSAnalyzingPage';
+import CSDocSelectPage from './pages/CSDocSelectPage';
 import MobileConfirm from './pages/MobileConfirm';
 import MobileResults from './pages/MobileResults';
 import MobileReport from './pages/MobileReport';
@@ -19,96 +22,166 @@ function MobileAppInner() {
     goToStep, archiveReport, reset, updateEntries, updateMapping,
   } = useReconciliation();
 
+  const [csStep, setCsStep] = useState('cs-home');
+  const [currentDoc, setCurrentDoc] = useState(null);
+  const [extraDocs, setExtraDocs] = useState([]);
+
+  const handleOpenDocument = useCallback((doc) => {
+    setCurrentDoc(doc);
+    setCsStep('cs-docview');
+  }, []);
+
+  const handleBackToHome = useCallback(() => {
+    setCsStep('cs-home');
+    setCurrentDoc(null);
+  }, []);
+
+  const handleStartReconciliation = useCallback(() => {
+    setCsStep('cs-analyzing');
+  }, []);
+
+  const handleAnalysisComplete = useCallback(() => {
+    if (currentDoc?.sufficient) {
+      loadDemo('bank_recon');
+      setCsStep('reconciling');
+    } else {
+      setCsStep('cs-doc-select');
+    }
+  }, [currentDoc, loadDemo]);
+
+  const handleDocSelectCancel = useCallback(() => {
+    setCsStep('cs-docview');
+  }, []);
+
+  const handleDocSelectConfirm = useCallback((docs) => {
+    setExtraDocs(docs);
+    setCsStep('cs-analyzing-2');
+  }, []);
+
+  const handleAnalysis2Complete = useCallback(() => {
+    loadDemo('bank_recon');
+    setCsStep('reconciling');
+  }, [loadDemo]);
+
+  const handleResetToCS = useCallback(() => {
+    reset();
+    setCsStep('cs-home');
+    setCurrentDoc(null);
+    setExtraDocs([]);
+  }, [reset]);
+
   const { step } = state;
   const scenario = state.scenarioId ? getScenario(state.scenarioId) : null;
 
-  if (step === 'home' || step === 'scenario') {
+  if (csStep === 'cs-home') {
+    return <CSHomePage onOpenDocument={handleOpenDocument} />;
+  }
+
+  if (csStep === 'cs-docview') {
     return (
-      <MobileHome
-        parsedFiles={state.parsedFiles}
-        isProcessing={state.isProcessing}
-        error={state.error}
-        scenarioId={state.scenarioId}
-        detectedScenarioId={state.detectedScenarioId}
-        periodStart={state.periodStart}
-        periodEnd={state.periodEnd}
-        onAddFiles={homeAddFiles}
-        onRemoveFile={homeRemoveFile}
-        onAssignRole={assignRole}
-        onSelectScenario={homeSelectScenario}
-        onSetPeriod={setPeriod}
-        onSelectDemo={loadDemo}
-        onConfirmData={confirmData}
-        onUpdateMapping={updateMapping}
+      <CSDocViewPage
+        document={currentDoc}
+        onBack={handleBackToHome}
+        onReconciliation={handleStartReconciliation}
       />
     );
   }
 
-  if (step === 'confirm') {
+  if (csStep === 'cs-analyzing') {
     return (
-      <MobileConfirm
-        scenario={scenario}
-        sideAData={state.sideAData}
-        sideBData={state.sideBData}
-        sideCData={state.sideCData}
-        sideABalance={state.sideABalance}
-        sideBBalance={state.sideBBalance}
-        validation={state.validation}
-        onSetBalances={setBalances}
-        onUpdateEntries={updateEntries}
-        onBack={() => goToStep('home')}
-        onNext={startMatching}
+      <CSAnalyzingPage
+        document={currentDoc}
+        onComplete={handleAnalysisComplete}
       />
     );
   }
 
-  if (step === 'matching') {
-    return <MobileLoading scenario={scenario} />;
-  }
-
-  if (step === 'results') {
+  if (csStep === 'cs-doc-select') {
     return (
-      <MobileResults
-        scenario={scenario}
-        matchResults={state.matchResults}
-        confirmedMatches={state.confirmedMatches}
-        rejectedMatches={state.rejectedMatches}
-        onConfirmMatch={confirmMatch}
-        onRejectMatch={rejectMatch}
-        onManualMatch={doManualMatch}
-        onBack={() => goToStep('confirm')}
-        onNext={generateReport}
+      <CSDocSelectPage
+        currentDocId={currentDoc?.id}
+        onCancel={handleDocSelectCancel}
+        onConfirm={handleDocSelectConfirm}
       />
     );
   }
 
-  if (step === 'reconciliation') {
+  if (csStep === 'cs-analyzing-2') {
     return (
-      <MobileReport
-        scenario={scenario}
-        reconciliation={state.reconciliation}
-        matchResults={state.matchResults}
-        periodStart={state.periodStart}
-        periodEnd={state.periodEnd}
-        sessionId={state.sessionId}
-        onBack={() => goToStep('results')}
-        onNext={() => { archiveReport(); reset(); }}
+      <CSAnalyzingPage
+        document={currentDoc}
+        onComplete={handleAnalysis2Complete}
       />
     );
   }
 
-  if (step === 'complete') {
-    return (
-      <MobileComplete
-        scenario={scenario}
-        reconciliation={state.reconciliation}
-        matchResults={state.matchResults}
-        parsedFiles={state.parsedFiles}
-        archived={state.archived}
-        onArchive={archiveReport}
-        onReset={reset}
-      />
-    );
+  if (csStep === 'reconciling') {
+    if (step === 'confirm') {
+      return (
+        <MobileConfirm
+          scenario={scenario}
+          sideAData={state.sideAData}
+          sideBData={state.sideBData}
+          sideCData={state.sideCData}
+          sideABalance={state.sideABalance}
+          sideBBalance={state.sideBBalance}
+          validation={state.validation}
+          onSetBalances={setBalances}
+          onUpdateEntries={updateEntries}
+          onBack={handleResetToCS}
+          onNext={startMatching}
+        />
+      );
+    }
+
+    if (step === 'matching') {
+      return <MobileLoading scenario={scenario} />;
+    }
+
+    if (step === 'results') {
+      return (
+        <MobileResults
+          scenario={scenario}
+          matchResults={state.matchResults}
+          confirmedMatches={state.confirmedMatches}
+          rejectedMatches={state.rejectedMatches}
+          onConfirmMatch={confirmMatch}
+          onRejectMatch={rejectMatch}
+          onManualMatch={doManualMatch}
+          onBack={() => goToStep('confirm')}
+          onNext={generateReport}
+        />
+      );
+    }
+
+    if (step === 'reconciliation') {
+      return (
+        <MobileReport
+          scenario={scenario}
+          reconciliation={state.reconciliation}
+          matchResults={state.matchResults}
+          periodStart={state.periodStart}
+          periodEnd={state.periodEnd}
+          sessionId={state.sessionId}
+          onBack={() => goToStep('results')}
+          onNext={() => { archiveReport(); handleResetToCS(); }}
+        />
+      );
+    }
+
+    if (step === 'complete') {
+      return (
+        <MobileComplete
+          scenario={scenario}
+          reconciliation={state.reconciliation}
+          matchResults={state.matchResults}
+          parsedFiles={state.parsedFiles}
+          archived={state.archived}
+          onArchive={archiveReport}
+          onReset={handleResetToCS}
+        />
+      );
+    }
   }
 
   return null;
