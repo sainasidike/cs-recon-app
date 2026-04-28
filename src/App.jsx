@@ -158,6 +158,7 @@ function AppInner() {
         onToggle={() => setSidebarCollapsed(c => !c)}
         onGoHome={reset}
         onLoadHistory={loadHistory}
+        onBackToToolbox={() => { reset(); setShowToolbox(true); }}
       />
       <main className="main-content">
         {renderPage()}

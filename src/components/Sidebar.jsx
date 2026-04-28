@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getScenario } from '../utils/scenarios';
 
-export default function Sidebar({ collapsed, onToggle, onGoHome, onLoadHistory }) {
+export default function Sidebar({ collapsed, onToggle, onGoHome, onLoadHistory, onBackToToolbox }) {
   const [historyList, setHistoryList] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -102,6 +102,14 @@ export default function Sidebar({ collapsed, onToggle, onGoHome, onLoadHistory }
         })}
       </div>
 
+      {onBackToToolbox && (
+        <div className="sidebar-back-toolbox" onClick={onBackToToolbox}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          返回工具箱
+        </div>
+      )}
       <div className="sidebar-footer">
         <div className="sidebar-footer-text">CamScanner 智能对账 v2.0</div>
       </div>
