@@ -26,7 +26,7 @@ const FILTERS = [
 ];
 
 export default function ReconApp() {
-  const [step, setStep] = useState('home');
+  const [step, setStep] = useState('toolbox');
   const [files, setFiles] = useState([]);
   const [currentFileIdx, setCurrentFileIdx] = useState(0);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -153,7 +153,7 @@ export default function ReconApp() {
   }, []);
 
   const handleReset = useCallback(() => {
-    setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]);
+    setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('auto'); setCurrentFileIdx(0);
@@ -163,8 +163,102 @@ export default function ReconApp() {
 
   return (
     <div className="rc">
+      {/* TOOLBOX */}
+      {step === 'toolbox' && (
+        <div className="rc-toolbox">
+          <div className="rc-tb-header">
+            <h2>工具箱</h2>
+            <div className="rc-tb-header-right">
+              <span className="rc-tb-new-badge">功能上新</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+          </div>
+          <div className="rc-tb-tabs">
+            <span>格式转换</span>
+            <span>文档编辑</span>
+            <span className="active">实用工具</span>
+            <span>求职与校园</span>
+            <span>其他</span>
+          </div>
+          <div className="rc-tb-section-title">实用工具</div>
+          <div className="rc-tb-grid">
+            <div className="rc-tb-card">
+              <span className="rc-tb-card-name">AI 测量</span>
+              <div className="rc-tb-card-icon">📐</div>
+            </div>
+            <div className="rc-tb-card">
+              <span className="rc-tb-card-name">滚动截屏</span>
+              <div className="rc-tb-card-icon">📜</div>
+            </div>
+            <div className="rc-tb-card">
+              <span className="rc-tb-card-name">拍照计数</span>
+              <div className="rc-tb-card-icon">🔢</div>
+            </div>
+            <div className="rc-tb-card">
+              <span className="rc-tb-card-name">二维码</span>
+              <div className="rc-tb-card-icon">📱</div>
+            </div>
+            <div className="rc-tb-card rc-tb-card-highlight" onClick={() => setStep('home')}>
+              <span className="rc-tb-card-name">财务对账</span>
+              <div className="rc-tb-card-icon">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/>
+                </svg>
+              </div>
+              <span className="rc-tb-new-tag">NEW</span>
+            </div>
+            <div className="rc-tb-card">
+              <span className="rc-tb-card-name">证件扫描</span>
+              <div className="rc-tb-card-icon">🪪</div>
+            </div>
+          </div>
+          <div className="rc-tb-section-title">求职与校园</div>
+          <div className="rc-tb-grid">
+            <div className="rc-tb-card">
+              <span className="rc-tb-card-name">AI 搜题</span>
+              <div className="rc-tb-card-icon">📝</div>
+            </div>
+            <div className="rc-tb-card">
+              <span className="rc-tb-card-name">简历模板</span>
+              <div className="rc-tb-card-icon">📄</div>
+            </div>
+            <div className="rc-tb-card">
+              <span className="rc-tb-card-name">扫描学生证件</span>
+              <div className="rc-tb-card-icon">🎓</div>
+            </div>
+            <div className="rc-tb-card">
+              <span className="rc-tb-card-name">更多</span>
+              <div className="rc-tb-card-icon">⊞</div>
+            </div>
+          </div>
+          <div className="rc-tb-section-title">其他</div>
+          <div className="rc-tb-grid rc-tb-grid-3">
+            <div className="rc-tb-card-sm">
+              <span className="rc-tb-card-name">打印文档</span>
+              <div className="rc-tb-card-icon">🖨️</div>
+            </div>
+            <div className="rc-tb-card-sm">
+              <span className="rc-tb-card-name">购买设备</span>
+              <div className="rc-tb-card-icon">🛒</div>
+            </div>
+            <div className="rc-tb-card-sm">
+              <span className="rc-tb-card-name">创新实验室</span>
+              <div className="rc-tb-card-icon">🚀</div>
+            </div>
+          </div>
+          <div style={{ height: 80 }} />
+          <div className="rc-tb-tabbar">
+            <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>首页</span></div>
+            <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>全部文档</span></div>
+            <div className="rc-tb-tabbar-camera"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+            <div className="rc-tb-tabbar-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>工具箱</span></div>
+            <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>我的</span></div>
+          </div>
+        </div>
+      )}
+
       {/* Pipeline Progress */}
-      {step !== 'home' && (
+      {step !== 'home' && step !== 'toolbox' && (
         <div className="rc-pipeline">
           {PIPELINE.map((s, i) => (
             <div key={s.key} className={`rc-pip-step ${i < stepIdx ? 'done' : ''} ${i === stepIdx ? 'active' : ''}`}>
