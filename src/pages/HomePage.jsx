@@ -183,7 +183,11 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
               return (
                 <div key={i} className="cs-file-item" onClick={() => {
                   if (window.parent !== window) {
-                    window.parent.postMessage({ type: 'recon-open-file', file: { name: pf.file.name, headers: pf.parsed.headers || [], entries: (pf.parsed.entries || []).slice(0, 100), role: pf.assignedRole } }, '*');
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      window.parent.postMessage({ type: 'recon-open-file', file: { name: pf.file.name, role: pf.assignedRole, mimeType: pf.file.type, dataUrl: ev.target.result } }, '*');
+                    };
+                    reader.readAsDataURL(pf.file);
                   }
                 }} style={window.parent !== window ? { cursor: 'pointer' } : undefined}>
                   <div className={`cs-file-thumb ${isExcel ? 'excel' : isPdf ? 'pdf' : 'img'}`}>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扫描全能王 2026...</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif; background: #f0f0f0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+/* 顶部导航栏 */
+.cs-reader-topbar {
+  height: 52px;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+.cs-reader-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cs-reader-logo svg { width: 28px; height: 28px; }
+.cs-reader-logo span { font-size: 14px; font-weight: 600; color: #333; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 标签页 */
+.cs-reader-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 32px;
+}
+.cs-reader-tab {
+  padding: 8px 18px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+.cs-reader-tab:hover { color: #333; }
+.cs-reader-tab.active { color: #00c4a1; font-weight: 600; }
+.cs-reader-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  background: #00c4a1;
+  border-radius: 2px;
+}
+.cs-reader-tab .new-badge {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 9px;
+  background: #ff4d4f;
+  color: #fff;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  line-height: 14px;
+}
+
+/* 顶栏右侧按钮 */
+.cs-reader-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cs-reader-btn-share {
+  padding: 7px 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cs-reader-btn-share:hover { border-color: #00c4a1; color: #00c4a1; }
+.cs-reader-btn-save {
+  padding: 7px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #fff;
+  background: #00c4a1;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cs-reader-btn-save:hover { background: #00b392; }
+
+/* 视图模式栏 */
+.cs-reader-viewbar {
+  height: 40px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-shrink: 0;
+}
+.cs-reader-viewbar-item {
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cs-reader-viewbar-item:hover { color: #333; }
+.cs-reader-viewbar-item.active { color: #00c4a1; }
+.cs-reader-viewbar-item svg { width: 14px; height: 14px; }
+
+/* 主体 */
+.cs-reader-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 左侧缩略图 */
+.cs-reader-thumbs {
+  width: 64px;
+  background: #fff;
+  border-right: 1px solid #eee;
+  overflow-y: auto;
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.cs-reader-thumb {
+  width: 50px;
+  height: 64px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: #f5f5f5;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #999;
+  gap: 2px;
+  transition: all 0.15s;
+  position: relative;
+}
+.cs-reader-thumb.active { border-color: #00c4a1; background: #f0fdf9; }
+.cs-reader-thumb:hover:not(.active) { background: #eee; }
+.cs-reader-thumb-label {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* 文档内容区 */
+.cs-reader-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  display: flex;
+  justify-content: center;
+  background: #e8e8e8;
+}
+.cs-reader-paper {
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  padding: 48px 56px;
+  max-width: 900px;
+  width: 100%;
+  min-height: 1100px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* 文档内容样式 */
+.doc-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 28px;
+  color: #1a1a1a;
+}
+.doc-info {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #333;
+}
+.doc-info strong { font-weight: 600; }
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 12px;
+}
+.doc-table th, .doc-table td {
+  padding: 10px 12px;
+  border: 1px solid #e8e8e8;
+  text-align: left;
+}
+.doc-table th {
+  background: #f9f9f9;
+  font-weight: 600;
+  color: #555;
+}
+.doc-table td.debit { color: #e53935; }
+.doc-table td.credit { color: #00c4a1; }
+
+/* 底部分页栏 */
+.cs-reader-footer {
+  height: 40px;
+  background: #fff;
+  border-top: 1px solid #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.cs-reader-footer-btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #999;
+  border-radius: 4px;
+}
+.cs-reader-footer-btn:hover { background: #f0f0f0; color: #333; }
+.cs-reader-footer-page { font-size: 13px; color: #666; }
+.cs-reader-footer-zoom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 24px;
+  font-size: 13px;
+  color: #666;
+}
+.cs-reader-footer-zoom span { cursor: pointer; font-size: 16px; color: #999; }
+.cs-reader-footer-zoom span:hover { color: #333; }
+
+/* 对账分栏模式 */
+.cs-recon-split {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  overflow: hidden;
+}
+.cs-recon-split-left,
+.cs-recon-split-right {
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.cs-recon-split-header {
+  height: 44px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  flex-shrink: 0;
+}
+.cs-recon-header-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  background: #fff;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+}
+.cs-recon-header-btn:hover { border-color: #00c4a1; color: #00c4a1; }
+.cs-recon-header-btn.primary {
+  background: #00c4a1;
+  color: #fff;
+  border-color: #00c4a1;
+}
+.cs-recon-header-btn.primary:hover { background: #00b392; }
+.cs-recon-split-doc {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 28px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.cs-recon-split-doc .doc-title { font-size: 15px; text-align: center; font-weight: 700; margin-bottom: 20px; }
+.cs-recon-split-doc .doc-info { font-size: 12px; margin-bottom: 6px; }
+.cs-recon-split-doc .doc-table { font-size: 11px; }
+.cs-recon-split-doc .doc-table th,
+.cs-recon-split-doc .doc-table td { padding: 6px 8px; }
+.cs-recon-split-footer {
+  height: 36px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
+  flex-shrink: 0;
+}
+.cs-recon-page-btn { cursor: pointer; color: #999; }
+.cs-recon-page-btn:hover { color: #333; }
+.cs-recon-page-info { color: #666; }
+</style>
+</head>
+<body>
+
+<!-- 顶部导航栏 -->
+<div class="cs-reader-topbar">
+  <div class="cs-reader-logo">
+    <svg viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="6" fill="#00c4a1"/>
+      <text x="4" y="19" font-size="12" font-weight="800" fill="#fff" font-family="Arial">CS</text>
+    </svg>
+    <span>扫描全能王 2026...</span>
+  </div>
+  <div class="cs-reader-tabs">
+    <div class="cs-reader-tab active">阅读</div>
+    <div class="cs-reader-tab">图片处理</div>
+    <div class="cs-reader-tab">批注</div>
+    <div class="cs-reader-tab">页面</div>
+    <div class="cs-reader-tab">格式转换</div>
+    <div class="cs-reader-tab" id="tabRecon" style="position:relative;">财务对账<span class="new-badge">NEW</span></div>
+  </div>
+  <div class="cs-reader-actions">
+    <button class="cs-reader-btn-share">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      分享
+    </button>
+    <button class="cs-reader-btn-save">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      保存
+    </button>
+  </div>
+</div>
+
+<!-- 视图模式栏 -->
+<div class="cs-reader-viewbar">
+  <div class="cs-reader-viewbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>
+    连续视图
+  </div>
+  <div class="cs-reader-viewbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="1"/></svg>
+    单页
+  </div>
+  <div class="cs-reader-viewbar-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="9" height="16" rx="1"/><rect x="13" y="4" width="9" height="16" rx="1"/></svg>
+    双页
+  </div>
+  <div class="cs-reader-viewbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    演示模式
+  </div>
+  <div class="cs-reader-viewbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg>
+    ✦ AI文档助手
+  </div>
+</div>
+
+<!-- 主体 -->
+<div class="cs-reader-main">
+  <!-- 阅读模式（全宽） -->
+  <div id="readMode" style="display:flex;flex:1;overflow:hidden;">
+    <div class="cs-reader-thumbs" id="thumbs"></div>
+    <div class="cs-reader-content">
+      <div class="cs-reader-paper" id="paper"></div>
+    </div>
+  </div>
+
+  <!-- 对账模式（左右分栏） -->
+  <div id="reconMode" class="cs-recon-split" style="display:none;">
+    <!-- 左侧：文档预览 -->
+    <div class="cs-recon-split-left">
+      <div class="cs-recon-split-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#4285f4"/><path d="M7 8h10M7 12h7M7 16h9" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>中国工商银行企业对账单 2026-04</span>
+      </div>
+      <div class="cs-recon-split-doc" id="reconDocView"></div>
+      <div class="cs-recon-split-footer">
+        <span class="cs-recon-page-btn">|◁</span>
+        <span class="cs-recon-page-btn">◁</span>
+        <span class="cs-recon-page-btn">▷</span>
+        <span class="cs-recon-page-btn">▷|</span>
+        <span class="cs-recon-page-info">1/1</span>
+        <span style="margin-left:16px;color:#999;">−</span>
+        <span style="color:#666;">100% ∨</span>
+        <span style="color:#999;">+</span>
+      </div>
+    </div>
+    <!-- 右侧：对账流程 -->
+    <div class="cs-recon-split-right">
+      <div class="cs-recon-split-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#00c4a1"/><path d="M8 12h8M12 8v8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>财务对账</span>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="cs-recon-header-btn" id="btnDownloadResult">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button class="cs-recon-header-btn primary" id="btnOpenResult">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            打开
+          </button>
+        </div>
+      </div>
+      <iframe id="reconIframe" style="flex:1;width:100%;border:none;" src="about:blank"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- 底部分页（仅阅读模式） -->
+<div class="cs-reader-footer" id="readerFooter">
+  <div class="cs-reader-footer-btn">|◁</div>
+  <div class="cs-reader-footer-btn">◁</div>
+  <div class="cs-reader-footer-btn">▷</div>
+  <div class="cs-reader-footer-btn">▷|</div>
+  <div class="cs-reader-footer-page" id="pageInfo">2 / 13</div>
+  <div class="cs-reader-footer-zoom">
+    <span>−</span>
+    <span>80%</span>
+    <span>+</span>
+  </div>
+</div>
+
+<script>
+// 银行对账单数据
+var bankData = {
+  title: '中国工商银行企业对账单',
+  company: '杭州锦鲤餐饮管理有限公司',
+  account: '1202 0236 0920 0156 789',
+  bank: '中国工商银行杭州西湖支行',
+  currency: '人民币',
+  period: '2026-04-01 至 2026-04-30',
+  printTime: '2026-05-03 09:15',
+  prevBalance: '253,500.00',
+  currBalance: '236,765.00',
+  entries: [
+    { date: '2026-04-01', time: '08:55:12', desc: '转账汇款-租金', counterparty: '杭州西湖物业发展有限公司', debit: 35000, credit: null, balance: 218500 },
+    { date: '2026-04-02', time: '15:30:45', desc: 'POS消费入账', counterparty: '美团收付通', debit: null, credit: 47800, balance: 266300 },
+    { date: '2026-04-03', time: '10:12:08', desc: '转账汇款-贷款', counterparty: '永辉超市股份有限公司', debit: 18500, credit: null, balance: 247800 },
+    { date: '2026-04-04', time: '10:00:00', desc: '代发工资', counterparty: '批量代发(28人)', debit: 89000, credit: null, balance: 158800 },
+    { date: '2026-04-05', time: '16:22:33', desc: 'POS消费入账', counterparty: '饿了么结算中心', debit: null, credit: 32600, balance: 191400 },
+    { date: '2026-04-07', time: '09:40:15', desc: '转账汇款-燃气费', counterparty: '杭州燃气集团有限公司', debit: 4200, credit: null, balance: 187200 },
+    { date: '2026-04-08', time: '09:30:00', desc: '社保代扣', counterparty: '杭州市社保中心', debit: 26800, credit: null, balance: 160400 },
+    { date: '2026-04-10', time: '18:05:27', desc: 'POS消费入账', counterparty: '抖音电商结算', debit: null, credit: 21500, balance: 181900 },
+    { date: '2026-04-11', time: '14:18:42', desc: '转账汇款-维修费', counterparty: '杭州厨业设备维修服务部', debit: 3600, credit: null, balance: 178300 },
+    { date: '2026-04-12', time: '00:00:00', desc: '账户管理费', counterparty: '中国工商银行', debit: 35, credit: null, balance: 178265 },
+    { date: '2026-04-14', time: '17:10:55', desc: 'POS消费入账', counterparty: '大众点评商户结算', debit: null, credit: 15200, balance: 193465 },
+    { date: '2026-04-15', time: '11:25:38', desc: '转账汇款-贷款', counterparty: '海天味业佛山分公司', debit: 6800, credit: null, balance: 186665 },
+    { date: '2026-04-17', time: '09:08:20', desc: '转账汇款-水电费', counterparty: '国网浙江省电力有限公司', debit: 7500, credit: null, balance: 179165 },
+    { date: '2026-04-18', time: '20:15:30', desc: 'POS消费入账', counterparty: '银联商务清算', debit: null, credit: 28900, balance: 208065 },
+    { date: '2026-04-20', time: '13:42:18', desc: '转账汇款-包装材料', counterparty: '义乌市恒达包装材料有限公司', debit: 4500, credit: null, balance: 203565 },
+    { date: '2026-04-22', time: '16:55:42', desc: 'POS消费入账', counterparty: '美团收付通', debit: null, credit: 38600, balance: 242165 },
+    { date: '2026-04-24', time: '10:30:10', desc: '转账汇款-食材', counterparty: '杭州菜鲜生农产品配送有限公司', debit: 22000, credit: null, balance: 220165 },
+    { date: '2026-04-25', time: '09:00:00', desc: '贷款还款', counterparty: '中国工商银行(内部)', debit: 8000, credit: null, balance: 212165 },
+    { date: '2026-04-28', time: '17:30:22', desc: 'POS消费入账', counterparty: '饿了么结算中心', debit: null, credit: 25800, balance: 237965 },
+    { date: '2026-04-30', time: '11:05:48', desc: '转账汇款-检测费', counterparty: '杭州市食品药品检验研究院', debit: 1200, credit: null, balance: 236765 },
+  ]
+};
+
+function fmt(val) {
+  if (val === null || val === undefined) return '';
+  return Number(val).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderPaper() {
+  var d = bankData;
+  var html = '';
+  html += '<div class="doc-title">' + d.title + '</div>';
+  html += '<div class="doc-info"><strong>单位名称：</strong>' + d.company + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>账　号：</strong>' + d.account + '</div>';
+  html += '<div class="doc-info"><strong>开户网点：</strong>' + d.bank + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>币　种：</strong>' + d.currency + '</div>';
+  html += '<div class="doc-info"><strong>对账区间：</strong>' + d.period + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>打印时间：</strong>' + d.printTime + '</div>';
+  html += '<div class="doc-info"><strong>上期余额：</strong>' + d.prevBalance + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>本期余额：</strong>' + d.currBalance + '</div>';
+
+  html += '<table class="doc-table">';
+  html += '<thead><tr><th>记账日期</th><th>交易时间</th><th>摘要/用途</th><th>借方金额</th><th>贷方金额</th><th>余额</th><th>对方户名</th></tr></thead>';
+  html += '<tbody>';
+  d.entries.forEach(function(e) {
+    html += '<tr>';
+    html += '<td>' + e.date + '</td>';
+    html += '<td>' + e.time + '</td>';
+    html += '<td>' + e.desc + ' ' + e.counterparty + '</td>';
+    html += '<td class="debit">' + (e.debit ? fmt(e.debit) : '') + '</td>';
+    html += '<td class="credit">' + (e.credit ? fmt(e.credit) : '') + '</td>';
+    html += '<td>' + fmt(e.balance) + '</td>';
+    html += '<td>' + e.counterparty + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+
+  document.getElementById('paper').innerHTML = html;
+}
+
+function renderThumbs() {
+  var totalPages = 13;
+  var activePage = 2;
+  var html = '';
+  for (var i = 1; i <= 4; i++) {
+    html += '<div class="cs-reader-thumb' + (i === activePage ? ' active' : '') + '">';
+    html += '<div style="font-size:9px;color:#999;">详查序</div>';
+    html += '<div class="cs-reader-thumb-label">' + i + '</div>';
+    html += '</div>';
+  }
+  document.getElementById('thumbs').innerHTML = html;
+  document.getElementById('pageInfo').textContent = activePage + ' / ' + totalPages;
+}
+
+renderPaper();
+renderThumbs();
+
+// 标签切换逻辑
+var tabs = document.querySelectorAll('.cs-reader-tab');
+var readMode = document.getElementById('readMode');
+var reconMode = document.getElementById('reconMode');
+var reconIframe = document.getElementById('reconIframe');
+var reconDocView = document.getElementById('reconDocView');
+var viewbar = document.querySelector('.cs-reader-viewbar');
+var readerFooter = document.getElementById('readerFooter');
+var reconLoaded = false;
+
+tabs.forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    tab.classList.add('active');
+
+    if (tab.id === 'tabRecon') {
+      readMode.style.display = 'none';
+      reconMode.style.display = 'flex';
+      viewbar.style.display = 'none';
+      readerFooter.style.display = 'none';
+      // 复制文档内容到左侧面板
+      reconDocView.innerHTML = document.getElementById('paper').innerHTML;
+      if (!reconLoaded) {
+        reconIframe.src = 'https://cs-pc-reconciliation.vercel.app/?embed=1&autoload=bank_jinli';
+        reconLoaded = true;
+      }
+    } else {
+      readMode.style.display = 'flex';
+      reconMode.style.display = 'none';
+      viewbar.style.display = 'flex';
+      readerFooter.style.display = 'flex';
+    }
+  });
+});
+
+// 打开按钮 - 新窗口打开对账
+document.getElementById('btnOpenResult').addEventListener('click', function() {
+  window.open('https://cs-pc-reconciliation.vercel.app/?autoload=bank_jinli', '_blank');
+});
+
+// 监听对账 iframe 消息
+window.addEventListener('message', function(e) {
+  if (!e.data || !e.data.type) return;
+
+  if (e.data.type === 'recon-open-file') {
+    var file = e.data.file;
+    if (!file) return;
+    renderFileInLeftPanel(file);
+  }
+});
+
+// 把点击的文件渲染到左侧面板（显示真实文档）
+function renderFileInLeftPanel(file) {
+  var name = file.name || '文档';
+  var role = file.role || '';
+  var roleLabels = { sideA: '银行流水', sideB: '企业账簿', sideC: '辅助数据', auto: '未分类' };
+  var roleLabel = roleLabels[role] || '';
+
+  // 更新左侧标题
+  var headerSpan = document.querySelector('.cs-recon-split-left .cs-recon-split-header span');
+  if (headerSpan) headerSpan.textContent = name + (roleLabel ? ' (' + roleLabel + ')' : '');
+
+  var html = '';
+  var dataUrl = file.dataUrl;
+  var mime = file.mimeType || '';
+
+  if (mime.startsWith('image/')) {
+    html = '<img src="' + dataUrl + '" style="width:100%;height:auto;display:block;" />';
+  } else if (mime === 'application/pdf') {
+    html = '<iframe src="' + dataUrl + '" style="width:100%;height:100%;border:none;"></iframe>';
+  } else if (mime.includes('sheet') || mime.includes('excel') || name.match(/\.(xlsx|xls|csv)$/i)) {
+    html = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:#666;">';
+    html += '<svg width="64" height="64" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#217346"/><path d="M7 7h4v3H7zm0 4h4v3H7zm0 4h4v2H7zm5-8h5v3h-5zm0 4h5v3h-5zm0 4h5v2h-5z" fill="rgba(255,255,255,0.8)"/></svg>';
+    html += '<div style="font-size:14px;font-weight:500;">' + escapeHtml(name) + '</div>';
+    html += '<div style="font-size:12px;color:#999;">Excel 文件无法直接预览图像</div>';
+    html += '</div>';
+  } else {
+    html = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:#999;">';
+    html += '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h5"/></svg>';
+    html += '<p>' + escapeHtml(name) + '</p>';
+    html += '</div>';
+  }
+
+  reconDocView.innerHTML = html;
+}
+</script>
+</body>
+</html>
