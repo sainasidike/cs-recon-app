@@ -389,6 +389,14 @@ export default function ReconApp() {
                     <div className="rc-history-meta">匹配率 {h.matchRate.toFixed(0)}% · {h.matchedCount}笔匹配 · {h.unmatchedCount}笔未达 · {h.time}</div>
                   </div>
                   <span className="rc-history-rate" style={{ color: h.matchRate >= 80 ? 'var(--rc-accent-dark)' : 'var(--rc-danger)' }}>{h.matchRate.toFixed(0)}%</span>
+                  <button className="rc-history-del" onClick={(e) => {
+                    e.stopPropagation();
+                    const next = history.filter(item => item.id !== h.id);
+                    setHistory(next);
+                    try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
                 </div>
               ))}
             </div>
