@@ -26,6 +26,7 @@ function AppInner() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const params = new URLSearchParams(window.location.search);
   const autoloadId = params.get('autoload');
+  const isEmbed = params.get('embed') === '1';
   const [showToolbox, setShowToolbox] = useState(!autoloadId);
   const autoloaded = useRef(false);
 
@@ -44,7 +45,7 @@ function AppInner() {
   const { step } = state;
   const scenario = state.scenarioId ? getScenario(state.scenarioId) : null;
 
-  if (showToolbox) {
+  if (showToolbox && !isEmbed) {
     return <ToolboxPage onEnterRecon={() => setShowToolbox(false)} />;
   }
 
@@ -165,6 +166,16 @@ function AppInner() {
 
     return null;
   };
+
+  if (isEmbed) {
+    return (
+      <div className="embed-layout">
+        <main className="embed-content">
+          {renderPage()}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className={`layout ${sidebarCollapsed ? 'layout-collapsed' : ''}`}>

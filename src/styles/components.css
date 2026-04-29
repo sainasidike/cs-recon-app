@@ -2126,6 +2126,31 @@
   justify-content: flex-end;
 }
 
+/* ===== Embed Mode ===== */
+.embed-layout {
+  min-height: 100vh;
+}
+.embed-content {
+  padding: 24px 28px;
+  max-width: 100%;
+  min-height: 100vh;
+}
+.embed-content .home-header {
+  margin-bottom: 24px;
+}
+.embed-content .home-title {
+  font-size: 1.2rem;
+}
+.embed-content .cs-home-section {
+  margin-top: 24px;
+}
+.embed-content .cs-home-demo-grid {
+  display: none;
+}
+.embed-content .cs-bottom-bar {
+  left: 0;
+}
+
 @media (max-width: 768px) {
   .sidebar {
     display: none;
