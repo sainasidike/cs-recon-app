@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useReconciliation } from './hooks/useReconciliation';
 import { ToastProvider } from './components/Toast';
-import Sidebar from './components/Sidebar';
 import ToolboxPage from './pages/ToolboxPage';
 import HomePage from './pages/HomePage';
 import ConfirmPage from './pages/ConfirmPage';
@@ -24,7 +23,6 @@ function AppInner() {
     goToStep, archiveReport, reset, updateEntries, updateMapping,
   } = useReconciliation();
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const params = new URLSearchParams(window.location.search);
   const autoloadId = params.get('autoload');
   const isEmbed = params.get('embed') === '1';
@@ -207,26 +205,9 @@ function AppInner() {
     );
   }
 
-  if (step === 'home' || step === 'scenario') {
-    return (
-      <div className="fullpage-layout">
-        {renderPage()}
-      </div>
-    );
-  }
-
   return (
-    <div className={`layout ${sidebarCollapsed ? 'layout-collapsed' : ''}`}>
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(c => !c)}
-        onGoHome={reset}
-        onLoadHistory={loadHistory}
-        onBackToToolbox={() => { reset(); setShowToolbox(true); }}
-      />
-      <main className="main-content">
-        {renderPage()}
-      </main>
+    <div className="fullpage-layout">
+      {renderPage()}
     </div>
   );
 }
