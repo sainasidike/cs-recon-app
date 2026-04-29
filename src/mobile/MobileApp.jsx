@@ -173,6 +173,7 @@ function MobileAppInner() {
       return (
         <MobileConfirm
           scenario={scenario}
+          parsedFiles={state.parsedFiles}
           sideAData={state.sideAData}
           sideBData={state.sideBData}
           sideCData={state.sideCData}
@@ -181,6 +182,7 @@ function MobileAppInner() {
           validation={state.validation}
           onSetBalances={setBalances}
           onUpdateEntries={updateEntries}
+          onAssignRole={assignRole}
           onBack={handleResetToCS}
           onNext={startMatching}
         />

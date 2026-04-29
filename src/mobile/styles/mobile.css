@@ -818,6 +818,9 @@ button {
   color: var(--text-primary);
 }
 
+/* Doc cards scroll - hide scrollbar */
+.m-doc-cards-scroll::-webkit-scrollbar { display: none; }
+
 /* Disabled hint */
 .m-disabled-hint {
   font-size: 11px;
