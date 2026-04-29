@@ -320,27 +320,31 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
       </div>
 
       <div className="cs-tool-body">
-        {/* 左侧文档预览 */}
+        {/* 左侧文档预览（小尺寸，微倾斜，模拟桌面照片） */}
         <div className="cs-tool-preview">
           <div className="cs-tool-preview-doc">
             <div className="cs-tool-preview-badge">Excel</div>
+            <div style={{ fontSize: 9, color: '#999', marginBottom: 6 }}>杭州锦鲤餐饮管理有限公司 · 银行流水</div>
             <table className="cs-tool-preview-table">
               <thead>
-                <tr><th>日期</th><th>摘要</th><th>借方</th><th>贷方</th></tr>
+                <tr><th>序号</th><th>摘要</th><th>金额</th></tr>
               </thead>
               <tbody>
-                <tr><td>04-01</td><td>转账-租金</td><td className="out">35,000</td><td></td></tr>
-                <tr><td>04-02</td><td>POS入账-美团</td><td></td><td className="in">47,800</td></tr>
-                <tr><td>04-03</td><td>采购-永辉超市</td><td className="out">18,500</td><td></td></tr>
-                <tr><td>04-04</td><td>代发工资(28人)</td><td className="out">89,000</td><td></td></tr>
-                <tr><td>04-05</td><td>POS入账-饿了么</td><td></td><td className="in">32,600</td></tr>
-                <tr><td>04-07</td><td>转账-燃气费</td><td className="out">4,200</td><td></td></tr>
-                <tr><td>04-08</td><td>社保代扣</td><td className="out">26,800</td><td></td></tr>
-                <tr><td>04-10</td><td>POS入账-抖音</td><td></td><td className="in">21,500</td></tr>
-                <tr><td>04-11</td><td>设备维修费</td><td className="out">3,600</td><td></td></tr>
-                <tr><td>04-12</td><td>账户管理费</td><td className="out">35.00</td><td></td></tr>
-                <tr><td>04-14</td><td>POS入账-点评</td><td></td><td className="in">15,200</td></tr>
-                <tr><td>04-15</td><td>采购-海天味业</td><td className="out">6,800</td><td></td></tr>
+                <tr><td>1</td><td>转账-租金</td><td className="out">¥35,000.00</td></tr>
+                <tr><td>2</td><td>POS入账-美团</td><td className="in">¥47,800.00</td></tr>
+                <tr><td>3</td><td>采购-永辉超市</td><td className="out">¥18,500.00</td></tr>
+                <tr><td>4</td><td>代发工资(28人)</td><td className="out">¥89,000.00</td></tr>
+                <tr><td>5</td><td>POS入账-饿了么</td><td className="in">¥32,600.00</td></tr>
+                <tr><td>6</td><td>转账-燃气费</td><td className="out">¥4,200.00</td></tr>
+                <tr><td>7</td><td>社保代扣</td><td className="out">¥26,800.00</td></tr>
+                <tr><td>8</td><td>POS入账-抖音</td><td className="in">¥21,500.00</td></tr>
+                <tr><td>9</td><td>设备维修费</td><td className="out">¥3,600.00</td></tr>
+                <tr><td>10</td><td>账户管理费</td><td className="out">¥35.00</td></tr>
+                <tr><td>11</td><td>POS入账-点评</td><td className="in">¥15,200.00</td></tr>
+                <tr><td>12</td><td>采购-海天味业</td><td className="out">¥6,800.00</td></tr>
+                <tr><td>13</td><td>转账-水电费</td><td className="out">¥7,500.00</td></tr>
+                <tr><td>14</td><td>POS入账-现金</td><td className="in">¥8,350.00</td></tr>
+                <tr><td>15</td><td>采购-调料(大量)</td><td className="out">¥4,500.00</td></tr>
               </tbody>
             </table>
           </div>
