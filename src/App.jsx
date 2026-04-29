@@ -162,7 +162,14 @@ function AppInner() {
                 periodEnd: state.periodEnd,
               }, '*');
             } else {
-              goToStep('historyList');
+              localStorage.setItem('cs_recon_latest_result', JSON.stringify({
+                reconciliation: state.reconciliation,
+                matchResults: state.matchResults,
+                scenario: scenario,
+                periodStart: state.periodStart,
+                periodEnd: state.periodEnd,
+              }));
+              window.location.href = '/cs-reader.html?showResult=latest';
             }
           }}
         />

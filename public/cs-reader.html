@@ -779,6 +779,27 @@ function renderFileInLeftPanel(file) {
 
   reconDocView.innerHTML = html;
 }
+
+// 检测 URL 参数：直接展示最新保存的调节表结果
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('showResult') === 'latest') {
+    var raw = localStorage.getItem('cs_recon_latest_result');
+    if (raw) {
+      try {
+        var data = JSON.parse(raw);
+        var paper = document.getElementById('paper');
+        paper.innerHTML = renderReconReport(data);
+        var title = (data.scenario && data.scenario.reportTitle) || '余额调节表';
+        document.querySelector('.cs-reader-logo span').textContent = title;
+        document.getElementById('thumbs').innerHTML =
+          '<div class="cs-reader-thumb active"><div style="font-size:9px;color:#999;">调节表</div><div class="cs-reader-thumb-label">1</div></div>' +
+          '<div class="cs-reader-thumb"><div style="font-size:9px;color:#999;">明细</div><div class="cs-reader-thumb-label">2</div></div>';
+        document.getElementById('pageInfo').textContent = '1 / 2';
+      } catch(e) {}
+    }
+  }
+})();
 </script>
 </body>
 </html>
