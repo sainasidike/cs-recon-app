@@ -2566,9 +2566,8 @@
   display: grid;
   grid-template-columns: 28% 1fr;
   gap: 32px;
-  align-items: stretch;
+  align-items: center;
   margin-bottom: 24px;
-  min-height: 480px;
 }
 .cs-tool-preview {
   display: flex;
@@ -2625,14 +2624,15 @@
   justify-content: center;
   gap: 24px;
   padding: 60px 40px;
-  border: 1.5px dashed #00c4a1;
+  border: 1.5px dashed #a8d8d0;
   border-radius: 12px;
-  background: #fff;
+  background: transparent;
   transition: all 0.2s;
+  height: 490px;
 }
 .cs-tool-upload-active {
-  background: rgba(0, 196, 161, 0.04);
-  border-color: #00b894;
+  background: rgba(0, 196, 161, 0.03);
+  border-color: #00c4a1;
 }
 .cs-tool-upload-icon {
   margin-bottom: 16px;
