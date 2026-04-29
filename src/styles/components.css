@@ -2134,19 +2134,19 @@
 }
 .embed-content {
   flex: 1;
-  padding: 14px 16px 72px;
+  padding: 12px 14px 64px;
   max-width: 100%;
   overflow-y: auto;
 }
 .embed-content .home-header {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .embed-content .home-title {
-  font-size: 0.95rem;
+  font-size: 0.87rem;
   margin-bottom: 2px;
 }
 .embed-content .home-desc {
-  font-size: 0.73rem;
+  font-size: 0.7rem;
   color: var(--text-tertiary);
 }
 .embed-content .cs-home-section {
@@ -2159,67 +2159,82 @@
   padding: 0 0 24px;
 }
 .embed-content .cs-upload-zone {
-  padding: 24px 16px;
-  margin-bottom: 10px;
-  gap: 8px;
+  padding: 18px 14px;
+  margin-bottom: 8px;
+  gap: 6px;
 }
 .embed-content .cs-upload-zone-compact {
-  padding: 12px 10px;
+  padding: 10px 10px;
   gap: 4px;
 }
 .embed-content .cs-upload-zone-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
+}
+.embed-content .cs-upload-zone-icon svg {
+  width: 16px;
+  height: 16px;
 }
 .embed-content .cs-upload-zone-title {
-  font-size: 12px;
+  font-size: 11px;
 }
 .embed-content .cs-upload-zone-desc {
-  font-size: 11px;
+  display: none;
 }
 .embed-content .cs-file-list {
-  gap: 4px;
+  gap: 3px;
 }
 .embed-content .cs-file-item {
-  padding: 8px 10px;
-  gap: 10px;
+  padding: 7px 10px;
+  gap: 8px;
+  border-radius: 8px;
 }
 .embed-content .cs-file-thumb {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 6px;
 }
+.embed-content .cs-file-thumb svg {
+  width: 18px;
+  height: 18px;
+}
 .embed-content .cs-file-name {
-  font-size: 12px;
-  margin-bottom: 1px;
+  font-size: 11.5px;
+  margin-bottom: 0;
 }
 .embed-content .cs-file-meta {
-  font-size: 11px;
+  font-size: 10px;
+  margin-bottom: 4px;
 }
 .embed-content .cs-file-role-row {
-  gap: 6px;
+  gap: 5px;
 }
 .embed-content .cs-role-select {
-  font-size: 11px;
-  padding: 2px 6px;
+  font-size: 10px;
+  padding: 2px 5px;
 }
 .embed-content .cs-ai-tag {
-  font-size: 10px;
-  padding: 1px 6px;
+  font-size: 9px;
+  padding: 1px 5px;
+}
+.embed-content .cs-file-remove {
+  width: 22px;
+  height: 22px;
 }
 .embed-content .card {
-  margin-top: 10px;
+  margin-top: 8px;
+  display: none;
 }
 .embed-content .card-header {
-  padding: 10px 12px;
-  font-size: 0.67rem;
+  padding: 8px 12px;
+  font-size: 0.65rem;
 }
 .embed-content .card-body {
-  padding: 10px 12px;
+  padding: 8px 12px;
 }
 .embed-content .card-body .input {
-  padding: 7px 10px;
-  font-size: 12px;
+  padding: 6px 8px;
+  font-size: 11px;
 }
 .embed-content .cs-bottom-bar {
   position: sticky;
@@ -2227,34 +2242,37 @@
   left: 0;
   right: 0;
   width: 100%;
-  padding: 10px 16px;
+  padding: 8px 14px;
   margin-top: auto;
 }
 .embed-content .cs-selected-count {
-  font-size: 12px;
+  font-size: 11px;
 }
 .embed-content .cs-confirm-btn {
-  padding: 8px 24px;
-  font-size: 13px;
+  padding: 7px 20px;
+  font-size: 12px;
+  border-radius: 6px;
 }
 .embed-content .cs-home-scenario-bar {
-  padding: 8px 12px;
+  padding: 7px 10px;
   margin-bottom: 6px;
-  gap: 10px;
+  gap: 8px;
+  border-radius: 8px;
 }
 .embed-content .cs-home-scenario-icon {
-  font-size: 18px;
+  font-size: 16px;
 }
 .embed-content .cs-home-scenario-name {
-  font-size: 12px;
+  font-size: 11.5px;
 }
 .embed-content .cs-home-scenario-desc {
-  font-size: 10px;
+  font-size: 9.5px;
 }
 .embed-content .cs-home-btn-switch,
 .embed-content .cs-home-btn-confirm {
-  font-size: 11px;
-  padding: 4px 10px;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
 }
 .embed-content .pc-page-header {
   margin-bottom: 16px;
