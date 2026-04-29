@@ -10,10 +10,21 @@ function fmt(v) {
 const PIPELINE = [
   { key: 'upload', label: '上传', icon: '📤' },
   { key: 'edit', label: '编辑', icon: '✂️' },
+  { key: 'docs', label: '文档', icon: '📂' },
   { key: 'analyze', label: '分析', icon: '🤖' },
   { key: 'results', label: '结果', icon: '📊' },
   { key: 'report', label: '报告', icon: '📋' },
 ];
+
+function classifyDoc(name) {
+  const n = (name || '').toLowerCase();
+  if (/银行|bank|流水|对账单|account.?statement/i.test(n)) return 'bank';
+  if (/账簿|ledger|凭证|记账|企业|voucher|总账/i.test(n)) return 'ledger';
+  return 'unknown';
+}
+
+const DOC_TYPE_LABEL = { bank: '银行流水', ledger: '企业账簿', unknown: '待分类' };
+const DOC_TYPE_COLOR = { bank: '#4a90d9', ledger: '#f5a623', unknown: '#999' };
 
 const FILTERS = [
   { key: 'original', label: '原图', filter: 'none', hot: false },
@@ -39,11 +50,15 @@ export default function ReconApp() {
   const [confirmed, setConfirmed] = useState({});
   const [rejected, setRejected] = useState({});
   const [activeResultTab, setActiveResultTab] = useState('exact');
+  const [docExpanded, setDocExpanded] = useState(false);
   const [history, setHistory] = useState(() => {
     try { return JSON.parse(localStorage.getItem('rc-history') || '[]'); } catch { return []; }
   });
+  const [docs, setDocs] = useState([]);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const docsInputRef = useRef(null);
+  const docsCameraRef = useRef(null);
 
   const stepIdx = PIPELINE.findIndex(s => s.key === step);
 
@@ -75,26 +90,47 @@ export default function ReconApp() {
   }, []);
 
   const handleEditConfirm = useCallback(() => {
-    const url = previewUrls[currentFileIdx];
-    if (!url) { startAnalyze(); return; }
-    const img = new Image();
-    img.onload = () => {
-      const box = cropBoxes[currentFileIdx];
-      const sx = box ? Math.round(box.x * img.naturalWidth) : 0;
-      const sy = box ? Math.round(box.y * img.naturalHeight) : 0;
-      const sw = box ? Math.round(box.w * img.naturalWidth) : img.naturalWidth;
-      const sh = box ? Math.round(box.h * img.naturalHeight) : img.naturalHeight;
-      const cvs = document.createElement('canvas');
-      cvs.width = sw; cvs.height = sh;
-      const ctx = cvs.getContext('2d');
-      const f = FILTERS.find(f => f.key === selectedFilter);
-      if (f && f.filter !== 'none') ctx.filter = f.filter;
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-      setProcessedUrls(prev => { const n = [...prev]; n[currentFileIdx] = cvs.toDataURL('image/jpeg', 0.92); return n; });
-      startAnalyze();
-    };
-    img.src = url;
-  }, [previewUrls, cropBoxes, selectedFilter, currentFileIdx]);
+    const processSingle = (idx) => new Promise((resolve) => {
+      const url = previewUrls[idx];
+      if (!url) { resolve({ previewUrl: null, processedUrl: null }); return; }
+      const img = new Image();
+      img.onload = () => {
+        const box = cropBoxes[idx];
+        const sx = box ? Math.round(box.x * img.naturalWidth) : 0;
+        const sy = box ? Math.round(box.y * img.naturalHeight) : 0;
+        const sw = box ? Math.round(box.w * img.naturalWidth) : img.naturalWidth;
+        const sh = box ? Math.round(box.h * img.naturalHeight) : img.naturalHeight;
+        const cvs = document.createElement('canvas');
+        cvs.width = sw; cvs.height = sh;
+        const ctx = cvs.getContext('2d');
+        const flt = FILTERS.find(f => f.key === selectedFilter);
+        if (flt && flt.filter !== 'none') ctx.filter = flt.filter;
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+        resolve({ previewUrl: url, processedUrl: cvs.toDataURL('image/jpeg', 0.92) });
+      };
+      img.src = url;
+    });
+    Promise.all(files.map((_, i) => processSingle(i))).then((results) => {
+      const newDocs = files.map((file, i) => ({
+        id: Date.now() + i,
+        name: file.name || `文档${i + 1}`,
+        type: classifyDoc(file.name),
+        previewUrl: results[i].previewUrl,
+        processedUrl: results[i].processedUrl,
+      }));
+      setDocs(prev => [...prev, ...newDocs]);
+      setStep('docs');
+    });
+  }, [files, previewUrls, cropBoxes, selectedFilter]);
+
+  const handleRemoveDoc = useCallback((id) => {
+    setDocs(prev => prev.filter(d => d.id !== id));
+  }, []);
+
+  const handleChangeDocType = useCallback((id) => {
+    const cycle = { bank: 'ledger', ledger: 'unknown', unknown: 'bank' };
+    setDocs(prev => prev.map(d => d.id === id ? { ...d, type: cycle[d.type] } : d));
+  }, []);
 
   const startAnalyze = useCallback(() => {
     setStep('analyze');
@@ -102,15 +138,15 @@ export default function ReconApp() {
     setParseResult(null);
 
     const steps = [
-      { text: '正在进行 OCR 文字识别...', delay: 500 },
-      { text: '识别到表格结构，提取数据中...', delay: 1200 },
-      { text: '检测到文档类型：银行对账单', delay: 1800 },
-      { text: '解析 20 笔交易记录', delay: 2400 },
-      { text: '加载企业账簿，解析 20 笔记账凭证', delay: 3000 },
-      { text: '执行精确匹配（金额+日期完全一致）...', delay: 3800 },
-      { text: '执行模糊匹配（日期容差±3天）...', delay: 4600 },
-      { text: '执行语义匹配（描述相似度分析）...', delay: 5200 },
-      { text: '检测未达账项，生成匹配报告...', delay: 5800 },
+      { text: '正在进行 OCR 文字识别...', delay: 200 },
+      { text: '识别到表格结构，提取数据中...', delay: 500 },
+      { text: '检测到文档类型：银行对账单', delay: 800 },
+      { text: '解析 20 笔交易记录', delay: 1100 },
+      { text: '加载企业账簿，解析 20 笔记账凭证', delay: 1400 },
+      { text: '执行精确匹配（金额+日期完全一致）...', delay: 1700 },
+      { text: '执行模糊匹配（日期容差±3天）...', delay: 2000 },
+      { text: '执行语义匹配（描述相似度分析）...', delay: 2300 },
+      { text: '检测未达账项，生成匹配报告...', delay: 2600 },
     ];
     steps.forEach(({ text, delay }) => {
       setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
@@ -123,8 +159,15 @@ export default function ReconApp() {
       const results = runMatching(BANK_DATA, LEDGER_DATA);
       setMatchResults(results);
       setStep('results');
-    }, 6500);
+    }, 3000);
   }, []);
+
+  const handleStartFromDocs = useCallback(() => {
+    setFiles(docs.map(d => ({ name: d.name, type: 'processed' })));
+    setPreviewUrls(docs.map(d => d.previewUrl));
+    setProcessedUrls(docs.map(d => d.processedUrl));
+    startAnalyze();
+  }, [docs, startAnalyze]);
 
   const handleConfirm = useCallback((key) => {
     setConfirmed(prev => ({ ...prev, [key]: true }));
@@ -151,14 +194,14 @@ export default function ReconApp() {
       setHistory(next);
       try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
     }
-    setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]);
+    setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
   }, [matchResults, history]);
 
   const handleReset = useCallback(() => {
-    setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]);
+    setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
@@ -351,10 +394,6 @@ export default function ReconApp() {
             </div>
           )}
 
-          <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf,.xlsx,.xls,.csv" style={{ display: 'none' }}
-            onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
-          <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
-            onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
         </div>
       )}
 
@@ -363,7 +402,7 @@ export default function ReconApp() {
         <div className="rc-edit">
           {/* Top bar */}
           <div className="rc-edit-topbar">
-            <button className="rc-edit-back" onClick={() => setStep('home')}>
+            <button className="rc-edit-back" onClick={() => setStep(docs.length > 0 ? 'docs' : 'home')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div className="rc-edit-title">{files[currentFileIdx]?.name || '扫描全能王'}</div>
@@ -450,6 +489,96 @@ export default function ReconApp() {
         </div>
       )}
 
+      {/* DOCS — Document Management */}
+      {step === 'docs' && (
+        <div className="rc-section">
+          <div className="rc-docs-header">
+            <button className="rc-docs-back" onClick={() => setStep('home')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <h3>文档管理</h3>
+            <span className="rc-docs-count">{docs.length} 份文档</span>
+          </div>
+
+          {(() => {
+            const hasBank = docs.some(d => d.type === 'bank');
+            const hasLedger = docs.some(d => d.type === 'ledger');
+            const missing = [];
+            if (!hasBank) missing.push('银行流水');
+            if (!hasLedger) missing.push('企业账簿');
+            if (missing.length > 0) return (
+              <div className="rc-docs-warning">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5a623" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>还需添加 <strong>{missing.join('、')}</strong> 才能开始对账</span>
+              </div>
+            );
+            return null;
+          })()}
+
+          <div className="rc-docs-list">
+            {docs.map(doc => (
+              <div key={doc.id} className="rc-docs-card">
+                <div className="rc-docs-thumb">
+                  {doc.processedUrl || doc.previewUrl ? (
+                    <img src={doc.processedUrl || doc.previewUrl} alt="" />
+                  ) : (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  )}
+                </div>
+                <div className="rc-docs-info">
+                  <div className="rc-docs-name">{doc.name}</div>
+                  <button
+                    className="rc-docs-type-badge"
+                    style={{ background: DOC_TYPE_COLOR[doc.type] + '20', color: DOC_TYPE_COLOR[doc.type] }}
+                    onClick={() => handleChangeDocType(doc.id)}
+                  >
+                    {DOC_TYPE_LABEL[doc.type]}
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                </div>
+                <button className="rc-docs-remove" onClick={() => handleRemoveDoc(doc.id)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="rc-docs-add">
+            <button className="rc-docs-add-btn" onClick={() => docsCameraRef.current?.click()}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <span>扫描添加</span>
+            </button>
+            <button className="rc-docs-add-btn" onClick={() => docsInputRef.current?.click()}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>导入文档</span>
+            </button>
+          </div>
+
+          <input ref={docsInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf,.xlsx,.xls,.csv" style={{ display: 'none' }}
+            onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
+          <input ref={docsCameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+            onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
+
+          <div className="rc-bottom">
+            {(() => {
+              const hasBank = docs.some(d => d.type === 'bank');
+              const hasLedger = docs.some(d => d.type === 'ledger');
+              const canStart = hasBank && hasLedger;
+              return (
+                <button
+                  className={`rc-btn-primary${!canStart ? ' disabled' : ''}`}
+                  disabled={!canStart}
+                  onClick={canStart ? handleStartFromDocs : undefined}
+                  style={!canStart ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                >
+                  开始对账
+                </button>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* ANALYZE - OCR + AI Matching combined */}
       {step === 'analyze' && (
         <div className="rc-section rc-center">
@@ -475,28 +604,56 @@ export default function ReconApp() {
       {/* RESULTS */}
       {step === 'results' && matchResults && (
         <div className="rc-section">
-          {/* Original document preview */}
-          <div className="rc-doc-preview">
-            <div className="rc-doc-preview-header">
+          {/* Original documents — collapsible */}
+          <div className="rc-doc-full">
+            <div className="rc-doc-full-header" onClick={() => setDocExpanded(!docExpanded)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--rc-text3)" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               <span>{files[0]?.name || '银行对账单_锦鲤餐饮_202604.xlsx'}</span>
+              <svg className={`rc-doc-full-arrow${docExpanded ? ' open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--rc-text3)" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
-            <div className="rc-doc-preview-body">
-              {(processedUrls[0] || previewUrls[0]) ? (
-                <img src={processedUrls[0] || previewUrls[0]} alt="" className="rc-doc-preview-img" />
-              ) : (
-                <table className="rc-doc-preview-table">
-                  <thead><tr><th>日期</th><th>摘要</th><th>借方</th><th>贷方</th><th>余额</th></tr></thead>
-                  <tbody>
-                    {BANK_DATA.slice(0, 5).map(r => (
-                      <tr key={r.id}><td>{r.date}</td><td>{r.desc}</td><td>{r.out || ''}</td><td>{r.income || ''}</td><td>{r.balance}</td></tr>
-                    ))}
-                    <tr><td colSpan={5} style={{ textAlign: 'center', color: '#999', fontSize: 11 }}>... 共 {BANK_DATA.length} 笔</td></tr>
-                  </tbody>
-                </table>
-              )}
-            </div>
+            {docExpanded && (
+              <>
+                {(processedUrls[0] || previewUrls[0]) ? (
+                  <img src={processedUrls[0] || previewUrls[0]} alt="" className="rc-doc-full-img" />
+                ) : (
+                  <div className="rc-doc-full-table-wrap">
+                    <table className="rc-doc-full-table">
+                      <thead>
+                        <tr><th>#</th><th>日期</th><th>摘要</th><th>对方</th><th style={{ textAlign: 'right' }}>支出</th><th style={{ textAlign: 'right' }}>收入</th><th style={{ textAlign: 'right' }}>余额</th></tr>
+                      </thead>
+                      <tbody>
+                        {BANK_DATA.map((r, i) => (
+                          <tr key={r.id}>
+                            <td className="rc-dft-idx">{i + 1}</td>
+                            <td className="rc-dft-date">{r.date}</td>
+                            <td className="rc-dft-desc">{r.desc}</td>
+                            <td className="rc-dft-desc">{r.payee}</td>
+                            <td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{r.out ? fmt(r.out) : ''}</td>
+                            <td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{r.income ? fmt(r.income) : ''}</td>
+                            <td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(r.balance)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan={3}>合计 {BANK_DATA.length} 笔</td>
+                          <td></td>
+                          <td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(BANK_TOTAL_OUT)}</td>
+                          <td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(BANK_TOTAL_IN)}</td>
+                          <td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(COMPANY_INFO.closingBalance)}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
           </div>
+
+          <button className="rc-results-upload" onClick={() => fileInputRef.current?.click()}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            继续上传文档
+          </button>
 
           <div className="rc-stats-row">
             <div className="rc-stat"><div className="rc-stat-value">{matchResults.matchedCount}</div><div className="rc-stat-label">匹配</div></div>
@@ -596,6 +753,10 @@ export default function ReconApp() {
           </div>
         </div>
       )}
+      <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf,.xlsx,.xls,.csv" style={{ display: 'none' }}
+        onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+        onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
     </div>
   );
 }

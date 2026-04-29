@@ -3,6 +3,7 @@ import { useReconciliation } from '../hooks/useReconciliation';
 import { ToastProvider } from '../components/Toast';
 import { getScenario } from '../utils/scenarios';
 import { isFinancialDoc, classifyFromText } from './pages/CSAnalyzingPage';
+import { BUILTIN_FINANCIAL_DOCS, builtinDocToFile } from './data/embeddedFiles';
 import CSHomePage from './pages/CSHomePage';
 import CSDocViewPage from './pages/CSDocViewPage';
 import CSDocSelectPage from './pages/CSDocSelectPage';
@@ -99,11 +100,22 @@ function MobileAppInner() {
     setUploadedFiles(prev => [...prev, ...files]);
   }, []);
 
-  // Doc select: confirm → re-analyze with all files then proceed
-  const handleDocSelectConfirm = useCallback(() => {
-    loadDemo('bank_recon');
-    setCsStep('reconciling');
-  }, [loadDemo]);
+  // Doc select: confirm → feed files into reconciliation pipeline
+  const handleDocSelectConfirm = useCallback(async () => {
+    if (uploadedFiles.length >= 2) {
+      await homeAddFiles(uploadedFiles);
+      const ok = confirmData();
+      if (ok) {
+        setCsStep('reconciling');
+      } else {
+        loadDemo('bank_recon');
+        setCsStep('reconciling');
+      }
+    } else {
+      loadDemo('bank_recon');
+      setCsStep('reconciling');
+    }
+  }, [uploadedFiles, homeAddFiles, confirmData, loadDemo]);
 
   const handleBackToHome = useCallback(() => {
     setCsStep('cs-home');
