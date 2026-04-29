@@ -1,7 +1,4 @@
 {
-  "redirects": [
-    { "source": "/", "destination": "/recon.html", "permanent": false }
-  ],
   "rewrites": [
     { "source": "/zhipu-api/:path*", "destination": "https://open.bigmodel.cn/:path*" },
     { "source": "/mobile", "destination": "/mobile.html" },
