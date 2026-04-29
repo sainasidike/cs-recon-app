@@ -9,20 +9,19 @@ function fmt(v) {
 
 const PIPELINE = [
   { key: 'upload', label: '上传', icon: '📤' },
-  { key: 'crop', label: '切边', icon: '✂️' },
-  { key: 'enhance', label: '增强', icon: '✨' },
+  { key: 'edit', label: '编辑', icon: '✂️' },
   { key: 'analyze', label: '分析', icon: '🤖' },
   { key: 'results', label: '结果', icon: '📊' },
   { key: 'report', label: '报告', icon: '📋' },
 ];
 
 const FILTERS = [
-  { key: 'original', label: '原图', filter: 'none' },
-  { key: 'auto', label: '自动', filter: 'contrast(1.2) brightness(1.05)' },
-  { key: 'sharp', label: '锐化', filter: 'contrast(1.4) brightness(1.1) saturate(0)' },
-  { key: 'bw', label: '黑白', filter: 'grayscale(1) contrast(1.3)' },
-  { key: 'bright', label: '明亮', filter: 'brightness(1.3) contrast(1.1)' },
-  { key: 'stamp', label: '印章', filter: 'contrast(2) brightness(1.5) saturate(0)' },
+  { key: 'original', label: '原图', filter: 'none', hot: false },
+  { key: 'hd', label: '智能高清', filter: 'contrast(1.2) brightness(1.05) saturate(1.05)', hot: true },
+  { key: 'shadow', label: '去阴影', filter: 'brightness(1.15) contrast(1.25)', hot: false },
+  { key: 'handwriting', label: '去除手写', filter: 'contrast(1.6) brightness(1.2) saturate(0)', hot: false },
+  { key: 'bright', label: '增亮', filter: 'brightness(1.3) contrast(1.1)', hot: false },
+  { key: 'sharp', label: '增强锐化', filter: 'contrast(1.4) brightness(1.1) saturate(1.1)', hot: false },
 ];
 
 export default function ReconApp() {
@@ -31,7 +30,8 @@ export default function ReconApp() {
   const [currentFileIdx, setCurrentFileIdx] = useState(0);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [cropBoxes, setCropBoxes] = useState([]);
-  const [selectedFilter, setSelectedFilter] = useState('auto');
+  const [selectedFilter, setSelectedFilter] = useState('hd');
+  const [isCropping, setIsCropping] = useState(false);
   const [processedUrls, setProcessedUrls] = useState([]);
   const [parseSteps, setParseSteps] = useState([]);
   const [parseResult, setParseResult] = useState(null);
@@ -71,50 +71,30 @@ export default function ReconApp() {
       }
     });
 
-    setStep('crop');
+    setStep('edit');
   }, []);
 
-  const handleCropConfirm = useCallback(() => {
+  const handleEditConfirm = useCallback(() => {
     const url = previewUrls[currentFileIdx];
-    if (url && cropBoxes[currentFileIdx]) {
-      const img = new Image();
-      img.onload = () => {
-        const box = cropBoxes[currentFileIdx];
-        const sx = Math.round(box.x * img.naturalWidth);
-        const sy = Math.round(box.y * img.naturalHeight);
-        const sw = Math.round(box.w * img.naturalWidth);
-        const sh = Math.round(box.h * img.naturalHeight);
-        const cvs = document.createElement('canvas');
-        cvs.width = sw; cvs.height = sh;
-        cvs.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-        setProcessedUrls(prev => { const n = [...prev]; n[currentFileIdx] = cvs.toDataURL('image/jpeg', 0.92); return n; });
-        setStep('enhance');
-      };
-      img.src = url;
-    } else {
-      setProcessedUrls(prev => { const n = [...prev]; n[currentFileIdx] = url; return n; });
-      setStep('enhance');
-    }
-  }, [previewUrls, cropBoxes, currentFileIdx]);
-
-  const handleEnhanceConfirm = useCallback(() => {
-    const url = processedUrls[currentFileIdx];
-    if (url && selectedFilter !== 'original') {
-      const img = new Image();
-      img.onload = () => {
-        const cvs = document.createElement('canvas');
-        cvs.width = img.naturalWidth; cvs.height = img.naturalHeight;
-        const ctx = cvs.getContext('2d');
-        ctx.filter = FILTERS.find(f => f.key === selectedFilter)?.filter || 'none';
-        ctx.drawImage(img, 0, 0);
-        setProcessedUrls(prev => { const n = [...prev]; n[currentFileIdx] = cvs.toDataURL('image/jpeg', 0.92); return n; });
-        startAnalyze();
-      };
-      img.src = url;
-    } else {
+    if (!url) { startAnalyze(); return; }
+    const img = new Image();
+    img.onload = () => {
+      const box = cropBoxes[currentFileIdx];
+      const sx = box ? Math.round(box.x * img.naturalWidth) : 0;
+      const sy = box ? Math.round(box.y * img.naturalHeight) : 0;
+      const sw = box ? Math.round(box.w * img.naturalWidth) : img.naturalWidth;
+      const sh = box ? Math.round(box.h * img.naturalHeight) : img.naturalHeight;
+      const cvs = document.createElement('canvas');
+      cvs.width = sw; cvs.height = sh;
+      const ctx = cvs.getContext('2d');
+      const f = FILTERS.find(f => f.key === selectedFilter);
+      if (f && f.filter !== 'none') ctx.filter = f.filter;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+      setProcessedUrls(prev => { const n = [...prev]; n[currentFileIdx] = cvs.toDataURL('image/jpeg', 0.92); return n; });
       startAnalyze();
-    }
-  }, [processedUrls, selectedFilter, currentFileIdx]);
+    };
+    img.src = url;
+  }, [previewUrls, cropBoxes, selectedFilter, currentFileIdx]);
 
   const startAnalyze = useCallback(() => {
     setStep('analyze');
@@ -174,14 +154,14 @@ export default function ReconApp() {
     setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
-    setSelectedFilter('auto'); setCurrentFileIdx(0);
+    setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
   }, [matchResults, history]);
 
   const handleReset = useCallback(() => {
     setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
-    setSelectedFilter('auto'); setCurrentFileIdx(0);
+    setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
   }, []);
 
   const isDocFile = files[currentFileIdx] && !files[currentFileIdx]?.type?.startsWith('image/');
@@ -378,89 +358,94 @@ export default function ReconApp() {
         </div>
       )}
 
-      {/* CROP */}
-      {step === 'crop' && (
-        <div className="rc-section">
-          <div className="rc-stage-title">
-            <span className="rc-stage-icon">✂️</span>
-            <div>
-              <h3>智能切边</h3>
-              <p>拖拽调整裁剪范围，去除多余背景</p>
-            </div>
+      {/* EDIT — CamScanner doc edit page (crop + filter combined) */}
+      {step === 'edit' && (
+        <div className="rc-edit">
+          {/* Top bar */}
+          <div className="rc-edit-topbar">
+            <button className="rc-edit-back" onClick={() => setStep('home')}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div className="rc-edit-title">{files[currentFileIdx]?.name || '扫描全能王'}</div>
+            <div style={{ width: 22 }} />
           </div>
-          <div className="rc-crop-area">
+
+          {/* Document preview area */}
+          <div className="rc-edit-canvas">
             {previewUrls[currentFileIdx] ? (
-              <CropEditor
-                src={previewUrls[currentFileIdx]}
-                box={cropBoxes[currentFileIdx] || { x: 0, y: 0, w: 1, h: 1 }}
-                onChange={(box) => setCropBoxes(prev => { const n = [...prev]; n[currentFileIdx] = box; return n; })}
-              />
+              isCropping ? (
+                <CropEditor
+                  src={previewUrls[currentFileIdx]}
+                  box={cropBoxes[currentFileIdx] || { x: 0, y: 0, w: 1, h: 1 }}
+                  onChange={(box) => setCropBoxes(prev => { const n = [...prev]; n[currentFileIdx] = box; return n; })}
+                />
+              ) : (
+                <div className="rc-edit-doc-wrap">
+                  <img
+                    src={previewUrls[currentFileIdx]}
+                    alt=""
+                    className="rc-edit-doc-img"
+                    style={{ filter: FILTERS.find(f => f.key === selectedFilter)?.filter || 'none' }}
+                  />
+                </div>
+              )
             ) : (
-              <div className="rc-doc-placeholder">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--rc-text3)" strokeWidth="1.2">
+              <div className="rc-doc-placeholder" style={{ padding: '60px 20px' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2">
                   <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
                 <span>{files[currentFileIdx]?.name || '文档文件'}</span>
-                <span className="rc-doc-hint">非图片文件，跳过切边</span>
               </div>
             )}
           </div>
-          <div className="rc-bottom">
-            <button className="rc-btn-secondary" onClick={() => { if (previewUrls[currentFileIdx]) { handleCropConfirm(); } else { setProcessedUrls([...previewUrls]); setStep('enhance'); } }}>
-              {previewUrls[currentFileIdx] ? '跳过裁剪' : '跳过'}
-            </button>
-            <button className="rc-btn-primary" onClick={() => { if (previewUrls[currentFileIdx]) { handleCropConfirm(); } else { setProcessedUrls([...previewUrls]); startAnalyze(); } }}>
-              {previewUrls[currentFileIdx] ? '确认裁剪' : '下一步'}
-            </button>
-          </div>
-        </div>
-      )}
 
-      {/* ENHANCE */}
-      {step === 'enhance' && (
-        <div className="rc-section">
-          <div className="rc-stage-title">
-            <span className="rc-stage-icon">✨</span>
-            <div>
-              <h3>图像增强</h3>
-              <p>选择滤镜效果，提升文档清晰度</p>
-            </div>
+          {/* Page indicator */}
+          <div className="rc-edit-pager">
+            <span>◀</span>
+            <span>{currentFileIdx + 1}/{files.length || 1}</span>
+            <span>▶</span>
+            <span className="rc-edit-compare">对比</span>
           </div>
-          <div className="rc-enhance-preview">
-            {processedUrls[currentFileIdx] ? (
-              <img
-                src={processedUrls[currentFileIdx]}
-                alt="预览"
-                style={{ filter: FILTERS.find(f => f.key === selectedFilter)?.filter || 'none' }}
-              />
-            ) : (
-              <div className="rc-doc-placeholder">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--rc-text3)" strokeWidth="1.2">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-                <span>{files[currentFileIdx]?.name}</span>
-              </div>
-            )}
-          </div>
-          <div className="rc-filter-strip">
+
+          {/* Filter strip */}
+          <div className="rc-edit-filter-strip">
             {FILTERS.map(f => (
-              <button key={f.key} className={`rc-filter-item ${selectedFilter === f.key ? 'active' : ''}`} onClick={() => setSelectedFilter(f.key)}>
-                <div className="rc-filter-thumb" style={{ filter: f.filter }}>
-                  {processedUrls[currentFileIdx] ? (
-                    <img src={processedUrls[currentFileIdx]} alt="" />
+              <button key={f.key} className={`rc-edit-filter-item ${selectedFilter === f.key ? 'active' : ''}`} onClick={() => { setSelectedFilter(f.key); setIsCropping(false); }}>
+                <div className="rc-edit-filter-thumb">
+                  {previewUrls[currentFileIdx] ? (
+                    <img src={previewUrls[currentFileIdx]} alt="" style={{ filter: f.filter }} />
                   ) : (
-                    <div className="rc-filter-placeholder" />
+                    <div className="rc-filter-placeholder" style={{ filter: f.filter }} />
                   )}
+                  {f.hot && <span className="rc-edit-filter-hot">HOT</span>}
                 </div>
                 <span>{f.label}</span>
               </button>
             ))}
           </div>
-          <div className="rc-bottom">
-            <button className="rc-btn-secondary" onClick={() => setStep('crop')}>返回</button>
-            <button className="rc-btn-primary" onClick={handleEnhanceConfirm}>确认增强</button>
+
+          {/* Bottom toolbar */}
+          <div className="rc-edit-toolbar">
+            <button className="rc-edit-tool" onClick={() => fileInputRef.current?.click()}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>继续导入</span>
+            </button>
+            <button className="rc-edit-tool">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.8"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+              <span>左转</span>
+            </button>
+            <button className="rc-edit-tool" onClick={() => setIsCropping(!isCropping)}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isCropping ? '#3DD598' : '#333'} strokeWidth="1.8"><path d="M6 2v4H2M18 22v-4h4M2 6h20M22 18H2"/></svg>
+              <span style={{ color: isCropping ? '#3DD598' : undefined }}>裁剪</span>
+            </button>
+            <button className="rc-edit-tool">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <span>提取文字</span>
+            </button>
+            <button className="rc-edit-tool-confirm" onClick={handleEditConfirm}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
           </div>
         </div>
       )}
