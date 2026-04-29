@@ -151,7 +151,15 @@ function AppInner() {
           onApprove={approveReport}
           onReject={rejectReport}
           onBack={() => goToStep('results')}
-          onNext={() => { archiveReport(); goToStep('historyList'); }}
+          onNext={() => {
+            archiveReport();
+            if (isEmbed) {
+              const history = JSON.parse(localStorage.getItem('cs_recon_history') || '[]');
+              window.parent.postMessage({ type: 'recon-save-result', history }, '*');
+            } else {
+              goToStep('historyList');
+            }
+          }}
         />
       );
     }
