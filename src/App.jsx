@@ -154,8 +154,14 @@ function AppInner() {
           onNext={() => {
             archiveReport();
             if (isEmbed) {
-              const history = JSON.parse(localStorage.getItem('cs_recon_history') || '[]');
-              window.parent.postMessage({ type: 'recon-save-result', history }, '*');
+              window.parent.postMessage({
+                type: 'recon-save-result',
+                reconciliation: state.reconciliation,
+                matchResults: state.matchResults,
+                scenario: scenario,
+                periodStart: state.periodStart,
+                periodEnd: state.periodEnd,
+              }, '*');
             } else {
               goToStep('historyList');
             }
