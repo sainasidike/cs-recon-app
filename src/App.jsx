@@ -32,9 +32,14 @@ function AppInner() {
   useEffect(() => {
     if (autoloadId && !autoloaded.current) {
       autoloaded.current = true;
-      loadDemo(autoloadId);
+      import('./utils/demoData.js').then(({ buildDemoFiles }) => {
+        const files = buildDemoFiles(autoloadId);
+        if (files.length > 0) {
+          homeAddFiles([files[0]]);
+        }
+      });
     }
-  }, [autoloadId, loadDemo]);
+  }, [autoloadId, homeAddFiles]);
 
   const { step } = state;
   const scenario = state.scenarioId ? getScenario(state.scenarioId) : null;
