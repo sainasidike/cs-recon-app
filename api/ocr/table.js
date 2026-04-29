@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '未找到文件' });
     }
 
-    const url = 'https://api.textin.com/ai/service/v2/recognize/table/multipage?excel=1';
+    const url = 'https://api.textin.com/ai/service/v2/recognize/table/multipage';
     const resp = await fetch(url, {
       method: 'POST',
       headers: {

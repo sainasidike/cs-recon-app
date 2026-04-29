@@ -244,12 +244,41 @@ export async function parseFile(file) {
   throw new Error(`不支持的文件格式: ${ext}`);
 }
 
+function compressImage(file, maxSize = 1600, quality = 0.8) {
+  return new Promise((resolve) => {
+    if (file.type === 'application/pdf') { resolve(file); return; }
+    if (file.size < 200 * 1024) { resolve(file); return; }
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width <= maxSize && height <= maxSize) { resolve(file); return; }
+      const scale = Math.min(maxSize / width, maxSize / height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 async function parseWithOCR(file) {
   const { ocrTable, aiExtractTable } = await import('./api.js');
 
+  const processedFile = await compressImage(file);
+
   let ocrResult;
   try {
-    ocrResult = await ocrTable(file);
+    ocrResult = await ocrTable(processedFile);
   } catch (e) {
     return {
       fileName: file.name, fileType: file.name.split('.').pop().toLowerCase(),
@@ -297,40 +326,6 @@ async function parseWithOCR(file) {
 
   const allRows = tables.flat();
 
-  let aiResult;
-  try {
-    aiResult = await aiExtractTable({ rows: allRows.slice(0, 50), fileName: file.name });
-  } catch {
-    aiResult = null;
-  }
-
-  if (aiResult?.entries?.length > 0) {
-    const entries = aiResult.entries.map((e, idx) => ({
-      id: `ocr-${idx}`,
-      date: e.date || null,
-      amount: Math.abs(e.debit || e.credit || 0),
-      direction: e.debit ? 'debit' : e.credit ? 'credit' : 'unknown',
-      description: e.description || '',
-      counterparty: e.counterparty || '',
-      balance: e.balance ?? null,
-      reference: '',
-      raw: e,
-    })).filter(e => e.date || e.amount);
-
-    return {
-      fileName: file.name,
-      fileType: file.name.split('.').pop().toLowerCase(),
-      ocrProcessed: true,
-      headers: Object.keys(aiResult.entries[0] || {}),
-      columnMapping: {},
-      entries,
-      totalRows: allRows.length,
-      parsedRows: entries.length,
-      metadata: aiResult.metadata || {},
-      aiDocType: aiResult.docType || 'unknown',
-    };
-  }
-
   let headerRowIdx = 0;
   for (let i = 0; i < Math.min(10, allRows.length); i++) {
     const row = allRows[i];
@@ -365,12 +360,55 @@ async function parseWithOCR(file) {
     };
   }).filter(e => e.date || e.amount);
 
+  if (entries.length > 0) {
+    return {
+      fileName: file.name,
+      fileType: file.name.split('.').pop().toLowerCase(),
+      ocrProcessed: true,
+      headers, columnMapping: colMap,
+      entries, totalRows: dataRows.length, parsedRows: entries.length,
+    };
+  }
+
+  let aiResult;
+  try {
+    aiResult = await aiExtractTable({ rows: allRows.slice(0, 50), fileName: file.name });
+  } catch {
+    aiResult = null;
+  }
+
+  if (aiResult?.entries?.length > 0) {
+    const aiEntries = aiResult.entries.map((e, idx) => ({
+      id: `ocr-${idx}`,
+      date: e.date || null,
+      amount: Math.abs(e.debit || e.credit || 0),
+      direction: e.debit ? 'debit' : e.credit ? 'credit' : 'unknown',
+      description: e.description || '',
+      counterparty: e.counterparty || '',
+      balance: e.balance ?? null,
+      reference: '',
+      raw: e,
+    })).filter(e => e.date || e.amount);
+
+    return {
+      fileName: file.name,
+      fileType: file.name.split('.').pop().toLowerCase(),
+      ocrProcessed: true,
+      headers: Object.keys(aiResult.entries[0] || {}),
+      columnMapping: {},
+      entries: aiEntries,
+      totalRows: allRows.length,
+      parsedRows: aiEntries.length,
+      aiDocType: aiResult.docType || 'unknown',
+    };
+  }
+
   return {
     fileName: file.name,
     fileType: file.name.split('.').pop().toLowerCase(),
     ocrProcessed: true,
     headers, columnMapping: colMap,
-    entries, totalRows: dataRows.length, parsedRows: entries.length,
+    entries: [], totalRows: dataRows.length, parsedRows: 0,
   };
 }
 
