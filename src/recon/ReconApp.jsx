@@ -55,10 +55,12 @@ export default function ReconApp() {
     try { return JSON.parse(localStorage.getItem('rc-history') || '[]'); } catch { return []; }
   });
   const [docs, setDocs] = useState([]);
+  const [flowMode, setFlowMode] = useState('recon');
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const docsInputRef = useRef(null);
   const docsCameraRef = useRef(null);
+  const scanCameraRef = useRef(null);
 
   const stepIdx = PIPELINE.findIndex(s => s.key === step);
 
@@ -119,9 +121,14 @@ export default function ReconApp() {
         processedUrl: results[i].processedUrl,
       }));
       setDocs(prev => [...prev, ...newDocs]);
-      setStep('docs');
+      if (flowMode === 'scan') {
+        setProcessedUrls(results.map(r => r.processedUrl));
+        setStep('list');
+      } else {
+        setStep('docs');
+      }
     });
-  }, [files, previewUrls, cropBoxes, selectedFilter]);
+  }, [files, previewUrls, cropBoxes, selectedFilter, flowMode]);
 
   const handleRemoveDoc = useCallback((id) => {
     setDocs(prev => prev.filter(d => d.id !== id));
@@ -246,7 +253,7 @@ export default function ReconApp() {
               <span className="rc-tb-card-name">二维码</span>
               <div className="rc-tb-card-icon">📱</div>
             </div>
-            <div className="rc-tb-card rc-tb-card-highlight" onClick={() => setStep('home')}>
+            <div className="rc-tb-card rc-tb-card-highlight" onClick={() => { setFlowMode('recon'); setStep('home'); }}>
               <span className="rc-tb-card-name">财务对账</span>
               <div className="rc-tb-card-icon">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5">
@@ -298,7 +305,7 @@ export default function ReconApp() {
           <div className="rc-tb-tabbar">
             <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>首页</span></div>
             <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>全部文档</span></div>
-            <div className="rc-tb-tabbar-camera" onClick={() => cameraInputRef.current?.click()}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+            <div className="rc-tb-tabbar-camera" onClick={() => { setFlowMode('scan'); scanCameraRef.current?.click(); }}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
             <div className="rc-tb-tabbar-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>工具箱</span></div>
             <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>我的</span></div>
           </div>
@@ -306,7 +313,7 @@ export default function ReconApp() {
       )}
 
       {/* Pipeline Progress */}
-      {step !== 'home' && step !== 'toolbox' && step !== 'list' && (
+      {step !== 'home' && step !== 'toolbox' && step !== 'list' && flowMode === 'recon' && (
         <div className="rc-pipeline">
           {PIPELINE.map((s, i) => (
             <div key={s.key} className={`rc-pip-step ${i < stepIdx ? 'done' : ''} ${i === stepIdx ? 'active' : ''}`}>
@@ -410,7 +417,7 @@ export default function ReconApp() {
         <div className="rc-edit">
           {/* Top bar */}
           <div className="rc-edit-topbar">
-            <button className="rc-edit-back" onClick={() => setStep(docs.length > 0 ? 'docs' : 'home')}>
+            <button className="rc-edit-back" onClick={() => setStep(flowMode === 'scan' ? 'toolbox' : docs.length > 0 ? 'docs' : 'home')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div className="rc-edit-title">{files[currentFileIdx]?.name || '扫描全能王'}</div>
@@ -781,8 +788,58 @@ export default function ReconApp() {
           </div>
         </div>
       )}
-      {/* LIST — Balance Reconciliation Sheet (spreadsheet view) */}
-      {step === 'list' && matchResults && (() => {
+      {/* LIST — Document view (scan) or Balance Reconciliation Sheet (recon) */}
+      {step === 'list' && flowMode === 'scan' && (
+        <div className="rc-list">
+          <div className="rc-list-topbar">
+            <button className="rc-list-back" onClick={() => { setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div className="rc-list-title">{files[0]?.name || '扫描文档'}</div>
+            <div style={{ width: 20 }} />
+          </div>
+
+          <div className="rc-list-tabs">
+            {docs.map((doc, i) => (
+              <button key={doc.id} className={`rc-list-tab${i === 0 ? ' active' : ''}`}>
+                {doc.name.length > 8 ? doc.name.slice(0, 8) + '...' : doc.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="rc-list-sheet" style={{ padding: 0 }}>
+            {docs.map(doc => {
+              const imgSrc = doc.processedUrl || doc.previewUrl;
+              return imgSrc ? (
+                <img key={doc.id} src={imgSrc} alt={doc.name} style={{ width: '100%', display: 'block' }} />
+              ) : (
+                <div key={doc.id} className="rc-doc-placeholder" style={{ padding: '40px 20px' }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span>{doc.name}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="rc-list-bottom">
+            <button className="rc-list-action" onClick={() => { setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              <span>在电脑上编辑</span>
+            </button>
+            <button className="rc-list-action">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h4"/></svg>
+              <span>另存为 PDF</span>
+            </button>
+            <button className="rc-list-action">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              <span>更多</span>
+            </button>
+            <button className="rc-list-export">导出文档</button>
+          </div>
+        </div>
+      )}
+
+      {step === 'list' && flowMode === 'recon' && matchResults && (() => {
         const bankAdj = COMPANY_INFO.closingBalance
           + matchResults.unmatchedLedger.filter(l => l.credit).reduce((s, l) => s + l.credit, 0)
           - matchResults.unmatchedLedger.filter(l => l.debit).reduce((s, l) => s + l.debit, 0);
@@ -877,6 +934,8 @@ export default function ReconApp() {
       <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf,.xlsx,.xls,.csv" style={{ display: 'none' }}
         onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
       <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+        onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
+      <input ref={scanCameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
         onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
     </div>
   );
