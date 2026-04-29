@@ -46,6 +46,8 @@ body {
   font-size: 14px;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
+  max-width: 430px;
+  margin: 0 auto;
 }
 
 input, textarea, select, button {
