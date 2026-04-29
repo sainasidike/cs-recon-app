@@ -50,7 +50,7 @@ export default function ReconApp() {
   const [confirmed, setConfirmed] = useState({});
   const [rejected, setRejected] = useState({});
   const [activeResultTab, setActiveResultTab] = useState('exact');
-  const [docExpanded, setDocExpanded] = useState(false);
+  const [docExpanded, setDocExpanded] = useState({ bank: false, ledger: false });
   const [history, setHistory] = useState(() => {
     try { return JSON.parse(localStorage.getItem('rc-history') || '[]'); } catch { return []; }
   });
@@ -604,51 +604,54 @@ export default function ReconApp() {
       {/* RESULTS */}
       {step === 'results' && matchResults && (
         <div className="rc-section">
-          {/* Original documents — collapsible */}
-          <div className="rc-doc-full">
-            <div className="rc-doc-full-header" onClick={() => setDocExpanded(!docExpanded)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--rc-text3)" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <span>{files[0]?.name || '银行对账单_锦鲤餐饮_202604.xlsx'}</span>
-              <svg className={`rc-doc-full-arrow${docExpanded ? ' open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--rc-text3)" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-            {docExpanded && (
-              <>
-                {(processedUrls[0] || previewUrls[0]) ? (
-                  <img src={processedUrls[0] || previewUrls[0]} alt="" className="rc-doc-full-img" />
-                ) : (
-                  <div className="rc-doc-full-table-wrap">
-                    <table className="rc-doc-full-table">
-                      <thead>
-                        <tr><th>#</th><th>日期</th><th>摘要</th><th>对方</th><th style={{ textAlign: 'right' }}>支出</th><th style={{ textAlign: 'right' }}>收入</th><th style={{ textAlign: 'right' }}>余额</th></tr>
-                      </thead>
-                      <tbody>
-                        {BANK_DATA.map((r, i) => (
-                          <tr key={r.id}>
-                            <td className="rc-dft-idx">{i + 1}</td>
-                            <td className="rc-dft-date">{r.date}</td>
-                            <td className="rc-dft-desc">{r.desc}</td>
-                            <td className="rc-dft-desc">{r.payee}</td>
-                            <td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{r.out ? fmt(r.out) : ''}</td>
-                            <td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{r.income ? fmt(r.income) : ''}</td>
-                            <td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(r.balance)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr>
-                          <td colSpan={3}>合计 {BANK_DATA.length} 笔</td>
-                          <td></td>
-                          <td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(BANK_TOTAL_OUT)}</td>
-                          <td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(BANK_TOTAL_IN)}</td>
-                          <td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(COMPANY_INFO.closingBalance)}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
+          {/* Documents — collapsible, one card per doc */}
+          {(docs.length > 0 ? docs : [
+            { id: 'demo-bank', name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'bank' },
+            { id: 'demo-ledger', name: '企业账簿_锦鲤餐饮_202604.xlsx', type: 'ledger' },
+          ]).map(doc => {
+            const expanded = !!docExpanded[doc.id];
+            const badgeColor = DOC_TYPE_COLOR[doc.type] || '#999';
+            const data = doc.type === 'bank' ? BANK_DATA : doc.type === 'ledger' ? LEDGER_DATA : null;
+            const imgSrc = doc.processedUrl || doc.previewUrl || null;
+            return (
+              <div key={doc.id} className="rc-doc-full">
+                <div className="rc-doc-full-header" onClick={() => setDocExpanded(prev => ({ ...prev, [doc.id]: !prev[doc.id] }))}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={badgeColor} strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span className={`rc-doc-full-badge ${doc.type}`}>{DOC_TYPE_LABEL[doc.type] || '文档'}</span>
+                  <span>{doc.name}</span>
+                  <svg className={`rc-doc-full-arrow${expanded ? ' open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--rc-text3)" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                {expanded && (
+                  <>
+                    {imgSrc ? (
+                      <img src={imgSrc} alt="" className="rc-doc-full-img" />
+                    ) : data && doc.type === 'bank' ? (
+                      <div className="rc-doc-full-table-wrap">
+                        <table className="rc-doc-full-table">
+                          <thead><tr><th>#</th><th>日期</th><th>摘要</th><th>对方</th><th style={{ textAlign: 'right' }}>支出</th><th style={{ textAlign: 'right' }}>收入</th><th style={{ textAlign: 'right' }}>余额</th></tr></thead>
+                          <tbody>{data.map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{r.desc}</td><td className="rc-dft-desc">{r.payee}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{r.out ? fmt(r.out) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{r.income ? fmt(r.income) : ''}</td><td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(r.balance)}</td></tr>))}</tbody>
+                          <tfoot><tr><td colSpan={3}>合计 {data.length} 笔</td><td></td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(BANK_TOTAL_OUT)}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(BANK_TOTAL_IN)}</td><td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(COMPANY_INFO.closingBalance)}</td></tr></tfoot>
+                        </table>
+                      </div>
+                    ) : data && doc.type === 'ledger' ? (
+                      <div className="rc-doc-full-table-wrap">
+                        <table className="rc-doc-full-table">
+                          <thead><tr><th>#</th><th>日期</th><th>摘要</th><th>对方</th><th style={{ textAlign: 'right' }}>借方</th><th style={{ textAlign: 'right' }}>贷方</th><th>凭证号</th></tr></thead>
+                          <tbody>{data.map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{r.desc}</td><td className="rc-dft-desc">{r.payee}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{r.debit ? fmt(r.debit) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{r.credit ? fmt(r.credit) : ''}</td><td className="rc-dft-date">{r.voucher}</td></tr>))}</tbody>
+                          <tfoot><tr><td colSpan={3}>合计 {data.length} 笔</td><td></td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(LEDGER_TOTAL_DEBIT)}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(LEDGER_TOTAL_CREDIT)}</td><td></td></tr></tfoot>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="rc-doc-placeholder" style={{ padding: '20px' }}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>{doc.name}</span>
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </div>
+              </div>
+            );
+          })}
 
           <button className="rc-results-upload" onClick={() => fileInputRef.current?.click()}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>

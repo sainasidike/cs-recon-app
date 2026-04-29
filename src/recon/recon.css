@@ -300,6 +300,16 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.rc-doc-full-badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.rc-doc-full-badge.bank { background: rgba(74, 144, 217, 0.12); color: #3574b5; }
+.rc-doc-full-badge.ledger { background: rgba(245, 166, 35, 0.12); color: #d48806; }
+.rc-doc-full-badge.unknown { background: rgba(153, 153, 153, 0.12); color: #666; }
 .rc-doc-full-arrow {
   flex-shrink: 0;
   transition: transform 0.2s;
