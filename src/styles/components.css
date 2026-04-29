@@ -2129,26 +2129,104 @@
 /* ===== Embed Mode ===== */
 .embed-layout {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 .embed-content {
-  padding: 24px 28px;
+  flex: 1;
+  padding: 16px 20px 80px;
   max-width: 100%;
-  min-height: 100vh;
+  overflow-y: auto;
 }
 .embed-content .home-header {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 .embed-content .home-title {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+.embed-content .home-desc {
+  font-size: 0.8rem;
 }
 .embed-content .cs-home-section {
-  margin-top: 24px;
+  margin-top: 20px;
 }
 .embed-content .cs-home-demo-grid {
   display: none;
 }
+.embed-content .cs-upload-zone {
+  padding: 32px 24px;
+  margin-bottom: 14px;
+}
+.embed-content .cs-upload-zone-compact {
+  padding: 14px 12px;
+}
+.embed-content .cs-upload-zone-icon {
+  width: 40px;
+  height: 40px;
+}
+.embed-content .cs-upload-zone-title {
+  font-size: 13px;
+}
+.embed-content .cs-file-item {
+  padding: 10px 12px;
+}
+.embed-content .cs-file-thumb {
+  width: 40px;
+  height: 40px;
+}
+.embed-content .cs-file-name {
+  font-size: 13px;
+}
+.embed-content .card {
+  margin-top: 12px;
+}
+.embed-content .card-header {
+  padding: 12px 16px;
+  font-size: 0.7rem;
+}
+.embed-content .card-body {
+  padding: 12px 16px;
+}
 .embed-content .cs-bottom-bar {
+  position: sticky;
+  bottom: 0;
   left: 0;
+  right: 0;
+  width: 100%;
+  padding: 12px 20px;
+  margin-top: auto;
+}
+.embed-content .cs-home-scenario-bar {
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.embed-content .cs-home-scenario-icon {
+  font-size: 20px;
+}
+.embed-content .cs-home-scenario-name {
+  font-size: 13px;
+}
+.embed-content .cs-home-scenario-desc {
+  font-size: 11px;
+}
+.embed-content .pc-page-header {
+  margin-bottom: 20px;
+}
+.embed-content .pc-page-title {
+  font-size: 1rem;
+}
+.embed-content .confirm-layout {
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+}
+.embed-content .results-layout {
+  grid-template-columns: 1fr 260px;
+  gap: 20px;
+}
+.embed-content .recon-layout {
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
 @media (max-width: 768px) {
