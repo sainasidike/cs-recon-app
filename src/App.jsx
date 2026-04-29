@@ -8,6 +8,7 @@ import ConfirmPage from './pages/ConfirmPage';
 import ResultsPage from './pages/ResultsPage';
 import ReconciliationPage from './pages/ReconciliationPage';
 import CompletePage from './pages/CompletePage';
+import HistoryListPage from './pages/HistoryListPage';
 import { getScenario } from './utils/scenarios';
 import './styles/theme.css';
 import './styles/components.css';
@@ -150,7 +151,16 @@ function AppInner() {
           onApprove={approveReport}
           onReject={rejectReport}
           onBack={() => goToStep('results')}
-          onNext={() => { archiveReport(); reset(); }}
+          onNext={() => { archiveReport(); goToStep('historyList'); }}
+        />
+      );
+    }
+
+    if (step === 'historyList') {
+      return (
+        <HistoryListPage
+          onLoadHistory={loadHistory}
+          onNewRecon={reset}
         />
       );
     }

@@ -334,7 +334,7 @@ export default function ReconciliationPage({ scenario, reconciliation, matchResu
 
       <div className="btn-row" style={{ marginTop: 24 }}>
         <button className="btn-pc-outline" onClick={handleExportExcel}>导出 Excel</button>
-        <button className="btn-pc-primary" onClick={onNext}>完成对账</button>
+        <button className="btn-pc-primary" onClick={onNext}>保存结果</button>
       </div>
     </div>
   );
