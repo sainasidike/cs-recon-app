@@ -359,23 +359,25 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
           onDrop={handleDrop}
         >
           <div className="cs-tool-upload-icon">
-            <svg width="64" height="64" viewBox="0 0 80 80" fill="none">
-              <rect x="16" y="8" width="48" height="64" rx="4" fill="#fff" stroke="#d0d5dd" strokeWidth="1.5"/>
-              <path d="M26 24h28M26 32h28M26 40h20" stroke="#d0d5dd" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M52 4h8v8" stroke="#d0d5dd" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M36 56l4-5 4 5" stroke="#999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="40" y1="51" x2="40" y2="62" stroke="#999" strokeWidth="1.5" strokeLinecap="round"/>
+            <svg width="80" height="100" viewBox="0 0 80 100" fill="none">
+              <rect x="12" y="10" width="50" height="65" rx="3" fill="#fff" stroke="#ccc" strokeWidth="1"/>
+              <rect x="18" y="6" width="50" height="65" rx="3" fill="#fff" stroke="#ccc" strokeWidth="1"/>
+              <path d="M28 30h30M28 38h30M28 46h20M28 54h25" stroke="#ddd" strokeWidth="1.5" strokeLinecap="round"/>
+              <rect x="24" y="2" width="50" height="65" rx="3" fill="#fff" stroke="#bbb" strokeWidth="1.2" strokeDasharray="3 2"/>
+              <path d="M38 30h20M38 38h18M38 46h12" stroke="#ccc" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
           </div>
-          <button className="cs-upload-btn-primary" onClick={() => fileInputRef.current?.click()}>
-            选择本地图片
-          </button>
-          <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
-            选择本地文档
-          </button>
-          <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
-            选择扫描全能王账号内文档
-          </button>
+          <div className="cs-tool-upload-btns">
+            <button className="cs-upload-btn-primary" onClick={() => fileInputRef.current?.click()}>
+              选择本地图片
+            </button>
+            <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
+              选择本地文档
+            </button>
+            <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
+              选择扫描全能王账号内文档
+            </button>
+          </div>
           <div className="cs-upload-zone-drag-hint">或拖拽文档至此</div>
           <input
             ref={fileInputRef}

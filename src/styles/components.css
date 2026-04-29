@@ -279,33 +279,31 @@
   margin-bottom: 8px;
 }
 .cs-upload-btn-primary {
-  width: 280px;
-  max-width: 100%;
-  padding: 14px 24px;
+  padding: 12px 28px;
   border-radius: 99px;
   background: #00c4a1;
   color: #fff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   border: none;
   cursor: pointer;
   transition: background 0.2s;
+  white-space: nowrap;
 }
 .cs-upload-btn-primary:hover {
   background: #00b894;
 }
 .cs-upload-btn-outline {
-  width: 280px;
-  max-width: 100%;
-  padding: 12px 24px;
+  padding: 11px 24px;
   border-radius: 99px;
   background: #fff;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   border: 1px solid #e0e0e0;
   cursor: pointer;
   transition: border-color 0.2s;
+  white-space: nowrap;
 }
 .cs-upload-btn-outline:hover {
   border-color: #00c4a1;
@@ -313,8 +311,8 @@
 }
 .cs-upload-zone-drag-hint {
   font-size: 13px;
-  color: var(--text-tertiary);
-  margin-top: 4px;
+  color: #bbb;
+  margin-top: 8px;
 }
 .cs-upload-zone-icon {
   width: 56px;
@@ -2566,10 +2564,11 @@
 }
 .cs-tool-body {
   display: grid;
-  grid-template-columns: 5fr 7fr;
-  gap: 24px;
-  align-items: start;
+  grid-template-columns: 28% 1fr;
+  gap: 32px;
+  align-items: stretch;
   margin-bottom: 24px;
+  min-height: 480px;
 }
 .cs-tool-preview {
   display: flex;
@@ -2580,13 +2579,13 @@
 }
 .cs-tool-preview-doc {
   background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-  padding: 12px 14px;
+  border-radius: 3px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+  padding: 10px 12px;
   width: 100%;
-  max-width: 300px;
+  max-width: 260px;
   position: relative;
-  transform: rotate(-2deg);
+  transform: rotate(-1.5deg);
 }
 .cs-tool-preview-badge {
   position: absolute;
@@ -2596,26 +2595,26 @@
   color: #fff;
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 4px;
   z-index: 1;
 }
 .cs-tool-preview-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 10px;
+  font-size: 9px;
 }
 .cs-tool-preview-table th,
 .cs-tool-preview-table td {
-  padding: 4px 6px;
-  border: 0.5px solid #e0e0e0;
+  padding: 3px 5px;
+  border: 0.5px solid #e8e8e8;
   text-align: left;
 }
 .cs-tool-preview-table th {
   background: #f5f5f5;
   font-weight: 600;
   color: #555;
-  font-size: 9.5px;
+  font-size: 8.5px;
 }
 .cs-tool-preview-table td.out { color: #e53935; }
 .cs-tool-preview-table td.in { color: #00c4a1; }
@@ -2624,9 +2623,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 48px 32px;
-  border: 2px dashed #00c4a1;
+  gap: 24px;
+  padding: 60px 40px;
+  border: 1.5px dashed #00c4a1;
   border-radius: 12px;
   background: #fff;
   transition: all 0.2s;
@@ -2636,7 +2635,14 @@
   border-color: #00b894;
 }
 .cs-tool-upload-icon {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+}
+.cs-tool-upload-btns {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 .cs-tool-footer {
   text-align: center;
