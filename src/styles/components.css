@@ -2564,9 +2564,10 @@
 }
 .cs-tool-body {
   display: grid;
-  grid-template-columns: 28% 1fr;
+  grid-template-columns: 28% 58%;
   gap: 32px;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 24px;
 }
 .cs-tool-preview {
