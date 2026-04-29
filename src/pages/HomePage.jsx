@@ -156,6 +156,9 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
                 </svg>
               </div>
               <button className="cs-upload-btn-primary" onClick={() => fileInputRef.current?.click()}>
+                选择本地图片
+              </button>
+              <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
                 选择本地文档
               </button>
               <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
