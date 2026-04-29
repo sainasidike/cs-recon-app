@@ -306,7 +306,7 @@ export default function ReconApp() {
       )}
 
       {/* Pipeline Progress */}
-      {step !== 'home' && step !== 'toolbox' && (
+      {step !== 'home' && step !== 'toolbox' && step !== 'list' && (
         <div className="rc-pipeline">
           {PIPELINE.map((s, i) => (
             <div key={s.key} className={`rc-pip-step ${i < stepIdx ? 'done' : ''} ${i === stepIdx ? 'active' : ''}`}>
@@ -749,10 +749,120 @@ export default function ReconApp() {
           </div>
           <div className="rc-bottom">
             <button className="rc-btn-secondary" onClick={() => setStep('results')}>返回</button>
-            <button className="rc-btn-primary" onClick={handleFinish}>完成对账</button>
+            <button className="rc-btn-primary" onClick={() => {
+              if (matchResults) {
+                const record = {
+                  id: Date.now(),
+                  company: COMPANY_INFO.name,
+                  period: COMPANY_INFO.period,
+                  matchRate: matchResults.matchRate,
+                  matchedCount: matchResults.matchedCount,
+                  unmatchedCount: matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length,
+                  totalCount: BANK_DATA.length + LEDGER_DATA.length,
+                  time: new Date().toLocaleString('zh-CN'),
+                };
+                const next = [record, ...history].slice(0, 20);
+                setHistory(next);
+                try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
+              }
+              setStep('list');
+            }}>保存结果</button>
           </div>
         </div>
       )}
+      {/* LIST — Balance Reconciliation Sheet (spreadsheet view) */}
+      {step === 'list' && matchResults && (() => {
+        const bankAdj = COMPANY_INFO.closingBalance
+          + matchResults.unmatchedLedger.filter(l => l.credit).reduce((s, l) => s + l.credit, 0)
+          - matchResults.unmatchedLedger.filter(l => l.debit).reduce((s, l) => s + l.debit, 0);
+        const ledgerBalance = COMPANY_INFO.openingBalance - LEDGER_TOTAL_DEBIT + LEDGER_TOTAL_CREDIT;
+        const ledgerAdj = ledgerBalance
+          + matchResults.unmatchedBank.filter(b => b.income).reduce((s, b) => s + b.income, 0)
+          - matchResults.unmatchedBank.filter(b => b.out).reduce((s, b) => s + b.out, 0);
+        const balanced = Math.abs(bankAdj - ledgerAdj) < 0.01;
+        const now = new Date();
+        const genTime = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+        return (
+          <div className="rc-list">
+            <div className="rc-list-topbar">
+              <button className="rc-list-back" onClick={handleFinish}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <div className="rc-list-title">银行余额调节表</div>
+              <div style={{ width: 20 }} />
+            </div>
+
+            <div className="rc-list-tabs">
+              <button className="rc-list-tab active">Sheet1</button>
+              <button className="rc-list-tab">Sheet2</button>
+              <button className="rc-list-tab">Sheet3</button>
+            </div>
+
+            <div className="rc-list-sheet">
+              <table className="rc-list-table">
+                <tbody>
+                  <tr><td colSpan={3} className="rc-lt-title">银行余额调节表</td></tr>
+                  <tr><td colSpan={3} className="rc-lt-meta">对账期间: {COMPANY_INFO.periodStart} ~ {COMPANY_INFO.periodEnd}</td></tr>
+                  <tr><td colSpan={3} className="rc-lt-meta">生成时间: {genTime}</td></tr>
+                  <tr><td colSpan={3} className="rc-lt-blank"></td></tr>
+
+                  <tr><td colSpan={3} className="rc-lt-section">一、对账摘要</td></tr>
+                  <tr className="rc-lt-header"><td className="rc-lt-bold">项目</td><td className="rc-lt-right">笔数</td><td className="rc-lt-right">占比</td></tr>
+                  <tr><td>精确匹配</td><td className="rc-lt-right">{matchResults.exact.length}</td><td className="rc-lt-right">{((matchResults.exact.length / (BANK_DATA.length + LEDGER_DATA.length)) * 100).toFixed(1)}%</td></tr>
+                  <tr><td>模糊匹配</td><td className="rc-lt-right">{matchResults.fuzzy.length}</td><td className="rc-lt-right">{((matchResults.fuzzy.length / (BANK_DATA.length + LEDGER_DATA.length)) * 100).toFixed(1)}%</td></tr>
+                  <tr><td>语义匹配</td><td className="rc-lt-right">{matchResults.semantic.length}</td><td className="rc-lt-right"></td></tr>
+                  <tr><td>未匹配(银行)</td><td className="rc-lt-right">{matchResults.unmatchedBank.length}</td><td className="rc-lt-right"></td></tr>
+                  <tr><td>未匹配(企业)</td><td className="rc-lt-right">{matchResults.unmatchedLedger.length}</td><td className="rc-lt-right"></td></tr>
+                  <tr className="rc-lt-bold-row"><td>银行总笔数</td><td className="rc-lt-right">{BANK_DATA.length}</td><td></td></tr>
+                  <tr className="rc-lt-bold-row"><td>企业总笔数</td><td className="rc-lt-right">{LEDGER_DATA.length}</td><td></td></tr>
+
+                  <tr><td colSpan={3} className="rc-lt-section">二、银行调节</td></tr>
+                  <tr className="rc-lt-bold-row"><td>银行余额</td><td></td><td className="rc-lt-right">{fmt(COMPANY_INFO.closingBalance)}</td></tr>
+                  {matchResults.unmatchedLedger.filter(l => l.credit).map((l, i) => (
+                    <tr key={`ba-${i}`}><td className="rc-lt-indent">加: {l.desc}</td><td></td><td className="rc-lt-right"></td></tr>
+                  ))}
+                  {matchResults.unmatchedLedger.filter(l => l.debit).map((l, i) => (
+                    <tr key={`bs-${i}`}><td className="rc-lt-indent">减: {l.desc}-{fmt(l.debit)}</td><td></td><td className="rc-lt-right"></td></tr>
+                  ))}
+                  <tr className="rc-lt-total-row"><td className="rc-lt-bold">调节后余额</td><td></td><td className="rc-lt-right rc-lt-bold">{fmt(bankAdj)}</td></tr>
+
+                  <tr><td colSpan={3} className="rc-lt-section">三、企业调节</td></tr>
+                  <tr className="rc-lt-bold-row"><td>企业余额</td><td></td><td className="rc-lt-right">{fmt(ledgerBalance)}</td></tr>
+                  {matchResults.unmatchedBank.filter(b => b.income).map((b, i) => (
+                    <tr key={`la-${i}`}><td className="rc-lt-indent">加: {b.desc}{fmt(b.income)}</td><td></td><td className="rc-lt-right">{fmt(b.income)}</td></tr>
+                  ))}
+                  {matchResults.unmatchedBank.filter(b => b.out).map((b, i) => (
+                    <tr key={`ls-${i}`}><td className="rc-lt-indent">减: 银行{b.date}{b.desc}</td><td></td><td className="rc-lt-right">-{fmt(b.out)}</td></tr>
+                  ))}
+                  <tr className="rc-lt-total-row"><td className="rc-lt-bold">调节后余额</td><td></td><td className="rc-lt-right rc-lt-bold">{fmt(ledgerAdj)}</td></tr>
+
+                  <tr><td colSpan={3} className={`rc-lt-verdict ${balanced ? 'ok' : 'err'}`}>
+                    {balanced ? '✓ 调节后余额一致' : '✗ 调节后余额不一致'}
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="rc-list-bottom">
+              <button className="rc-list-action" onClick={handleFinish}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                <span>在电脑上编辑</span>
+              </button>
+              <button className="rc-list-action">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h4"/></svg>
+                <span>另存为 PDF</span>
+              </button>
+              <button className="rc-list-action">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                <span>更多</span>
+              </button>
+              <button className="rc-list-export">导出文档</button>
+            </div>
+          </div>
+        );
+      })()}
+
       <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf,.xlsx,.xls,.csv" style={{ display: 'none' }}
         onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
       <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
