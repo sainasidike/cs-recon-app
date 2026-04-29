@@ -195,7 +195,11 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
                 const isExcel = ['xlsx', 'xls', 'csv'].includes(ext);
                 const isPdf = ext === 'pdf';
                 return (
-                  <div key={i} className="cs-file-item">
+                  <div key={i} className="cs-file-item" onClick={() => {
+                    if (window.parent !== window) {
+                      window.parent.postMessage({ type: 'recon-open-file', file: { name: pf.file.name, headers: pf.parsed.headers || [], entries: (pf.parsed.entries || []).slice(0, 100), role: pf.assignedRole } }, '*');
+                    }
+                  }} style={window.parent !== window ? { cursor: 'pointer' } : undefined}>
                     <div className={`cs-file-thumb ${isExcel ? 'excel' : isPdf ? 'pdf' : 'img'}`}>
                       {isExcel && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#217346"/><path d="M7 7h4v3H7zm0 4h4v3H7zm0 4h4v2H7zm5-8h5v3h-5zm0 4h5v3h-5zm0 4h5v2h-5z" fill="rgba(255,255,255,0.8)"/></svg>}
                       {isPdf && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="2" width="18" height="20" rx="2" fill="#E53935"/><path d="M8 8h8M8 11h8M8 14h5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5"/></svg>}

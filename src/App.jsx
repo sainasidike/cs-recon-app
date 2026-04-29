@@ -47,17 +47,6 @@ function AppInner() {
 
   useEffect(() => {
     if (!isEmbed) return;
-    const files = state.parsedFiles.map(pf => ({
-      name: pf.file.name,
-      headers: pf.parsed.headers || [],
-      entries: (pf.parsed.entries || []).slice(0, 50),
-      role: pf.assignedRole,
-    }));
-    window.parent.postMessage({ type: 'recon-files', files }, '*');
-  }, [isEmbed, state.parsedFiles]);
-
-  useEffect(() => {
-    if (!isEmbed) return;
     window.parent.postMessage({ type: 'recon-step', step }, '*');
   }, [isEmbed, step]);
 
