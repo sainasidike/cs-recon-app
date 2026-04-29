@@ -73,7 +73,7 @@ function AppInner() {
           onConfirmData={confirmData}
           onLoadHistory={loadHistory}
           onUpdateMapping={updateMapping}
-          onBackToToolbox={() => { reset(); setShowToolbox(true); }}
+          onBackToToolbox={isEmbed ? undefined : () => { reset(); setShowToolbox(true); }}
         />
       );
     }

@@ -423,15 +423,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans
       <div class="cs-recon-split-header">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#00c4a1"/><path d="M8 12h8M12 8v8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
         <span>财务对账</span>
-        <div style="margin-left:auto;display:flex;gap:8px;">
-          <button class="cs-recon-header-btn" id="btnDownloadResult">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </button>
-          <button class="cs-recon-header-btn primary" id="btnOpenResult">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            打开
-          </button>
-        </div>
       </div>
       <iframe id="reconIframe" style="flex:1;width:100%;border:none;" src="about:blank"></iframe>
     </div>
@@ -573,10 +564,6 @@ tabs.forEach(function(tab) {
   });
 });
 
-// 打开按钮 - 新窗口打开对账
-document.getElementById('btnOpenResult').addEventListener('click', function() {
-  window.open('https://cs-pc-reconciliation.vercel.app/?autoload=bank_jinli', '_blank');
-});
 
 // 监听对账 iframe 消息
 window.addEventListener('message', function(e) {
@@ -587,7 +574,176 @@ window.addEventListener('message', function(e) {
     if (!file) return;
     renderFileInLeftPanel(file);
   }
+
+  if (e.data.type === 'recon-save-result') {
+    showReconciliationReport(e.data);
+  }
 });
+
+// 保存结果后：切回阅读模式，显示余额调节表文档
+function showReconciliationReport(data) {
+  // 切回阅读模式
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  tabs[0].classList.add('active');
+  readMode.style.display = 'flex';
+  reconMode.style.display = 'none';
+  viewbar.style.display = 'flex';
+  readerFooter.style.display = 'flex';
+
+  // 渲染余额调节表到文档区域
+  var paper = document.getElementById('paper');
+  paper.innerHTML = renderReconReport(data);
+
+  // 更新缩略图
+  document.getElementById('thumbs').innerHTML =
+    '<div class="cs-reader-thumb active"><div style="font-size:9px;color:#999;">调节表</div><div class="cs-reader-thumb-label">1</div></div>' +
+    '<div class="cs-reader-thumb"><div style="font-size:9px;color:#999;">明细</div><div class="cs-reader-thumb-label">2</div></div>';
+  document.getElementById('pageInfo').textContent = '1 / 2';
+}
+
+function renderReconReport(data) {
+  var recon = data.reconciliation;
+  var scenario = data.scenario;
+  var matchResults = data.matchResults;
+  var periodStart = data.periodStart;
+  var periodEnd = data.periodEnd;
+  if (!recon) return '<p style="text-align:center;color:#999;padding:60px;">暂无数据</p>';
+
+  var sideALabel = (scenario && scenario.sideA && scenario.sideA.shortLabel) || 'A方';
+  var sideBLabel = (scenario && scenario.sideB && scenario.sideB.shortLabel) || 'B方';
+  var reportTitle = (scenario && scenario.reportTitle) || '余额调节表';
+  var period = (periodStart && periodEnd) ? (periodStart + ' ~ ' + periodEnd) : new Date().toISOString().slice(0, 7);
+  var now = new Date().toLocaleString('zh-CN');
+  var isBalanced = recon.isBalanced;
+  var useBalanceMode = recon.useBalanceMode;
+
+  var html = '';
+  html += '<div class="doc-title">' + escapeHtml(reportTitle) + '</div>';
+  html += '<div style="text-align:center;font-size:12px;color:#999;margin-bottom:28px;">对账期间：' + escapeHtml(period) + ' &nbsp;|&nbsp; 生成时间：' + escapeHtml(now) + '</div>';
+
+  // 结论横幅
+  html += '<div style="text-align:center;padding:24px;margin-bottom:28px;border-radius:12px;border:1px solid ' + (isBalanced ? '#d1fae5' : '#fecaca') + ';background:' + (isBalanced ? '#f0fdf9' : '#fef2f2') + ';">';
+  html += '<div style="font-size:28px;margin-bottom:8px;">' + (isBalanced ? '✓' : '✕') + '</div>';
+  if (useBalanceMode) {
+    html += '<div style="font-size:15px;color:#333;font-weight:600;">' + (isBalanced ? '调节后余额一致' : '调节后余额不一致') + '</div>';
+    html += '<div style="font-size:22px;font-weight:300;color:' + (isBalanced ? '#00c4a1' : '#e53935') + ';margin-top:6px;">¥ ' + fmt(recon.sideAAdjusted) + '</div>';
+    if (!isBalanced) {
+      html += '<div style="font-size:12px;color:#e53935;margin-top:6px;">差额：¥ ' + fmt(Math.abs(recon.sideAAdjusted - recon.sideBAdjusted)) + '</div>';
+    }
+  } else {
+    html += '<div style="font-size:15px;color:#333;font-weight:600;">' + (isBalanced ? '全部单据匹配成功' : '存在未匹配单据') + '</div>';
+    html += '<div style="font-size:22px;font-weight:300;color:' + (isBalanced ? '#00c4a1' : '#e53935') + ';margin-top:6px;">匹配率 ' + (recon.matchRate || 0).toFixed(1) + '%</div>';
+    html += '<div style="font-size:12px;color:#666;margin-top:6px;">匹配金额合计：¥ ' + fmt(recon.matchedAmount) + '</div>';
+  }
+  html += '</div>';
+
+  if (useBalanceMode) {
+    // A方调节
+    html += '<div style="font-size:14px;font-weight:700;color:#333;margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0;">' + escapeHtml(sideALabel) + ' 对账单</div>';
+    html += '<table class="doc-table">';
+    html += '<thead><tr><th style="width:60%">项目</th><th style="text-align:right;">金额</th></tr></thead>';
+    html += '<tbody>';
+    var balLabel = (scenario && scenario.balanceLabels && scenario.balanceLabels.sideA) || (sideALabel + '余额');
+    html += '<tr><td style="font-weight:600;">' + escapeHtml(balLabel) + '</td><td style="text-align:right;font-weight:600;">¥ ' + fmt(recon.sideABalance) + '</td></tr>';
+    if (recon.sideAAdj && recon.sideAAdj.adds) {
+      recon.sideAAdj.adds.forEach(function(item) {
+        html += '<tr><td class="credit">加：' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</td><td class="credit" style="text-align:right;">+ ¥ ' + fmt(item.amount) + '</td></tr>';
+      });
+    }
+    if (recon.sideAAdj && recon.sideAAdj.subs) {
+      recon.sideAAdj.subs.forEach(function(item) {
+        html += '<tr><td class="debit">减：' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</td><td class="debit" style="text-align:right;">- ¥ ' + fmt(item.amount) + '</td></tr>';
+      });
+    }
+    html += '<tr style="background:#f9fafb;font-weight:700;"><td>调节后余额</td><td style="text-align:right;">¥ ' + fmt(recon.sideAAdjusted) + '</td></tr>';
+    html += '</tbody></table>';
+
+    // B方调节
+    html += '<div style="font-size:14px;font-weight:700;color:#333;margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0;">' + escapeHtml(sideBLabel) + ' 账面</div>';
+    html += '<table class="doc-table">';
+    html += '<thead><tr><th style="width:60%">项目</th><th style="text-align:right;">金额</th></tr></thead>';
+    html += '<tbody>';
+    var balLabelB = (scenario && scenario.balanceLabels && scenario.balanceLabels.sideB) || (sideBLabel + '余额');
+    html += '<tr><td style="font-weight:600;">' + escapeHtml(balLabelB) + '</td><td style="text-align:right;font-weight:600;">¥ ' + fmt(recon.sideBBalance) + '</td></tr>';
+    if (recon.sideBAdj && recon.sideBAdj.adds) {
+      recon.sideBAdj.adds.forEach(function(item) {
+        html += '<tr><td class="credit">加：' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</td><td class="credit" style="text-align:right;">+ ¥ ' + fmt(item.amount) + '</td></tr>';
+      });
+    }
+    if (recon.sideBAdj && recon.sideBAdj.subs) {
+      recon.sideBAdj.subs.forEach(function(item) {
+        html += '<tr><td class="debit">减：' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</td><td class="debit" style="text-align:right;">- ¥ ' + fmt(item.amount) + '</td></tr>';
+      });
+    }
+    html += '<tr style="background:#f9fafb;font-weight:700;"><td>调节后余额</td><td style="text-align:right;">¥ ' + fmt(recon.sideBAdjusted) + '</td></tr>';
+    html += '</tbody></table>';
+  } else {
+    // 匹配模式
+    var ms = recon.matchSummary || {};
+    var matchedCount = (ms.exactCount || 0) + (ms.fuzzyCount || 0) + (ms.semanticCount || 0) + (ms.manyToOneItemCount || 0);
+
+    html += '<div style="font-size:14px;font-weight:700;color:#333;margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0;">匹配汇总</div>';
+    html += '<table class="doc-table">';
+    html += '<thead><tr><th>项目</th><th style="text-align:right;">数值</th></tr></thead>';
+    html += '<tbody>';
+    html += '<tr><td>匹配笔数</td><td style="text-align:right;">' + matchedCount + ' 笔</td></tr>';
+    html += '<tr><td>匹配金额</td><td style="text-align:right;">¥ ' + fmt(recon.matchedAmount) + '</td></tr>';
+    html += '<tr><td>精确匹配</td><td style="text-align:right;">' + (ms.exactCount || 0) + ' 笔</td></tr>';
+    if (ms.fuzzyCount) html += '<tr><td>模糊匹配</td><td style="text-align:right;">' + ms.fuzzyCount + ' 笔</td></tr>';
+    if (ms.semanticCount) html += '<tr><td>语义匹配</td><td style="text-align:right;">' + ms.semanticCount + ' 笔</td></tr>';
+    if (ms.manyToOneCount) html += '<tr><td>多对一匹配</td><td style="text-align:right;">' + ms.manyToOneCount + ' 组</td></tr>';
+    html += '<tr style="background:#f9fafb;font-weight:700;"><td>匹配率</td><td style="text-align:right;">' + (recon.matchRate || 0).toFixed(1) + '%</td></tr>';
+    html += '</tbody></table>';
+
+    html += '<div style="font-size:14px;font-weight:700;color:#333;margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0;">各方金额</div>';
+    html += '<table class="doc-table">';
+    html += '<thead><tr><th>项目</th><th style="text-align:right;">金额</th></tr></thead>';
+    html += '<tbody>';
+    html += '<tr><td>' + escapeHtml(sideALabel) + ' 总额</td><td style="text-align:right;">¥ ' + fmt(recon.sideATotalAmount) + '</td></tr>';
+    html += '<tr><td>' + escapeHtml(sideBLabel) + ' 总额</td><td style="text-align:right;">¥ ' + fmt(recon.sideBTotalAmount) + '</td></tr>';
+    if (ms.unmatchedACount) html += '<tr><td class="debit">' + escapeHtml(sideALabel) + ' 未匹配</td><td class="debit" style="text-align:right;">' + ms.unmatchedACount + ' 笔 / ¥ ' + fmt(recon.unmatchedAAmount) + '</td></tr>';
+    if (ms.unmatchedBCount) html += '<tr><td class="debit">' + escapeHtml(sideBLabel) + ' 未匹配</td><td class="debit" style="text-align:right;">' + ms.unmatchedBCount + ' 笔 / ¥ ' + fmt(recon.unmatchedBAmount) + '</td></tr>';
+    html += '<tr style="background:#f9fafb;font-weight:700;"><td>核验结论</td><td style="text-align:right;color:' + (isBalanced ? '#00c4a1' : '#e53935') + ';">' + (isBalanced ? '全部一致' : '存在差异') + '</td></tr>';
+    html += '</tbody></table>';
+  }
+
+  // 匹配明细
+  if (matchResults) {
+    var allMatches = [].concat(matchResults.exact || [], matchResults.fuzzy || [], matchResults.semantic || [], matchResults.manyToOne || []);
+    if (allMatches.length > 0) {
+      html += '<div style="font-size:14px;font-weight:700;color:#333;margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0;">匹配明细</div>';
+      html += '<table class="doc-table"><thead><tr><th>类型</th><th>' + escapeHtml(sideALabel) + '</th><th>金额</th><th>' + escapeHtml(sideBLabel) + '</th><th>金额</th></tr></thead><tbody>';
+      var typeNames = { exact: '精确', fuzzy: '模糊', semantic: '语义', manyToOne: '多对一' };
+      ['exact', 'fuzzy', 'semantic', 'manyToOne'].forEach(function(type) {
+        var items = matchResults[type] || [];
+        items.slice(0, 20).forEach(function(m) {
+          var aDesc = m.sideA ? (m.sideA.description || m.sideA.counterparty || '-') : '-';
+          var aAmt = m.sideA ? (m.sideA.amount || 0) : 0;
+          var bDesc = m.sideB ? (m.sideB.description || m.sideB.counterparty || '-') : '-';
+          var bAmt = m.sideB ? (m.sideB.amount || 0) : 0;
+          html += '<tr><td><span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;background:#f0f0f0;color:#666;">' + typeNames[type] + '</span></td>';
+          html += '<td>' + escapeHtml(String(aDesc).slice(0, 18)) + '</td>';
+          html += '<td style="text-align:right;">¥ ' + fmt(aAmt) + '</td>';
+          html += '<td>' + escapeHtml(String(bDesc).slice(0, 18)) + '</td>';
+          html += '<td style="text-align:right;">¥ ' + fmt(bAmt) + '</td></tr>';
+        });
+      });
+      html += '</tbody></table>';
+      if (allMatches.length > 20) {
+        html += '<div style="text-align:center;font-size:11px;color:#999;margin-top:8px;">仅显示前 20 条，共 ' + allMatches.length + ' 条匹配记录</div>';
+      }
+    }
+  }
+
+  // 底部签章
+  html += '<div style="margin-top:48px;padding-top:24px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between;font-size:11px;color:#999;">';
+  html += '<span>制表：AI 智能对账系统</span>';
+  html += '<span>审核：________________</span>';
+  html += '<span>日期：' + new Date().toISOString().slice(0, 10) + '</span>';
+  html += '</div>';
+
+  return html;
+}
 
 // 把点击的文件渲染到左侧面板（显示真实文档）
 function renderFileInLeftPanel(file) {
