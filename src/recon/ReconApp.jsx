@@ -475,6 +475,29 @@ export default function ReconApp() {
       {/* RESULTS */}
       {step === 'results' && matchResults && (
         <div className="rc-section">
+          {/* Original document preview */}
+          <div className="rc-doc-preview">
+            <div className="rc-doc-preview-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--rc-text3)" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>{files[0]?.name || '银行对账单_锦鲤餐饮_202604.xlsx'}</span>
+            </div>
+            <div className="rc-doc-preview-body">
+              {(processedUrls[0] || previewUrls[0]) ? (
+                <img src={processedUrls[0] || previewUrls[0]} alt="" className="rc-doc-preview-img" />
+              ) : (
+                <table className="rc-doc-preview-table">
+                  <thead><tr><th>日期</th><th>摘要</th><th>借方</th><th>贷方</th><th>余额</th></tr></thead>
+                  <tbody>
+                    {BANK_DATA.slice(0, 5).map(r => (
+                      <tr key={r.id}><td>{r.date}</td><td>{r.desc}</td><td>{r.out || ''}</td><td>{r.income || ''}</td><td>{r.balance}</td></tr>
+                    ))}
+                    <tr><td colSpan={5} style={{ textAlign: 'center', color: '#999', fontSize: 11 }}>... 共 {BANK_DATA.length} 笔</td></tr>
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
           <div className="rc-stats-row">
             <div className="rc-stat"><div className="rc-stat-value">{matchResults.matchedCount}</div><div className="rc-stat-label">匹配</div></div>
             <div className="rc-stat"><div className="rc-stat-value accent">{matchResults.matchRate.toFixed(0)}%</div><div className="rc-stat-label">匹配率</div></div>
