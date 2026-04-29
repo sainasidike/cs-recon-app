@@ -41,6 +41,11 @@ function guessRole(parsed, scenario) {
 
 export function useReconciliation() {
   const [state, setState] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('autoload')) {
+      clearSession();
+      return initialState;
+    }
     const saved = loadSession();
     if (saved && saved.step !== 'home' && saved.step !== 'scenario' && saved.step !== 'upload') {
       return {
