@@ -576,7 +576,7 @@ window.addEventListener('message', function(e) {
   }
 
   if (e.data.type === 'recon-save-result') {
-    showReconciliationReport(e.data);
+    showResultFullPage(e.data);
   }
 });
 
@@ -743,6 +743,296 @@ function renderReconReport(data) {
   html += '</div>';
 
   return html;
+}
+
+// 保存结果后：切回 List 页布局，中间展示调节表结果
+function showResultFullPage(data) {
+  var recon = data.reconciliation;
+  var scenario = data.scenario;
+  var matchResults = data.matchResults;
+  var periodStart = data.periodStart;
+  var periodEnd = data.periodEnd;
+  if (!recon) return;
+
+  // 切回阅读模式（List 页布局）
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  tabs[0].classList.add('active');
+  readMode.style.display = 'flex';
+  reconMode.style.display = 'none';
+  viewbar.style.display = 'flex';
+  readerFooter.style.display = 'flex';
+
+  var sideALabel = (scenario && scenario.sideA && scenario.sideA.shortLabel) || 'A方';
+  var sideBLabel = (scenario && scenario.sideB && scenario.sideB.shortLabel) || 'B方';
+  var reportTitle = (scenario && scenario.reportTitle) || '余额调节表';
+  var period = (periodStart && periodEnd) ? (periodStart + ' ~ ' + periodEnd) : '';
+  var now = new Date().toLocaleString('zh-CN');
+  var isBalanced = recon.isBalanced;
+  var useBalanceMode = recon.useBalanceMode;
+
+  // 更新顶栏标题
+  document.querySelector('.cs-reader-logo span').textContent = reportTitle;
+
+  // 更新缩略图
+  document.getElementById('thumbs').innerHTML =
+    '<div class="cs-reader-thumb active"><div style="font-size:9px;color:#999;">调节表</div><div class="cs-reader-thumb-label">1</div></div>' +
+    '<div class="cs-reader-thumb"><div style="font-size:9px;color:#999;">明细</div><div class="cs-reader-thumb-label">2</div></div>';
+  document.getElementById('pageInfo').textContent = '1 / 2';
+
+  // 渲染调节表内容到文档区
+  var html = '';
+
+  // 顶部期间
+  html += '<div style="text-align:center;padding:16px 0 24px;font-size:12px;color:#999;">';
+  html += '对账期间：' + escapeHtml(period) + ' | 生成时间：' + escapeHtml(now);
+  html += '</div>';
+
+  // 结论横幅
+  html += '<div style="text-align:center;padding:32px 20px;margin-bottom:32px;">';
+  html += '<div style="width:44px;height:44px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:' + (isBalanced ? 'rgba(0,196,161,0.1)' : 'rgba(229,57,53,0.1)') + ';">';
+  if (isBalanced) {
+    html += '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00c4a1" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>';
+  } else {
+    html += '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12"/></svg>';
+  }
+  html += '</div>';
+  if (useBalanceMode) {
+    html += '<div style="font-size:16px;color:#333;font-weight:600;">' + (isBalanced ? '调节后余额一致' : '调节后余额不一致') + '</div>';
+    html += '<div style="font-size:26px;font-weight:300;color:' + (isBalanced ? '#00c4a1' : '#e53935') + ';margin-top:10px;letter-spacing:-0.5px;">¥ ' + fmt(recon.sideAAdjusted) + '</div>';
+    if (!isBalanced) {
+      html += '<div style="font-size:12px;color:#e53935;margin-top:8px;">差额：¥ ' + fmt(Math.abs(recon.sideAAdjusted - recon.sideBAdjusted)) + '</div>';
+    }
+  } else {
+    html += '<div style="font-size:16px;color:#333;font-weight:600;">' + (isBalanced ? '全部单据匹配成功' : '存在未匹配单据') + '</div>';
+    html += '<div style="font-size:26px;font-weight:300;color:' + (isBalanced ? '#00c4a1' : '#e53935') + ';margin-top:10px;">匹配率 ' + (recon.matchRate || 0).toFixed(1) + '%</div>';
+    html += '<div style="font-size:12px;color:#999;margin-top:8px;">匹配金额合计：¥ ' + fmt(recon.matchedAmount) + '</div>';
+  }
+  html += '</div>';
+
+  // 分隔线
+  html += '<div style="height:1px;background:#eee;margin:0 0 28px;"></div>';
+
+  if (useBalanceMode) {
+    // A方
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;font-size:13px;color:#555;">';
+    html += '<span style="font-size:16px;">' + ((scenario && scenario.icon) || '🏦') + '</span> ' + escapeHtml(sideALabel) + '对账单';
+    html += '</div>';
+
+    html += '<div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">';
+    html += '<span style="color:#333;font-weight:500;">' + escapeHtml((scenario && scenario.balanceLabels && scenario.balanceLabels.sideA) || (sideALabel + '期末余额')) + '</span>';
+    html += '<span style="font-weight:600;font-size:14px;">¥ ' + fmt(recon.sideABalance) + '</span>';
+    html += '</div>';
+
+    if (recon.sideAAdj && recon.sideAAdj.adds) {
+      recon.sideAAdj.adds.forEach(function(item) {
+        html += '<div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+        html += '<span style="color:#00c4a1;">+ ' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</span>';
+        html += '<span style="color:#00c4a1;font-weight:500;">+ ¥ ' + fmt(item.amount) + '</span>';
+        html += '</div>';
+      });
+    }
+    if (recon.sideAAdj && recon.sideAAdj.subs) {
+      recon.sideAAdj.subs.forEach(function(item) {
+        html += '<div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+        html += '<span style="color:#e53935;">- ' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</span>';
+        html += '<span style="color:#e53935;font-weight:500;">- ¥ ' + fmt(item.amount) + '</span>';
+        html += '</div>';
+      });
+    }
+
+    html += '<div style="display:flex;justify-content:space-between;padding:14px 16px;margin-top:8px;font-size:13px;font-weight:600;background:#f9fafb;border-radius:8px;">';
+    html += '<span>调节后余额</span><span>¥ ' + fmt(recon.sideAAdjusted) + '</span>';
+    html += '</div>';
+
+    // B方
+    html += '<div style="height:1px;background:#eee;margin:28px 0;"></div>';
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;font-size:13px;color:#555;">';
+    html += '<span style="font-size:16px;">📒</span> ' + escapeHtml(sideBLabel) + '账面';
+    html += '</div>';
+
+    html += '<div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">';
+    html += '<span style="color:#333;font-weight:500;">' + escapeHtml((scenario && scenario.balanceLabels && scenario.balanceLabels.sideB) || (sideBLabel + '期末余额')) + '</span>';
+    html += '<span style="font-weight:600;font-size:14px;">¥ ' + fmt(recon.sideBBalance) + '</span>';
+    html += '</div>';
+
+    if (recon.sideBAdj && recon.sideBAdj.adds) {
+      recon.sideBAdj.adds.forEach(function(item) {
+        html += '<div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+        html += '<span style="color:#00c4a1;">+ ' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</span>';
+        html += '<span style="color:#00c4a1;font-weight:500;">+ ¥ ' + fmt(item.amount) + '</span>';
+        html += '</div>';
+      });
+    }
+    if (recon.sideBAdj && recon.sideBAdj.subs) {
+      recon.sideBAdj.subs.forEach(function(item) {
+        html += '<div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+        html += '<span style="color:#e53935;">- ' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</span>';
+        html += '<span style="color:#e53935;font-weight:500;">- ¥ ' + fmt(item.amount) + '</span>';
+        html += '</div>';
+      });
+    }
+
+    html += '<div style="display:flex;justify-content:space-between;padding:14px 16px;margin-top:8px;font-size:13px;font-weight:600;background:#f9fafb;border-radius:8px;">';
+    html += '<span>调节后余额</span><span>¥ ' + fmt(recon.sideBAdjusted) + '</span>';
+    html += '</div>';
+
+  } else {
+    // 匹配模式
+    var ms = recon.matchSummary || {};
+    var matchedCount = (ms.exactCount || 0) + (ms.fuzzyCount || 0) + (ms.semanticCount || 0) + (ms.manyToOneItemCount || 0);
+
+    html += '<div style="font-size:14px;font-weight:600;color:#333;margin-bottom:14px;">匹配汇总</div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0;font-size:13px;"><span>匹配笔数</span><span style="font-weight:500;">' + matchedCount + ' 笔</span></div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0;font-size:13px;"><span>匹配金额</span><span style="font-weight:500;">¥ ' + fmt(recon.matchedAmount) + '</span></div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0;font-size:13px;"><span>精确匹配</span><span>' + (ms.exactCount || 0) + ' 笔</span></div>';
+    if (ms.fuzzyCount) html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0;font-size:13px;"><span>模糊匹配</span><span>' + ms.fuzzyCount + ' 笔</span></div>';
+    if (ms.semanticCount) html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0;font-size:13px;"><span>语义匹配</span><span>' + ms.semanticCount + ' 笔</span></div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:14px 16px;margin-top:8px;font-size:13px;font-weight:600;background:#f9fafb;border-radius:8px;"><span>匹配率</span><span>' + (recon.matchRate || 0).toFixed(1) + '%</span></div>';
+
+    if (ms.unmatchedACount || ms.unmatchedBCount) {
+      html += '<div style="height:1px;background:#eee;margin:24px 0;"></div>';
+      html += '<div style="font-size:14px;font-weight:600;color:#333;margin-bottom:14px;">未匹配</div>';
+      if (ms.unmatchedACount) html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#e53935;"><span>' + escapeHtml(sideALabel) + ' 未匹配</span><span>' + ms.unmatchedACount + ' 笔 / ¥ ' + fmt(recon.unmatchedAAmount) + '</span></div>';
+      if (ms.unmatchedBCount) html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#e53935;"><span>' + escapeHtml(sideBLabel) + ' 未匹配</span><span>' + ms.unmatchedBCount + ' 笔 / ¥ ' + fmt(recon.unmatchedBAmount) + '</span></div>';
+    }
+  }
+
+  document.getElementById('paper').innerHTML = html;
+}
+
+// 保存结果后，左侧面板展示余额调节表（ReconciliationPage 风格）— 已弃用
+function renderResultInLeftPanel(data) {
+  var recon = data.reconciliation;
+  var scenario = data.scenario;
+  var matchResults = data.matchResults;
+  var periodStart = data.periodStart;
+  var periodEnd = data.periodEnd;
+  if (!recon) return;
+
+  var sideALabel = (scenario && scenario.sideA && scenario.sideA.shortLabel) || 'A方';
+  var sideBLabel = (scenario && scenario.sideB && scenario.sideB.shortLabel) || 'B方';
+  var reportTitle = (scenario && scenario.reportTitle) || '余额调节表';
+  var period = (periodStart && periodEnd) ? (periodStart + ' ~ ' + periodEnd) : '';
+  var now = new Date().toLocaleString('zh-CN');
+  var isBalanced = recon.isBalanced;
+  var useBalanceMode = recon.useBalanceMode;
+
+  // 更新左侧标题
+  var headerSpan = document.querySelector('.cs-recon-split-left .cs-recon-split-header span');
+  if (headerSpan) headerSpan.textContent = reportTitle;
+
+  var html = '';
+
+  // 顶部期间信息
+  html += '<div style="text-align:center;padding:16px 0;font-size:12px;color:#999;border-bottom:1px solid #f0f0f0;margin-bottom:24px;">';
+  html += '对账期间：' + escapeHtml(period) + ' | 生成时间：' + escapeHtml(now);
+  html += '</div>';
+
+  // 结论横幅
+  html += '<div style="text-align:center;padding:32px 20px;margin-bottom:24px;">';
+  html += '<div style="width:40px;height:40px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:' + (isBalanced ? 'rgba(0,196,161,0.1)' : 'rgba(229,57,53,0.1)') + ';">';
+  if (isBalanced) {
+    html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00c4a1" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>';
+  } else {
+    html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>';
+  }
+  html += '</div>';
+  if (useBalanceMode) {
+    html += '<div style="font-size:15px;color:#333;font-weight:600;">' + (isBalanced ? '调节后余额一致' : '调节后余额不一致') + '</div>';
+    html += '<div style="font-size:24px;font-weight:300;color:' + (isBalanced ? '#00c4a1' : '#e53935') + ';margin-top:8px;">¥ ' + fmt(recon.sideAAdjusted) + '</div>';
+    if (!isBalanced) {
+      html += '<div style="font-size:12px;color:#e53935;margin-top:8px;">差额：¥ ' + fmt(Math.abs(recon.sideAAdjusted - recon.sideBAdjusted)) + '</div>';
+    }
+  } else {
+    html += '<div style="font-size:15px;color:#333;font-weight:600;">' + (isBalanced ? '全部单据匹配成功' : '存在未匹配单据') + '</div>';
+    html += '<div style="font-size:24px;font-weight:300;color:' + (isBalanced ? '#00c4a1' : '#e53935') + ';margin-top:8px;">匹配率 ' + (recon.matchRate || 0).toFixed(1) + '%</div>';
+    html += '<div style="font-size:12px;color:#999;margin-top:8px;">匹配金额合计：¥ ' + fmt(recon.matchedAmount) + '</div>';
+  }
+  html += '</div>';
+
+  // 分隔线
+  html += '<div style="height:1px;background:#f0f0f0;margin:0 -28px 24px;"></div>';
+
+  if (useBalanceMode) {
+    // A方调节
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;font-size:13px;color:#666;">';
+    html += '<span style="font-size:16px;">' + ((scenario && scenario.icon) || '🏦') + '</span> ' + escapeHtml(sideALabel) + '对账单';
+    html += '</div>';
+
+    html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+    html += '<span style="color:#333;font-weight:500;">' + escapeHtml((scenario && scenario.balanceLabels && scenario.balanceLabels.sideA) || (sideALabel + '期末余额')) + '</span>';
+    html += '<span style="font-weight:600;">¥ ' + fmt(recon.sideABalance) + '</span>';
+    html += '</div>';
+
+    if (recon.sideAAdj && recon.sideAAdj.adds) {
+      recon.sideAAdj.adds.forEach(function(item) {
+        html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+        html += '<span style="color:#00c4a1;">+ ' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</span>';
+        html += '<span style="color:#00c4a1;">+ ¥ ' + fmt(item.amount) + '</span>';
+        html += '</div>';
+      });
+    }
+    if (recon.sideAAdj && recon.sideAAdj.subs) {
+      recon.sideAAdj.subs.forEach(function(item) {
+        html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+        html += '<span style="color:#e53935;">- ' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</span>';
+        html += '<span style="color:#e53935;">- ¥ ' + fmt(item.amount) + '</span>';
+        html += '</div>';
+      });
+    }
+
+    html += '<div style="display:flex;justify-content:space-between;padding:12px 0;margin-top:4px;font-size:13px;font-weight:600;background:#f9fafb;border-radius:6px;padding:12px;">';
+    html += '<span>调节后余额</span>';
+    html += '<span>¥ ' + fmt(recon.sideAAdjusted) + '</span>';
+    html += '</div>';
+
+    // B方调节
+    html += '<div style="height:1px;background:#f0f0f0;margin:24px -28px;"></div>';
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;font-size:13px;color:#666;">';
+    html += '<span style="font-size:16px;">📒</span> ' + escapeHtml(sideBLabel) + '账面';
+    html += '</div>';
+
+    html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+    html += '<span style="color:#333;font-weight:500;">' + escapeHtml((scenario && scenario.balanceLabels && scenario.balanceLabels.sideB) || (sideBLabel + '期末余额')) + '</span>';
+    html += '<span style="font-weight:600;">¥ ' + fmt(recon.sideBBalance) + '</span>';
+    html += '</div>';
+
+    if (recon.sideBAdj && recon.sideBAdj.adds) {
+      recon.sideBAdj.adds.forEach(function(item) {
+        html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+        html += '<span style="color:#00c4a1;">+ ' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</span>';
+        html += '<span style="color:#00c4a1;">+ ¥ ' + fmt(item.amount) + '</span>';
+        html += '</div>';
+      });
+    }
+    if (recon.sideBAdj && recon.sideBAdj.subs) {
+      recon.sideBAdj.subs.forEach(function(item) {
+        html += '<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">';
+        html += '<span style="color:#e53935;">- ' + escapeHtml((item.date || '') + ' ' + (item.description || item.reason || '')) + '</span>';
+        html += '<span style="color:#e53935;">- ¥ ' + fmt(item.amount) + '</span>';
+        html += '</div>';
+      });
+    }
+
+    html += '<div style="display:flex;justify-content:space-between;padding:12px;margin-top:4px;font-size:13px;font-weight:600;background:#f9fafb;border-radius:6px;">';
+    html += '<span>调节后余额</span>';
+    html += '<span>¥ ' + fmt(recon.sideBAdjusted) + '</span>';
+    html += '</div>';
+
+  } else {
+    // 匹配模式
+    var ms = recon.matchSummary || {};
+    var matchedCount = (ms.exactCount || 0) + (ms.fuzzyCount || 0) + (ms.semanticCount || 0) + (ms.manyToOneItemCount || 0);
+
+    html += '<div style="font-size:13px;font-weight:600;color:#333;margin-bottom:12px;">匹配汇总</div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:13px;"><span>匹配笔数</span><span>' + matchedCount + ' 笔</span></div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:13px;"><span>精确匹配</span><span>' + (ms.exactCount || 0) + ' 笔</span></div>';
+    if (ms.fuzzyCount) html += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:13px;"><span>模糊匹配</span><span>' + ms.fuzzyCount + ' 笔</span></div>';
+    if (ms.semanticCount) html += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:13px;"><span>语义匹配</span><span>' + ms.semanticCount + ' 笔</span></div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:12px;margin-top:8px;font-size:13px;font-weight:600;background:#f9fafb;border-radius:6px;"><span>匹配率</span><span>' + (recon.matchRate || 0).toFixed(1) + '%</span></div>';
+  }
+
+  reconDocView.innerHTML = html;
 }
 
 // 把点击的文件渲染到左侧面板（显示真实文档）
