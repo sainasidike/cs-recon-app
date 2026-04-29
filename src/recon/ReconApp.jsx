@@ -2,9 +2,55 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { BANK_DATA, LEDGER_DATA, COMPANY_INFO, BANK_TOTAL_OUT, BANK_TOTAL_IN, LEDGER_TOTAL_DEBIT, LEDGER_TOTAL_CREDIT } from './demoData';
 import { runMatching } from './matchEngine';
 import CropEditor from './CropEditor';
+import { parseFile, classifyDocumentLocal } from '../utils/fileParser';
 
 function fmt(v) {
   return (v || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 });
+}
+
+function getAmt(e) { return e.out || e.income || e.debit || e.credit || e.amount || 0; }
+function getDir(e) {
+  if (e.out || e.debit) return 'debit';
+  if (e.income || e.credit) return 'credit';
+  return e.direction || 'unknown';
+}
+function getDesc(e) { return e.desc || e.description || ''; }
+function getPayee(e) { return e.payee || e.counterparty || ''; }
+function getRef(e) { return e.ref || e.reference || e.voucher || ''; }
+function getBalance(e) { return e.balance ?? null; }
+
+function buildReconData(bankEntries, ledgerEntries, docNames) {
+  const bankTotalOut = bankEntries.filter(e => getDir(e) === 'debit').reduce((s, e) => s + getAmt(e), 0);
+  const bankTotalIn = bankEntries.filter(e => getDir(e) === 'credit').reduce((s, e) => s + getAmt(e), 0);
+  const ledgerTotalDebit = ledgerEntries.filter(e => getDir(e) === 'debit').reduce((s, e) => s + getAmt(e), 0);
+  const ledgerTotalCredit = ledgerEntries.filter(e => getDir(e) === 'credit').reduce((s, e) => s + getAmt(e), 0);
+  const openingBal = bankEntries.length > 0 ? (getBalance(bankEntries[0]) ?? 0) : 0;
+  const closingBal = bankEntries.length > 0 ? (getBalance(bankEntries[bankEntries.length - 1]) ?? 0) : 0;
+  const allDates = [...bankEntries, ...ledgerEntries].map(e => e.date).filter(Boolean).sort();
+  const periodStart = allDates[0] || '';
+  const periodEnd = allDates[allDates.length - 1] || '';
+  let name = '对账企业';
+  if (docNames && docNames.length) {
+    for (const n of docNames) {
+      const m = n.match(/[_\-]([^_\-.]{2,})[_\-.]/);
+      if (m) { name = m[1]; break; }
+    }
+  }
+  const period = periodStart ? periodStart.slice(0, 7).replace('-', '年') + '月' : '';
+  return {
+    bankEntries, ledgerEntries,
+    companyInfo: { name, period, periodStart, periodEnd, openingBalance: openingBal, closingBalance: closingBal },
+    bankTotalOut, bankTotalIn, ledgerTotalDebit, ledgerTotalCredit,
+  };
+}
+
+function dataUrlToFile(dataUrl, filename) {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const binary = atob(base64);
+  const array = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+  return new File([array], filename, { type: mime });
 }
 
 const PIPELINE = [
@@ -56,6 +102,7 @@ export default function ReconApp() {
   });
   const [docs, setDocs] = useState([]);
   const [flowMode, setFlowMode] = useState('recon');
+  const [reconData, setReconData] = useState(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const docsInputRef = useRef(null);
@@ -119,6 +166,7 @@ export default function ReconApp() {
         type: classifyDoc(file.name),
         previewUrl: results[i].previewUrl,
         processedUrl: results[i].processedUrl,
+        file: file,
       }));
       setDocs(prev => [...prev, ...newDocs]);
       if (flowMode === 'scan') {
@@ -139,41 +187,108 @@ export default function ReconApp() {
     setDocs(prev => prev.map(d => d.id === id ? { ...d, type: cycle[d.type] } : d));
   }, []);
 
-  const startAnalyze = useCallback(() => {
+  const startAnalyze = useCallback(async (demoMode = false) => {
     setStep('analyze');
     setParseSteps([]);
     setParseResult(null);
 
-    const steps = [
-      { text: '正在进行 OCR 文字识别...', delay: 200 },
-      { text: '识别到表格结构，提取数据中...', delay: 500 },
-      { text: '检测到文档类型：银行对账单', delay: 800 },
-      { text: '解析 20 笔交易记录', delay: 1100 },
-      { text: '加载企业账簿，解析 20 笔记账凭证', delay: 1400 },
-      { text: '执行精确匹配（金额+日期完全一致）...', delay: 1700 },
-      { text: '执行模糊匹配（日期容差±3天）...', delay: 2000 },
-      { text: '执行语义匹配（描述相似度分析）...', delay: 2300 },
-      { text: '检测未达账项，生成匹配报告...', delay: 2600 },
-    ];
-    steps.forEach(({ text, delay }) => {
-      setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
-    });
-    setTimeout(() => {
-      setParseResult({
-        bankCount: BANK_DATA.length,
-        ledgerCount: LEDGER_DATA.length,
+    if (demoMode) {
+      const steps = [
+        { text: '正在进行 OCR 文字识别...', delay: 200 },
+        { text: '识别到表格结构，提取数据中...', delay: 500 },
+        { text: '检测到文档类型：银行对账单', delay: 800 },
+        { text: '解析 20 笔交易记录', delay: 1100 },
+        { text: '加载企业账簿，解析 20 笔记账凭证', delay: 1400 },
+        { text: '执行精确匹配（金额+日期完全一致）...', delay: 1700 },
+        { text: '执行模糊匹配（日期容差±3天）...', delay: 2000 },
+        { text: '执行语义匹配（描述相似度分析）...', delay: 2300 },
+        { text: '检测未达账项，生成匹配报告...', delay: 2600 },
+      ];
+      steps.forEach(({ text, delay }) => {
+        setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
       });
-      const results = runMatching(BANK_DATA, LEDGER_DATA);
+      setTimeout(() => {
+        const rd = {
+          bankEntries: BANK_DATA, ledgerEntries: LEDGER_DATA,
+          companyInfo: COMPANY_INFO,
+          bankTotalOut: BANK_TOTAL_OUT, bankTotalIn: BANK_TOTAL_IN,
+          ledgerTotalDebit: LEDGER_TOTAL_DEBIT, ledgerTotalCredit: LEDGER_TOTAL_CREDIT,
+        };
+        setReconData(rd);
+        const results = runMatching(BANK_DATA, LEDGER_DATA);
+        setMatchResults(results);
+        setStep('results');
+      }, 3000);
+      return;
+    }
+
+    try {
+      const bankDocs = docs.filter(d => d.type === 'bank');
+      const ledgerDocs = docs.filter(d => d.type === 'ledger');
+      const allBankEntries = [];
+      const allLedgerEntries = [];
+
+      setParseSteps(prev => [...prev, `开始解析 ${docs.length} 份文档...`]);
+
+      for (const doc of bankDocs) {
+        setParseSteps(prev => [...prev, `解析银行文档: ${doc.name}...`]);
+        let fileObj = doc.file;
+        if (!fileObj || fileObj.type === 'processed') {
+          if (doc.processedUrl) {
+            fileObj = dataUrlToFile(doc.processedUrl, doc.name);
+          } else continue;
+        }
+        try {
+          const parsed = await parseFile(fileObj);
+          setParseSteps(prev => [...prev, `银行文档识别 ${parsed.parsedRows} 笔记录`]);
+          allBankEntries.push(...parsed.entries);
+        } catch (err) {
+          setParseSteps(prev => [...prev, `银行文档解析失败: ${err.message}`]);
+        }
+      }
+
+      for (const doc of ledgerDocs) {
+        setParseSteps(prev => [...prev, `解析企业文档: ${doc.name}...`]);
+        let fileObj = doc.file;
+        if (!fileObj || fileObj.type === 'processed') {
+          if (doc.processedUrl) {
+            fileObj = dataUrlToFile(doc.processedUrl, doc.name);
+          } else continue;
+        }
+        try {
+          const parsed = await parseFile(fileObj);
+          setParseSteps(prev => [...prev, `企业文档识别 ${parsed.parsedRows} 笔记录`]);
+          allLedgerEntries.push(...parsed.entries);
+        } catch (err) {
+          setParseSteps(prev => [...prev, `企业文档解析失败: ${err.message}`]);
+        }
+      }
+
+      if (allBankEntries.length === 0 && allLedgerEntries.length === 0) {
+        setParseSteps(prev => [...prev, '未能解析出有效数据，请检查文档格式']);
+        return;
+      }
+
+      setParseSteps(prev => [...prev, `共解析银行 ${allBankEntries.length} 笔、企业 ${allLedgerEntries.length} 笔`]);
+      setParseSteps(prev => [...prev, '执行智能匹配...']);
+
+      const rd = buildReconData(allBankEntries, allLedgerEntries, docs.map(d => d.name));
+      setReconData(rd);
+      const results = runMatching(allBankEntries, allLedgerEntries);
       setMatchResults(results);
-      setStep('results');
-    }, 3000);
-  }, []);
+      setParseSteps(prev => [...prev, `匹配完成: ${results.matchedCount} 笔匹配, ${results.unmatchedBank.length + results.unmatchedLedger.length} 笔未达`]);
+
+      setTimeout(() => setStep('results'), 500);
+    } catch (err) {
+      setParseSteps(prev => [...prev, `解析出错: ${err.message}`]);
+    }
+  }, [docs]);
 
   const handleStartFromDocs = useCallback(() => {
     setFiles(docs.map(d => ({ name: d.name, type: 'processed' })));
     setPreviewUrls(docs.map(d => d.previewUrl));
     setProcessedUrls(docs.map(d => d.processedUrl));
-    startAnalyze();
+    startAnalyze(false);
   }, [docs, startAnalyze]);
 
   const handleConfirm = useCallback((key) => {
@@ -186,15 +301,15 @@ export default function ReconApp() {
   }, []);
 
   const handleFinish = useCallback(() => {
-    if (matchResults) {
+    if (matchResults && reconData) {
       const record = {
         id: Date.now(),
-        company: COMPANY_INFO.name,
-        period: COMPANY_INFO.period,
+        company: reconData.companyInfo.name,
+        period: reconData.companyInfo.period,
         matchRate: matchResults.matchRate,
         matchedCount: matchResults.matchedCount,
         unmatchedCount: matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length,
-        totalCount: BANK_DATA.length + LEDGER_DATA.length,
+        totalCount: reconData.bankEntries.length + reconData.ledgerEntries.length,
         time: new Date().toLocaleString('zh-CN'),
       };
       const next = [record, ...history].slice(0, 20);
@@ -202,14 +317,14 @@ export default function ReconApp() {
       try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
     }
     setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
-    setProcessedUrls([]); setParseSteps([]); setParseResult(null);
+    setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
-  }, [matchResults, history]);
+  }, [matchResults, reconData, history]);
 
   const handleReset = useCallback(() => {
     setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
-    setProcessedUrls([]); setParseSteps([]); setParseResult(null);
+    setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
   }, []);
@@ -373,7 +488,7 @@ export default function ReconApp() {
           <button className="rc-demo-btn" onClick={() => {
             setFiles([{ name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'demo' }]);
             setPreviewUrls([null]);
-            startAnalyze();
+            startAnalyze(true);
           }}>
             <div className="rc-demo-icon">🏦</div>
             <div className="rc-demo-info">
@@ -617,7 +732,7 @@ export default function ReconApp() {
       )}
 
       {/* RESULTS */}
-      {step === 'results' && matchResults && (
+      {step === 'results' && matchResults && reconData && (
         <div className="rc-section">
           {/* Documents — collapsible, one card per doc */}
           {(docs.length > 0 ? docs : [
@@ -626,7 +741,7 @@ export default function ReconApp() {
           ]).map(doc => {
             const expanded = !!docExpanded[doc.id];
             const badgeColor = DOC_TYPE_COLOR[doc.type] || '#999';
-            const data = doc.type === 'bank' ? BANK_DATA : doc.type === 'ledger' ? LEDGER_DATA : null;
+            const data = doc.type === 'bank' ? reconData.bankEntries : doc.type === 'ledger' ? reconData.ledgerEntries : null;
             const imgSrc = doc.processedUrl || doc.previewUrl || null;
             return (
               <div key={doc.id} className="rc-doc-full">
@@ -644,16 +759,16 @@ export default function ReconApp() {
                       <div className="rc-doc-full-table-wrap">
                         <table className="rc-doc-full-table">
                           <thead><tr><th>#</th><th>日期</th><th>摘要</th><th>对方</th><th style={{ textAlign: 'right' }}>支出</th><th style={{ textAlign: 'right' }}>收入</th><th style={{ textAlign: 'right' }}>余额</th></tr></thead>
-                          <tbody>{data.map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{r.desc}</td><td className="rc-dft-desc">{r.payee}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{r.out ? fmt(r.out) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{r.income ? fmt(r.income) : ''}</td><td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(r.balance)}</td></tr>))}</tbody>
-                          <tfoot><tr><td colSpan={3}>合计 {data.length} 笔</td><td></td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(BANK_TOTAL_OUT)}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(BANK_TOTAL_IN)}</td><td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(COMPANY_INFO.closingBalance)}</td></tr></tfoot>
+                          <tbody>{data.map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{getDesc(r)}</td><td className="rc-dft-desc">{getPayee(r)}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{getDir(r) === 'debit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{getDir(r) === 'credit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-bal" style={{ textAlign: 'right' }}>{getBalance(r) != null ? fmt(getBalance(r)) : ''}</td></tr>))}</tbody>
+                          <tfoot><tr><td colSpan={3}>合计 {data.length} 笔</td><td></td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(reconData.bankTotalOut)}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(reconData.bankTotalIn)}</td><td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(reconData.companyInfo.closingBalance)}</td></tr></tfoot>
                         </table>
                       </div>
                     ) : data && doc.type === 'ledger' ? (
                       <div className="rc-doc-full-table-wrap">
                         <table className="rc-doc-full-table">
                           <thead><tr><th>#</th><th>日期</th><th>摘要</th><th>对方</th><th style={{ textAlign: 'right' }}>借方</th><th style={{ textAlign: 'right' }}>贷方</th><th>凭证号</th></tr></thead>
-                          <tbody>{data.map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{r.desc}</td><td className="rc-dft-desc">{r.payee}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{r.debit ? fmt(r.debit) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{r.credit ? fmt(r.credit) : ''}</td><td className="rc-dft-date">{r.voucher}</td></tr>))}</tbody>
-                          <tfoot><tr><td colSpan={3}>合计 {data.length} 笔</td><td></td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(LEDGER_TOTAL_DEBIT)}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(LEDGER_TOTAL_CREDIT)}</td><td></td></tr></tfoot>
+                          <tbody>{data.map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{getDesc(r)}</td><td className="rc-dft-desc">{getPayee(r)}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{getDir(r) === 'debit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{getDir(r) === 'credit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-date">{getRef(r)}</td></tr>))}</tbody>
+                          <tfoot><tr><td colSpan={3}>合计 {data.length} 笔</td><td></td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(reconData.ledgerTotalDebit)}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(reconData.ledgerTotalCredit)}</td><td></td></tr></tfoot>
                         </table>
                       </div>
                     ) : (
@@ -689,11 +804,11 @@ export default function ReconApp() {
             const key = `exact-${i}`;
             return (
               <div key={key} className="rc-match-card">
-                <div className="rc-match-head"><span className="rc-badge exact">精确</span><span className="rc-match-score">{m.score}%</span><span className="rc-match-amt">¥{fmt(m.bank.out || m.bank.income)}</span></div>
+                <div className="rc-match-head"><span className="rc-badge exact">精确</span><span className="rc-match-score">{m.score}%</span><span className="rc-match-amt">¥{fmt(getAmt(m.bank))}</span></div>
                 <div className="rc-match-pair">
-                  <div className="rc-match-side"><span className="rc-match-tag bank">银行</span><span>{m.bank.date}</span><span className="rc-match-desc">{m.bank.desc}</span></div>
+                  <div className="rc-match-side"><span className="rc-match-tag bank">银行</span><span>{m.bank.date}</span><span className="rc-match-desc">{getDesc(m.bank)}</span></div>
                   <div className="rc-match-arrow">↔</div>
-                  <div className="rc-match-side"><span className="rc-match-tag ledger">企业</span><span>{m.ledger.date}</span><span className="rc-match-desc">{m.ledger.desc}</span></div>
+                  <div className="rc-match-side"><span className="rc-match-tag ledger">企业</span><span>{m.ledger.date}</span><span className="rc-match-desc">{getDesc(m.ledger)}</span></div>
                 </div>
                 {!confirmed[key] && !rejected[key] && (<div className="rc-match-actions"><button className="rc-action-btn confirm" onClick={() => handleConfirm(key)}>✓ 确认</button><button className="rc-action-btn reject" onClick={() => handleReject(key)}>✗ 驳回</button></div>)}
                 {confirmed[key] && <div className="rc-match-status confirmed">✓ 已确认</div>}
@@ -705,11 +820,11 @@ export default function ReconApp() {
             const key = `fuzzy-${i}`;
             return (
               <div key={key} className="rc-match-card">
-                <div className="rc-match-head"><span className={`rc-badge ${m.score >= 75 ? 'fuzzy' : 'semantic'}`}>{m.score >= 75 ? '模糊' : '语义'}</span><span className="rc-match-score">{m.score}%</span><span className="rc-match-amt">¥{fmt(m.bank.out || m.bank.income)}</span></div>
+                <div className="rc-match-head"><span className={`rc-badge ${m.score >= 75 ? 'fuzzy' : 'semantic'}`}>{m.score >= 75 ? '模糊' : '语义'}</span><span className="rc-match-score">{m.score}%</span><span className="rc-match-amt">¥{fmt(getAmt(m.bank))}</span></div>
                 <div className="rc-match-pair">
-                  <div className="rc-match-side"><span className="rc-match-tag bank">银行</span><span>{m.bank.date}</span><span className="rc-match-desc">{m.bank.desc}</span></div>
+                  <div className="rc-match-side"><span className="rc-match-tag bank">银行</span><span>{m.bank.date}</span><span className="rc-match-desc">{getDesc(m.bank)}</span></div>
                   <div className="rc-match-arrow">↔</div>
-                  <div className="rc-match-side"><span className="rc-match-tag ledger">企业</span><span>{m.ledger.date}</span><span className="rc-match-desc">{m.ledger.desc}</span></div>
+                  <div className="rc-match-side"><span className="rc-match-tag ledger">企业</span><span>{m.ledger.date}</span><span className="rc-match-desc">{getDesc(m.ledger)}</span></div>
                 </div>
                 {m.daysDiff > 0 && <div className="rc-match-diff">日期差异 {m.daysDiff} 天</div>}
                 {!confirmed[key] && !rejected[key] && (<div className="rc-match-actions"><button className="rc-action-btn confirm" onClick={() => handleConfirm(key)}>✓ 确认</button><button className="rc-action-btn reject" onClick={() => handleReject(key)}>✗ 驳回</button></div>)}
@@ -720,8 +835,8 @@ export default function ReconApp() {
           })}
           {activeResultTab === 'unmatched' && (
             <>
-              {matchResults.unmatchedBank.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">银行未达 ({matchResults.unmatchedBank.length})</div>{matchResults.unmatchedBank.map(b => (<div key={b.id} className="rc-unmatched-row"><span className="rc-um-date">{b.date}</span><span className="rc-um-desc">{b.desc}</span><span className={`rc-um-amt ${b.out ? 'out' : 'in'}`}>{b.out ? `-¥${fmt(b.out)}` : `+¥${fmt(b.income)}`}</span></div>))}</div>)}
-              {matchResults.unmatchedLedger.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">企业未达 ({matchResults.unmatchedLedger.length})</div>{matchResults.unmatchedLedger.map(l => (<div key={l.id} className="rc-unmatched-row"><span className="rc-um-date">{l.date}</span><span className="rc-um-desc">{l.desc}</span><span className={`rc-um-amt ${l.debit ? 'out' : 'in'}`}>{l.debit ? `-¥${fmt(l.debit)}` : `+¥${fmt(l.credit)}`}</span></div>))}</div>)}
+              {matchResults.unmatchedBank.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">银行未达 ({matchResults.unmatchedBank.length})</div>{matchResults.unmatchedBank.map(b => (<div key={b.id} className="rc-unmatched-row"><span className="rc-um-date">{b.date}</span><span className="rc-um-desc">{getDesc(b)}</span><span className={`rc-um-amt ${getDir(b) === 'debit' ? 'out' : 'in'}`}>{getDir(b) === 'debit' ? `-¥${fmt(getAmt(b))}` : `+¥${fmt(getAmt(b))}`}</span></div>))}</div>)}
+              {matchResults.unmatchedLedger.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">企业未达 ({matchResults.unmatchedLedger.length})</div>{matchResults.unmatchedLedger.map(l => (<div key={l.id} className="rc-unmatched-row"><span className="rc-um-date">{l.date}</span><span className="rc-um-desc">{getDesc(l)}</span><span className={`rc-um-amt ${getDir(l) === 'debit' ? 'out' : 'in'}`}>{getDir(l) === 'debit' ? `-¥${fmt(getAmt(l))}` : `+¥${fmt(getAmt(l))}`}</span></div>))}</div>)}
             </>
           )}
           <div className="rc-bottom">
@@ -732,27 +847,27 @@ export default function ReconApp() {
       )}
 
       {/* REPORT */}
-      {step === 'report' && matchResults && (
+      {step === 'report' && matchResults && reconData && (
         <div className="rc-section">
           <div className="rc-report-header">
             <h3>银行存款余额调节表</h3>
-            <p>{COMPANY_INFO.name}</p>
-            <p className="rc-report-period">{COMPANY_INFO.periodStart} 至 {COMPANY_INFO.periodEnd}</p>
+            <p>{reconData.companyInfo.name}</p>
+            <p className="rc-report-period">{reconData.companyInfo.periodStart} 至 {reconData.companyInfo.periodEnd}</p>
           </div>
           <div className="rc-report-grid">
             <div className="rc-report-col">
               <div className="rc-report-col-title">银行对账单</div>
-              <div className="rc-report-row"><span>期末余额</span><span className="rc-report-val">¥{fmt(COMPANY_INFO.closingBalance)}</span></div>
-              {matchResults.unmatchedLedger.filter(l => l.credit).map((l, i) => (<div key={i} className="rc-report-row add"><span>加：{l.desc}</span><span className="rc-report-val">+¥{fmt(l.credit)}</span></div>))}
-              {matchResults.unmatchedLedger.filter(l => l.debit).map((l, i) => (<div key={i} className="rc-report-row sub"><span>减：{l.desc}</span><span className="rc-report-val">-¥{fmt(l.debit)}</span></div>))}
-              {(() => { const adj = COMPANY_INFO.closingBalance + matchResults.unmatchedLedger.filter(l => l.credit).reduce((s, l) => s + l.credit, 0) - matchResults.unmatchedLedger.filter(l => l.debit).reduce((s, l) => s + l.debit, 0); return <div className="rc-report-row total"><span>调节后余额</span><span className="rc-report-val">¥{fmt(adj)}</span></div>; })()}
+              <div className="rc-report-row"><span>期末余额</span><span className="rc-report-val">¥{fmt(reconData.companyInfo.closingBalance)}</span></div>
+              {matchResults.unmatchedLedger.filter(l => getDir(l) === 'credit').map((l, i) => (<div key={i} className="rc-report-row add"><span>加：{getDesc(l)}</span><span className="rc-report-val">+¥{fmt(getAmt(l))}</span></div>))}
+              {matchResults.unmatchedLedger.filter(l => getDir(l) === 'debit').map((l, i) => (<div key={i} className="rc-report-row sub"><span>减：{getDesc(l)}</span><span className="rc-report-val">-¥{fmt(getAmt(l))}</span></div>))}
+              {(() => { const adj = reconData.companyInfo.closingBalance + matchResults.unmatchedLedger.filter(l => getDir(l) === 'credit').reduce((s, l) => s + getAmt(l), 0) - matchResults.unmatchedLedger.filter(l => getDir(l) === 'debit').reduce((s, l) => s + getAmt(l), 0); return <div className="rc-report-row total"><span>调节后余额</span><span className="rc-report-val">¥{fmt(adj)}</span></div>; })()}
             </div>
             <div className="rc-report-col">
               <div className="rc-report-col-title">企业账面</div>
-              {(() => { const lb = COMPANY_INFO.openingBalance - LEDGER_TOTAL_DEBIT + LEDGER_TOTAL_CREDIT; return (<><div className="rc-report-row"><span>期末余额</span><span className="rc-report-val">¥{fmt(lb)}</span></div>
-                {matchResults.unmatchedBank.filter(b => b.income).map((b, i) => (<div key={i} className="rc-report-row add"><span>加：{b.desc}</span><span className="rc-report-val">+¥{fmt(b.income)}</span></div>))}
-                {matchResults.unmatchedBank.filter(b => b.out).map((b, i) => (<div key={i} className="rc-report-row sub"><span>减：{b.desc}</span><span className="rc-report-val">-¥{fmt(b.out)}</span></div>))}
-                {(() => { const adj = lb + matchResults.unmatchedBank.filter(b => b.income).reduce((s, b) => s + b.income, 0) - matchResults.unmatchedBank.filter(b => b.out).reduce((s, b) => s + b.out, 0); return <div className="rc-report-row total"><span>调节后余额</span><span className="rc-report-val">¥{fmt(adj)}</span></div>; })()}
+              {(() => { const lb = reconData.companyInfo.openingBalance - reconData.ledgerTotalDebit + reconData.ledgerTotalCredit; return (<><div className="rc-report-row"><span>期末余额</span><span className="rc-report-val">¥{fmt(lb)}</span></div>
+                {matchResults.unmatchedBank.filter(b => getDir(b) === 'credit').map((b, i) => (<div key={i} className="rc-report-row add"><span>加：{getDesc(b)}</span><span className="rc-report-val">+¥{fmt(getAmt(b))}</span></div>))}
+                {matchResults.unmatchedBank.filter(b => getDir(b) === 'debit').map((b, i) => (<div key={i} className="rc-report-row sub"><span>减：{getDesc(b)}</span><span className="rc-report-val">-¥{fmt(getAmt(b))}</span></div>))}
+                {(() => { const adj = lb + matchResults.unmatchedBank.filter(b => getDir(b) === 'credit').reduce((s, b) => s + getAmt(b), 0) - matchResults.unmatchedBank.filter(b => getDir(b) === 'debit').reduce((s, b) => s + getAmt(b), 0); return <div className="rc-report-row total"><span>调节后余额</span><span className="rc-report-val">¥{fmt(adj)}</span></div>; })()}
               </>); })()}
             </div>
           </div>
@@ -768,15 +883,15 @@ export default function ReconApp() {
           <div className="rc-bottom">
             <button className="rc-btn-secondary" onClick={() => setStep('results')}>返回</button>
             <button className="rc-btn-primary" onClick={() => {
-              if (matchResults) {
+              if (matchResults && reconData) {
                 const record = {
                   id: Date.now(),
-                  company: COMPANY_INFO.name,
-                  period: COMPANY_INFO.period,
+                  company: reconData.companyInfo.name,
+                  period: reconData.companyInfo.period,
                   matchRate: matchResults.matchRate,
                   matchedCount: matchResults.matchedCount,
                   unmatchedCount: matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length,
-                  totalCount: BANK_DATA.length + LEDGER_DATA.length,
+                  totalCount: reconData.bankEntries.length + reconData.ledgerEntries.length,
                   time: new Date().toLocaleString('zh-CN'),
                 };
                 const next = [record, ...history].slice(0, 20);
@@ -853,17 +968,18 @@ export default function ReconApp() {
         </div>
       )}
 
-      {step === 'list' && flowMode === 'recon' && matchResults && (() => {
-        const bankAdj = COMPANY_INFO.closingBalance
-          + matchResults.unmatchedLedger.filter(l => l.credit).reduce((s, l) => s + l.credit, 0)
-          - matchResults.unmatchedLedger.filter(l => l.debit).reduce((s, l) => s + l.debit, 0);
-        const ledgerBalance = COMPANY_INFO.openingBalance - LEDGER_TOTAL_DEBIT + LEDGER_TOTAL_CREDIT;
+      {step === 'list' && flowMode === 'recon' && matchResults && reconData && (() => {
+        const bankAdj = reconData.companyInfo.closingBalance
+          + matchResults.unmatchedLedger.filter(l => getDir(l) === 'credit').reduce((s, l) => s + getAmt(l), 0)
+          - matchResults.unmatchedLedger.filter(l => getDir(l) === 'debit').reduce((s, l) => s + getAmt(l), 0);
+        const ledgerBalance = reconData.companyInfo.openingBalance - reconData.ledgerTotalDebit + reconData.ledgerTotalCredit;
         const ledgerAdj = ledgerBalance
-          + matchResults.unmatchedBank.filter(b => b.income).reduce((s, b) => s + b.income, 0)
-          - matchResults.unmatchedBank.filter(b => b.out).reduce((s, b) => s + b.out, 0);
+          + matchResults.unmatchedBank.filter(b => getDir(b) === 'credit').reduce((s, b) => s + getAmt(b), 0)
+          - matchResults.unmatchedBank.filter(b => getDir(b) === 'debit').reduce((s, b) => s + getAmt(b), 0);
         const balanced = Math.abs(bankAdj - ledgerAdj) < 0.01;
         const now = new Date();
         const genTime = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        const totalEntries = reconData.bankEntries.length + reconData.ledgerEntries.length;
 
         return (
           <div className="rc-list">
@@ -885,37 +1001,37 @@ export default function ReconApp() {
               <table className="rc-list-table">
                 <tbody>
                   <tr><td colSpan={3} className="rc-lt-title">银行余额调节表</td></tr>
-                  <tr><td colSpan={3} className="rc-lt-meta">对账期间: {COMPANY_INFO.periodStart} ~ {COMPANY_INFO.periodEnd}</td></tr>
+                  <tr><td colSpan={3} className="rc-lt-meta">对账期间: {reconData.companyInfo.periodStart} ~ {reconData.companyInfo.periodEnd}</td></tr>
                   <tr><td colSpan={3} className="rc-lt-meta">生成时间: {genTime}</td></tr>
                   <tr><td colSpan={3} className="rc-lt-blank"></td></tr>
 
                   <tr><td colSpan={3} className="rc-lt-section">一、对账摘要</td></tr>
                   <tr className="rc-lt-header"><td className="rc-lt-bold">项目</td><td className="rc-lt-right">笔数</td><td className="rc-lt-right">占比</td></tr>
-                  <tr><td>精确匹配</td><td className="rc-lt-right">{matchResults.exact.length}</td><td className="rc-lt-right">{((matchResults.exact.length / (BANK_DATA.length + LEDGER_DATA.length)) * 100).toFixed(1)}%</td></tr>
-                  <tr><td>模糊匹配</td><td className="rc-lt-right">{matchResults.fuzzy.length}</td><td className="rc-lt-right">{((matchResults.fuzzy.length / (BANK_DATA.length + LEDGER_DATA.length)) * 100).toFixed(1)}%</td></tr>
+                  <tr><td>精确匹配</td><td className="rc-lt-right">{matchResults.exact.length}</td><td className="rc-lt-right">{totalEntries > 0 ? ((matchResults.exact.length / totalEntries) * 100).toFixed(1) : 0}%</td></tr>
+                  <tr><td>模糊匹配</td><td className="rc-lt-right">{matchResults.fuzzy.length}</td><td className="rc-lt-right">{totalEntries > 0 ? ((matchResults.fuzzy.length / totalEntries) * 100).toFixed(1) : 0}%</td></tr>
                   <tr><td>语义匹配</td><td className="rc-lt-right">{matchResults.semantic.length}</td><td className="rc-lt-right"></td></tr>
                   <tr><td>未匹配(银行)</td><td className="rc-lt-right">{matchResults.unmatchedBank.length}</td><td className="rc-lt-right"></td></tr>
                   <tr><td>未匹配(企业)</td><td className="rc-lt-right">{matchResults.unmatchedLedger.length}</td><td className="rc-lt-right"></td></tr>
-                  <tr className="rc-lt-bold-row"><td>银行总笔数</td><td className="rc-lt-right">{BANK_DATA.length}</td><td></td></tr>
-                  <tr className="rc-lt-bold-row"><td>企业总笔数</td><td className="rc-lt-right">{LEDGER_DATA.length}</td><td></td></tr>
+                  <tr className="rc-lt-bold-row"><td>银行总笔数</td><td className="rc-lt-right">{reconData.bankEntries.length}</td><td></td></tr>
+                  <tr className="rc-lt-bold-row"><td>企业总笔数</td><td className="rc-lt-right">{reconData.ledgerEntries.length}</td><td></td></tr>
 
                   <tr><td colSpan={3} className="rc-lt-section">二、银行调节</td></tr>
-                  <tr className="rc-lt-bold-row"><td>银行余额</td><td></td><td className="rc-lt-right">{fmt(COMPANY_INFO.closingBalance)}</td></tr>
-                  {matchResults.unmatchedLedger.filter(l => l.credit).map((l, i) => (
-                    <tr key={`ba-${i}`}><td className="rc-lt-indent">加: {l.desc}</td><td></td><td className="rc-lt-right"></td></tr>
+                  <tr className="rc-lt-bold-row"><td>银行余额</td><td></td><td className="rc-lt-right">{fmt(reconData.companyInfo.closingBalance)}</td></tr>
+                  {matchResults.unmatchedLedger.filter(l => getDir(l) === 'credit').map((l, i) => (
+                    <tr key={`ba-${i}`}><td className="rc-lt-indent">加: {getDesc(l)}</td><td></td><td className="rc-lt-right"></td></tr>
                   ))}
-                  {matchResults.unmatchedLedger.filter(l => l.debit).map((l, i) => (
-                    <tr key={`bs-${i}`}><td className="rc-lt-indent">减: {l.desc}-{fmt(l.debit)}</td><td></td><td className="rc-lt-right"></td></tr>
+                  {matchResults.unmatchedLedger.filter(l => getDir(l) === 'debit').map((l, i) => (
+                    <tr key={`bs-${i}`}><td className="rc-lt-indent">减: {getDesc(l)}-{fmt(getAmt(l))}</td><td></td><td className="rc-lt-right"></td></tr>
                   ))}
                   <tr className="rc-lt-total-row"><td className="rc-lt-bold">调节后余额</td><td></td><td className="rc-lt-right rc-lt-bold">{fmt(bankAdj)}</td></tr>
 
                   <tr><td colSpan={3} className="rc-lt-section">三、企业调节</td></tr>
                   <tr className="rc-lt-bold-row"><td>企业余额</td><td></td><td className="rc-lt-right">{fmt(ledgerBalance)}</td></tr>
-                  {matchResults.unmatchedBank.filter(b => b.income).map((b, i) => (
-                    <tr key={`la-${i}`}><td className="rc-lt-indent">加: {b.desc}{fmt(b.income)}</td><td></td><td className="rc-lt-right">{fmt(b.income)}</td></tr>
+                  {matchResults.unmatchedBank.filter(b => getDir(b) === 'credit').map((b, i) => (
+                    <tr key={`la-${i}`}><td className="rc-lt-indent">加: {getDesc(b)}{fmt(getAmt(b))}</td><td></td><td className="rc-lt-right">{fmt(getAmt(b))}</td></tr>
                   ))}
-                  {matchResults.unmatchedBank.filter(b => b.out).map((b, i) => (
-                    <tr key={`ls-${i}`}><td className="rc-lt-indent">减: 银行{b.date}{b.desc}</td><td></td><td className="rc-lt-right">-{fmt(b.out)}</td></tr>
+                  {matchResults.unmatchedBank.filter(b => getDir(b) === 'debit').map((b, i) => (
+                    <tr key={`ls-${i}`}><td className="rc-lt-indent">减: 银行{b.date}{getDesc(b)}</td><td></td><td className="rc-lt-right">-{fmt(getAmt(b))}</td></tr>
                   ))}
                   <tr className="rc-lt-total-row"><td className="rc-lt-bold">调节后余额</td><td></td><td className="rc-lt-right rc-lt-bold">{fmt(ledgerAdj)}</td></tr>
 
