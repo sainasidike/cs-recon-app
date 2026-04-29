@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useReconciliation } from './hooks/useReconciliation';
 import { ToastProvider } from './components/Toast';
 import Sidebar from './components/Sidebar';
@@ -24,7 +24,17 @@ function AppInner() {
   } = useReconciliation();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [showToolbox, setShowToolbox] = useState(true);
+  const params = new URLSearchParams(window.location.search);
+  const autoloadId = params.get('autoload');
+  const [showToolbox, setShowToolbox] = useState(!autoloadId);
+  const autoloaded = useRef(false);
+
+  useEffect(() => {
+    if (autoloadId && !autoloaded.current) {
+      autoloaded.current = true;
+      loadDemo(autoloadId);
+    }
+  }, [autoloadId, loadDemo]);
 
   const { step } = state;
   const scenario = state.scenarioId ? getScenario(state.scenarioId) : null;
