@@ -9,6 +9,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         mobile: resolve(__dirname, 'mobile.html'),
+        recon: resolve(__dirname, 'recon.html'),
       },
     },
   },
