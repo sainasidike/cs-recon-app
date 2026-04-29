@@ -790,51 +790,65 @@ export default function ReconApp() {
       )}
       {/* LIST — Document view (scan) or Balance Reconciliation Sheet (recon) */}
       {step === 'list' && flowMode === 'scan' && (
-        <div className="rc-list">
+        <div className="rc-list rc-list-img">
           <div className="rc-list-topbar">
             <button className="rc-list-back" onClick={() => { setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
-            <div className="rc-list-title">{files[0]?.name || '扫描文档'}</div>
-            <div style={{ width: 20 }} />
+            <div className="rc-list-title">{docs[0]?.name || '扫描文档'}</div>
+            <div className="rc-list-topbar-right">
+              <span className="rc-list-tag-btn">标签+</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.8"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </div>
           </div>
 
-          <div className="rc-list-tabs">
-            {docs.map((doc, i) => (
-              <button key={doc.id} className={`rc-list-tab${i === 0 ? ' active' : ''}`}>
-                {doc.name.length > 8 ? doc.name.slice(0, 8) + '...' : doc.name}
-              </button>
-            ))}
-          </div>
-
-          <div className="rc-list-sheet" style={{ padding: 0 }}>
-            {docs.map(doc => {
+          <div className="rc-list-img-content">
+            {docs.map((doc, i) => {
               const imgSrc = doc.processedUrl || doc.previewUrl;
-              return imgSrc ? (
-                <img key={doc.id} src={imgSrc} alt={doc.name} style={{ width: '100%', display: 'block' }} />
-              ) : (
-                <div key={doc.id} className="rc-doc-placeholder" style={{ padding: '40px 20px' }}>
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <span>{doc.name}</span>
+              return (
+                <div key={doc.id} className="rc-list-img-page">
+                  {i > 0 && <div className="rc-list-img-divider" />}
+                  {imgSrc ? (
+                    <img src={imgSrc} alt={doc.name} className="rc-list-img-photo" />
+                  ) : (
+                    <div className="rc-doc-placeholder" style={{ padding: '40px 20px' }}>
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <span>{doc.name}</span>
+                    </div>
+                  )}
                 </div>
               );
             })}
+
+            <button className="rc-list-img-add" onClick={() => scanCameraRef.current?.click()}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--rc-accent)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <span>继续添加页面</span>
+            </button>
           </div>
 
-          <div className="rc-list-bottom">
-            <button className="rc-list-action" onClick={() => { setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-              <span>在电脑上编辑</span>
+          <div className="rc-list-bottom rc-list-bottom-img">
+            <button className="rc-list-action" onClick={() => scanCameraRef.current?.click()}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/><line x1="14" y1="3" x2="14" y2="8"/><line x1="11" y1="5.5" x2="17" y2="5.5"/></svg>
+              <span>添加</span>
             </button>
             <button className="rc-list-action">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h4"/></svg>
-              <span>另存为 PDF</span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <span>编辑</span>
             </button>
             <button className="rc-list-action">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-              <span>更多</span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              <span>分享</span>
             </button>
-            <button className="rc-list-export">导出文档</button>
+            <button className="rc-list-action">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <span>转 Word</span>
+            </button>
+            <button className="rc-list-action rc-list-action-recon" onClick={() => { setFlowMode('recon'); setStep('home'); }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+              <span>财务对账</span>
+            </button>
           </div>
         </div>
       )}
