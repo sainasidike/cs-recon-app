@@ -132,20 +132,38 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
         <div
           ref={uploadZoneRef}
           className={`cs-upload-zone ${hasFiles ? 'cs-upload-zone-compact' : ''} ${dragOver || demoAnim ? 'cs-upload-zone-active' : ''}`}
-          onClick={() => fileInputRef.current?.click()}
           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
         >
-          <div className="cs-upload-zone-icon">
-            <svg width={hasFiles ? '28' : '40'} height={hasFiles ? '28' : '40'} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-          </div>
-          <div className="cs-upload-zone-title">{hasFiles ? '继续添加文件' : '上传文件，自动识别对账场景'}</div>
-          {!hasFiles && <div className="cs-upload-zone-desc">支持 Excel / CSV / PDF / 图片</div>}
+          {hasFiles ? (
+            <div className="cs-upload-zone-compact-inner" onClick={() => fileInputRef.current?.click()}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span>继续添加文件</span>
+            </div>
+          ) : (
+            <>
+              <div className="cs-upload-zone-doc-icon">
+                <svg width="64" height="64" viewBox="0 0 80 80" fill="none">
+                  <rect x="16" y="8" width="48" height="64" rx="4" fill="#fff" stroke="#d0d5dd" strokeWidth="1.5"/>
+                  <path d="M26 24h28M26 32h28M26 40h20" stroke="#d0d5dd" strokeWidth="1.5" strokeLinecap="round"/>
+                  <rect x="44" y="4" width="16" height="16" rx="2" fill="none" stroke="#d0d5dd" strokeWidth="1"/>
+                  <path d="M48 56l4-4 4 4" stroke="#bbb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <button className="cs-upload-btn-primary" onClick={() => fileInputRef.current?.click()}>
+                选择本地文档
+              </button>
+              <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
+                选择扫描全能王账号内文档
+              </button>
+              <div className="cs-upload-zone-drag-hint">或拖拽文档至此</div>
+            </>
+          )}
           <input
             ref={fileInputRef}
             type="file"

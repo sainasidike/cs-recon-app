@@ -237,32 +237,84 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 56px 40px;
-  border: 1px dashed rgba(44, 44, 52, 0.15);
+  gap: 16px;
+  padding: 60px 40px;
+  border: 2px dashed #00c4a1;
   border-radius: var(--radius-lg);
-  background: transparent;
-  cursor: pointer;
+  background: #fff;
   transition: all var(--transition);
   margin-bottom: 20px;
 }
 .cs-upload-zone:hover {
-  border-color: var(--accent);
-  background: var(--accent-light);
+  background: rgba(0, 196, 161, 0.02);
 }
 .cs-upload-zone-compact {
-  padding: 20px 16px;
+  padding: 16px;
   margin-top: 12px;
   margin-bottom: 12px;
   gap: 6px;
+  border-style: dashed;
+  border-width: 1px;
+  border-color: rgba(44, 44, 52, 0.15);
+  cursor: pointer;
 }
-.cs-upload-zone-compact .cs-upload-zone-icon {
-  width: 36px;
-  height: 36px;
+.cs-upload-zone-compact:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.cs-upload-zone-compact-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--accent-pressed);
+  font-weight: 500;
 }
 .cs-upload-zone-active {
-  border-color: var(--accent);
-  background: rgba(62, 207, 142, 0.10);
+  border-color: #00c4a1;
+  background: rgba(0, 196, 161, 0.06);
+}
+.cs-upload-zone-doc-icon {
+  margin-bottom: 8px;
+}
+.cs-upload-btn-primary {
+  width: 280px;
+  max-width: 100%;
+  padding: 14px 24px;
+  border-radius: 99px;
+  background: #00c4a1;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cs-upload-btn-primary:hover {
+  background: #00b894;
+}
+.cs-upload-btn-outline {
+  width: 280px;
+  max-width: 100%;
+  padding: 12px 24px;
+  border-radius: 99px;
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.cs-upload-btn-outline:hover {
+  border-color: #00c4a1;
+  color: #00c4a1;
+}
+.cs-upload-zone-drag-hint {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
 }
 .cs-upload-zone-icon {
   width: 56px;
@@ -336,12 +388,12 @@
 
 /* Home page PC layout */
 .home-header {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 .home-title {
-  font-size: 1.6rem;
-  font-weight: 300;
-  letter-spacing: 1px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0;
   color: var(--text-primary);
   margin-bottom: 8px;
 }
@@ -2159,21 +2211,30 @@
   padding: 0 0 24px;
 }
 .embed-content .cs-upload-zone {
-  padding: 18px 14px;
+  padding: 32px 14px;
   margin-bottom: 8px;
-  gap: 6px;
+  gap: 10px;
 }
 .embed-content .cs-upload-zone-compact {
   padding: 10px 10px;
   gap: 4px;
 }
-.embed-content .cs-upload-zone-icon {
-  width: 28px;
-  height: 28px;
+.embed-content .cs-upload-zone-doc-icon svg {
+  width: 44px;
+  height: 44px;
 }
-.embed-content .cs-upload-zone-icon svg {
-  width: 16px;
-  height: 16px;
+.embed-content .cs-upload-btn-primary {
+  width: 200px;
+  padding: 10px 16px;
+  font-size: 13px;
+}
+.embed-content .cs-upload-btn-outline {
+  width: 200px;
+  padding: 9px 16px;
+  font-size: 12px;
+}
+.embed-content .cs-upload-zone-drag-hint {
+  font-size: 11px;
 }
 .embed-content .cs-upload-zone-title {
   font-size: 11px;
