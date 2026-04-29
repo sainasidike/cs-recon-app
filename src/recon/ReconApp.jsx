@@ -39,6 +39,9 @@ export default function ReconApp() {
   const [confirmed, setConfirmed] = useState({});
   const [rejected, setRejected] = useState({});
   const [activeResultTab, setActiveResultTab] = useState('exact');
+  const [history, setHistory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('rc-history') || '[]'); } catch { return []; }
+  });
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
@@ -152,8 +155,30 @@ export default function ReconApp() {
     setConfirmed(prev => { const n = { ...prev }; delete n[key]; return n; });
   }, []);
 
+  const handleFinish = useCallback(() => {
+    if (matchResults) {
+      const record = {
+        id: Date.now(),
+        company: COMPANY_INFO.name,
+        period: COMPANY_INFO.period,
+        matchRate: matchResults.matchRate,
+        matchedCount: matchResults.matchedCount,
+        unmatchedCount: matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length,
+        totalCount: BANK_DATA.length + LEDGER_DATA.length,
+        time: new Date().toLocaleString('zh-CN'),
+      };
+      const next = [record, ...history].slice(0, 20);
+      setHistory(next);
+      try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
+    }
+    setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]);
+    setProcessedUrls([]); setParseSteps([]); setParseResult(null);
+    setMatchResults(null); setConfirmed({}); setRejected({});
+    setSelectedFilter('auto'); setCurrentFileIdx(0);
+  }, [matchResults, history]);
+
   const handleReset = useCallback(() => {
-    setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]);
+    setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('auto'); setCurrentFileIdx(0);
@@ -327,6 +352,24 @@ export default function ReconApp() {
             </div>
             <span className="rc-demo-arrow">→</span>
           </button>
+
+          {history.length > 0 && (
+            <div className="rc-history">
+              <div className="rc-history-title">历史记录</div>
+              {history.map(h => (
+                <div key={h.id} className="rc-history-item">
+                  <div className="rc-history-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                  </div>
+                  <div className="rc-history-info">
+                    <div className="rc-history-name">{h.company} · {h.period}</div>
+                    <div className="rc-history-meta">匹配率 {h.matchRate.toFixed(0)}% · {h.matchedCount}笔匹配 · {h.unmatchedCount}笔未达 · {h.time}</div>
+                  </div>
+                  <span className="rc-history-rate" style={{ color: h.matchRate >= 80 ? 'var(--rc-accent-dark)' : 'var(--rc-danger)' }}>{h.matchRate.toFixed(0)}%</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf,.xlsx,.xls,.csv" style={{ display: 'none' }}
             onChange={e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; }} />
@@ -541,7 +584,7 @@ export default function ReconApp() {
           </div>
           <div className="rc-bottom">
             <button className="rc-btn-secondary" onClick={() => setStep('results')}>返回</button>
-            <button className="rc-btn-primary" onClick={handleReset}>完成对账</button>
+            <button className="rc-btn-primary" onClick={handleFinish}>完成对账</button>
           </div>
         </div>
       )}

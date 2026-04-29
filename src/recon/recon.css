@@ -744,6 +744,61 @@ body {
 .rc-parse-badge { font-size: 13px; margin-bottom: 4px; }
 .rc-parse-val { font-size: 22px; font-weight: 700; color: var(--rc-accent-dark); }
 
+/* History */
+.rc-history {
+  width: 100%;
+  margin-top: 24px;
+}
+.rc-history-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--rc-text);
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+.rc-history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--rc-card);
+  border-radius: 12px;
+  border: 1px solid var(--rc-border);
+  margin-bottom: 8px;
+}
+.rc-history-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--rc-accent-light);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.rc-history-info {
+  flex: 1;
+  min-width: 0;
+}
+.rc-history-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rc-text);
+}
+.rc-history-meta {
+  font-size: 11px;
+  color: var(--rc-text3);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rc-history-rate {
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ============================================
    Toolbox Page
    ============================================ */
