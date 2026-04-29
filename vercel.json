@@ -2,6 +2,8 @@
   "rewrites": [
     { "source": "/zhipu-api/:path*", "destination": "https://open.bigmodel.cn/:path*" },
     { "source": "/mobile", "destination": "/mobile.html" },
-    { "source": "/mobile/(.*)", "destination": "/mobile.html" }
+    { "source": "/mobile/(.*)", "destination": "/mobile.html" },
+    { "source": "/recon", "destination": "/recon.html" },
+    { "source": "/recon/(.*)", "destination": "/recon.html" }
   ]
 }
