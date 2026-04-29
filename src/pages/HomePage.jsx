@@ -101,9 +101,9 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
     return '';
   })();
 
-  const hasFiles = parsedFiles.length > 0;
+  const hasFiles = parsedFiles.length > 0 || isProcessing;
 
-  // 上传后的文件管理界面
+  // 上传后的文件管理界面（或正在解析中）
   if (hasFiles) {
     return (
       <div className="pc-page">
