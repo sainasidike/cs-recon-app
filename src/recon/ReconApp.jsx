@@ -11,8 +11,7 @@ const PIPELINE = [
   { key: 'upload', label: '上传', icon: '📤' },
   { key: 'crop', label: '切边', icon: '✂️' },
   { key: 'enhance', label: '增强', icon: '✨' },
-  { key: 'parse', label: '识别', icon: '🔍' },
-  { key: 'match', label: '匹配', icon: '🤖' },
+  { key: 'analyze', label: '分析', icon: '🤖' },
   { key: 'results', label: '结果', icon: '📊' },
   { key: 'report', label: '报告', icon: '📋' },
 ];
@@ -40,7 +39,6 @@ export default function ReconApp() {
   const [confirmed, setConfirmed] = useState({});
   const [rejected, setRejected] = useState({});
   const [activeResultTab, setActiveResultTab] = useState('exact');
-  const [activePreviewTab, setActivePreviewTab] = useState('bank');
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
@@ -107,16 +105,16 @@ export default function ReconApp() {
         ctx.filter = FILTERS.find(f => f.key === selectedFilter)?.filter || 'none';
         ctx.drawImage(img, 0, 0);
         setProcessedUrls(prev => { const n = [...prev]; n[currentFileIdx] = cvs.toDataURL('image/jpeg', 0.92); return n; });
-        startParsing();
+        startAnalyze();
       };
       img.src = url;
     } else {
-      startParsing();
+      startAnalyze();
     }
   }, [processedUrls, selectedFilter, currentFileIdx]);
 
-  const startParsing = useCallback(() => {
-    setStep('parse');
+  const startAnalyze = useCallback(() => {
+    setStep('analyze');
     setParseSteps([]);
     setParseResult(null);
 
@@ -125,10 +123,11 @@ export default function ReconApp() {
       { text: '识别到表格结构，提取数据中...', delay: 1200 },
       { text: '检测到文档类型：银行对账单', delay: 1800 },
       { text: '解析 20 笔交易记录', delay: 2400 },
-      { text: '智能分类：支出 11 笔，收入 9 笔', delay: 3000 },
-      { text: '加载企业账簿数据...', delay: 3500 },
-      { text: '解析 20 笔记账凭证', delay: 4000 },
-      { text: '文档识别完成，准备对账', delay: 4500 },
+      { text: '加载企业账簿，解析 20 笔记账凭证', delay: 3000 },
+      { text: '执行精确匹配（金额+日期完全一致）...', delay: 3800 },
+      { text: '执行模糊匹配（日期容差±3天）...', delay: 4600 },
+      { text: '执行语义匹配（描述相似度分析）...', delay: 5200 },
+      { text: '检测未达账项，生成匹配报告...', delay: 5800 },
     ];
     steps.forEach(({ text, delay }) => {
       setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
@@ -137,31 +136,11 @@ export default function ReconApp() {
       setParseResult({
         bankCount: BANK_DATA.length,
         ledgerCount: LEDGER_DATA.length,
-        company: COMPANY_INFO.name,
-        period: COMPANY_INFO.period,
       });
-    }, 5000);
-  }, []);
-
-  const startMatching = useCallback(() => {
-    setStep('match');
-    setParseSteps([]);
-
-    const steps = [
-      { text: '执行第一轮：精确匹配（金额+日期完全一致）...', delay: 600 },
-      { text: '执行第二轮：模糊匹配（日期容差±3天）...', delay: 1400 },
-      { text: '执行第三轮：语义匹配（描述相似度分析）...', delay: 2200 },
-      { text: '检测未达账项...', delay: 2800 },
-      { text: '生成匹配报告...', delay: 3200 },
-    ];
-    steps.forEach(({ text, delay }) => {
-      setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
-    });
-    setTimeout(() => {
       const results = runMatching(BANK_DATA, LEDGER_DATA);
       setMatchResults(results);
       setStep('results');
-    }, 3800);
+    }, 6500);
   }, []);
 
   const handleConfirm = useCallback((key) => {
@@ -245,7 +224,7 @@ export default function ReconApp() {
           <button className="rc-demo-btn" onClick={() => {
             setFiles([{ name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'demo' }]);
             setPreviewUrls([null]);
-            startParsing();
+            startAnalyze();
           }}>
             <div className="rc-demo-icon">🏦</div>
             <div className="rc-demo-info">
@@ -294,7 +273,7 @@ export default function ReconApp() {
             <button className="rc-btn-secondary" onClick={() => { if (previewUrls[currentFileIdx]) { handleCropConfirm(); } else { setProcessedUrls([...previewUrls]); setStep('enhance'); } }}>
               {previewUrls[currentFileIdx] ? '跳过裁剪' : '跳过'}
             </button>
-            <button className="rc-btn-primary" onClick={() => { if (previewUrls[currentFileIdx]) { handleCropConfirm(); } else { setProcessedUrls([...previewUrls]); startParsing(); } }}>
+            <button className="rc-btn-primary" onClick={() => { if (previewUrls[currentFileIdx]) { handleCropConfirm(); } else { setProcessedUrls([...previewUrls]); startAnalyze(); } }}>
               {previewUrls[currentFileIdx] ? '确认裁剪' : '下一步'}
             </button>
           </div>
@@ -349,88 +328,8 @@ export default function ReconApp() {
         </div>
       )}
 
-      {/* PARSE - Document Recognition */}
-      {step === 'parse' && (
-        <div className="rc-section rc-center">
-          <div className="rc-analysis">
-            <div className="rc-analysis-brain">
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.3">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <div className="rc-analysis-pulse" />
-            </div>
-            <h3>文档识别中</h3>
-            <div className="rc-analysis-steps">
-              {parseSteps.map((s, i) => (
-                <div key={i} className="rc-analysis-step"><span className="rc-analysis-check">✓</span><span>{s}</span></div>
-              ))}
-              {!parseResult && (
-                <div className="rc-analysis-step loading"><div className="rc-mini-spinner" /><span>处理中...</span></div>
-              )}
-            </div>
-            {parseResult && (
-              <div className="rc-parse-result">
-                <div className="rc-parse-card">
-                  <div className="rc-parse-badge">🏦 银行流水</div>
-                  <div className="rc-parse-val">{parseResult.bankCount} 笔</div>
-                </div>
-                <div className="rc-parse-card">
-                  <div className="rc-parse-badge">📒 企业账簿</div>
-                  <div className="rc-parse-val">{parseResult.ledgerCount} 笔</div>
-                </div>
-              </div>
-            )}
-            {parseResult && (
-              <div className="rc-bottom">
-                <button className="rc-btn-secondary" onClick={() => setStep('preview')}>查看数据</button>
-                <button className="rc-btn-primary" onClick={startMatching}>开始AI对账</button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* DATA PREVIEW */}
-      {step === 'preview' && (
-        <div className="rc-section">
-          <div className="rc-tabs">
-            <button className={`rc-tab ${activePreviewTab === 'bank' ? 'active' : ''}`} onClick={() => setActivePreviewTab('bank')}>银行流水 ({BANK_DATA.length})</button>
-            <button className={`rc-tab ${activePreviewTab === 'ledger' ? 'active' : ''}`} onClick={() => setActivePreviewTab('ledger')}>企业账簿 ({LEDGER_DATA.length})</button>
-          </div>
-          <div className="rc-table-wrap">
-            {activePreviewTab === 'bank' ? (
-              <table className="rc-table">
-                <thead><tr><th>日期</th><th>摘要</th><th>对方</th><th>支出</th><th>收入</th><th>余额</th></tr></thead>
-                <tbody>
-                  {BANK_DATA.map(r => (
-                    <tr key={r.id}><td className="rc-td-date">{r.date}</td><td className="rc-td-desc">{r.desc}</td><td className="rc-td-desc">{r.payee}</td>
-                      <td className="rc-td-amt out">{r.out ? fmt(r.out) : ''}</td><td className="rc-td-amt in">{r.income ? fmt(r.income) : ''}</td><td className="rc-td-amt">{fmt(r.balance)}</td></tr>
-                  ))}
-                </tbody>
-                <tfoot><tr><td colSpan={3} style={{ textAlign: 'right', fontWeight: 600 }}>合计</td><td className="rc-td-amt out" style={{ fontWeight: 600 }}>{fmt(BANK_TOTAL_OUT)}</td><td className="rc-td-amt in" style={{ fontWeight: 600 }}>{fmt(BANK_TOTAL_IN)}</td><td className="rc-td-amt" style={{ fontWeight: 600 }}>{fmt(COMPANY_INFO.closingBalance)}</td></tr></tfoot>
-              </table>
-            ) : (
-              <table className="rc-table">
-                <thead><tr><th>日期</th><th>摘要</th><th>对方</th><th>借方</th><th>贷方</th><th>凭证号</th></tr></thead>
-                <tbody>
-                  {LEDGER_DATA.map(r => (
-                    <tr key={r.id}><td className="rc-td-date">{r.date}</td><td className="rc-td-desc">{r.desc}</td><td className="rc-td-desc">{r.payee}</td>
-                      <td className="rc-td-amt out">{r.debit ? fmt(r.debit) : ''}</td><td className="rc-td-amt in">{r.credit ? fmt(r.credit) : ''}</td><td className="rc-td-ref">{r.voucher}</td></tr>
-                  ))}
-                </tbody>
-                <tfoot><tr><td colSpan={3} style={{ textAlign: 'right', fontWeight: 600 }}>合计</td><td className="rc-td-amt out" style={{ fontWeight: 600 }}>{fmt(LEDGER_TOTAL_DEBIT)}</td><td className="rc-td-amt in" style={{ fontWeight: 600 }}>{fmt(LEDGER_TOTAL_CREDIT)}</td><td></td></tr></tfoot>
-              </table>
-            )}
-          </div>
-          <div className="rc-bottom">
-            <button className="rc-btn-secondary" onClick={() => setStep('parse')}>返回</button>
-            <button className="rc-btn-primary" onClick={startMatching}>开始AI对账</button>
-          </div>
-        </div>
-      )}
-
-      {/* MATCHING */}
-      {step === 'match' && (
+      {/* ANALYZE - OCR + AI Matching combined */}
+      {step === 'analyze' && (
         <div className="rc-section rc-center">
           <div className="rc-analysis">
             <div className="rc-analysis-brain">
@@ -440,7 +339,7 @@ export default function ReconApp() {
               </svg>
               <div className="rc-analysis-pulse" />
             </div>
-            <h3>AI 智能匹配中</h3>
+            <h3>AI 识别与对账中</h3>
             <div className="rc-analysis-steps">
               {parseSteps.map((s, i) => (
                 <div key={i} className="rc-analysis-step"><span className="rc-analysis-check">✓</span><span>{s}</span></div>
@@ -506,7 +405,7 @@ export default function ReconApp() {
             </>
           )}
           <div className="rc-bottom">
-            <button className="rc-btn-secondary" onClick={() => setStep('parse')}>返回</button>
+            <button className="rc-btn-secondary" onClick={handleReset}>重新对账</button>
             <button className="rc-btn-primary" onClick={() => setStep('report')}>生成调节表</button>
           </div>
         </div>
