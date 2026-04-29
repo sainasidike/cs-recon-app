@@ -6,7 +6,7 @@ import { getDemoList } from '../utils/demoData';
 
 const MAX_FILES_PER_ROLE = 10;
 
-const DEMOS = getDemoList();
+const DEMOS = getDemoList().filter(d => d.id !== 'bank_jinli');
 const DEMO_ICONS = { bank_recon: '🏦', expense_recon: '💳', invoice_verify: '🧾' };
 
 function formatSize(bytes) {
