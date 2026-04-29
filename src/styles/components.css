@@ -2523,3 +2523,155 @@
   color: var(--text-tertiary);
   margin-top: 8px;
 }
+
+/* ===== CamScanner Tool Page Layout (转Excel风格) ===== */
+.fullpage-layout {
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+.cs-tool-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px 48px;
+}
+.cs-tool-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.cs-tool-back:hover { color: var(--text-primary); }
+.cs-tool-header {
+  text-align: center;
+  padding: 20px 0 36px;
+}
+.cs-tool-header-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+.cs-tool-header-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.cs-tool-header-desc {
+  font-size: 15px;
+  color: var(--text-tertiary);
+}
+.cs-tool-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: stretch;
+  margin-bottom: 24px;
+}
+.cs-tool-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f6f8;
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  min-height: 420px;
+}
+.cs-tool-preview-doc {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 20px;
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+}
+.cs-tool-preview-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #217346;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.cs-tool-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.cs-tool-preview-table th,
+.cs-tool-preview-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+}
+.cs-tool-preview-table th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #555;
+  font-size: 10.5px;
+}
+.cs-tool-preview-table td.out { color: #e53935; }
+.cs-tool-preview-table td.in { color: #00c4a1; }
+.cs-tool-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 48px 32px;
+  border: 2px dashed #00c4a1;
+  border-radius: 12px;
+  background: #fff;
+  transition: all 0.2s;
+  min-height: 420px;
+}
+.cs-tool-upload-active {
+  background: rgba(0, 196, 161, 0.04);
+  border-color: #00b894;
+}
+.cs-tool-upload-icon {
+  margin-bottom: 12px;
+}
+.cs-tool-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 16px 0;
+}
+.cs-tool-demos {
+  margin-top: 24px;
+}
+.cs-tool-demos-title {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+.home-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: color 0.15s;
+}
+.home-back-link:hover { color: var(--text-primary); }
+
+@media (max-width: 900px) {
+  .cs-tool-body {
+    grid-template-columns: 1fr;
+  }
+  .cs-tool-preview {
+    display: none;
+  }
+}

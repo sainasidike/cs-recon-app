@@ -6,13 +6,6 @@ import { getDemoList } from '../utils/demoData';
 
 const MAX_FILES_PER_ROLE = 10;
 
-const FEATURES = [
-  { label: 'AI 驱动', icon: '🤖' },
-  { label: '多轮匹配', icon: '🔗' },
-  { label: '自动调节表', icon: '📊' },
-  { label: '录入纠错', icon: '🔍' },
-];
-
 const DEMOS = getDemoList();
 const DEMO_ICONS = { bank_recon: '🏦', expense_recon: '💳', invoice_verify: '🧾' };
 
@@ -22,7 +15,7 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping }) {
+export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping, onBackToToolbox }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
   const uploadZoneRef = useRef(null);
@@ -110,34 +103,31 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
 
   const hasFiles = parsedFiles.length > 0;
 
-  return (
-    <div className="pc-page">
-      <div className="home-header">
-        <h1 className="home-title">开始对账</h1>
-        <p className="home-desc">上传文件自动识别场景，或选择体验案例</p>
-      </div>
+  // 上传后的文件管理界面
+  if (hasFiles) {
+    return (
+      <div className="pc-page">
+        <div className="home-header">
+          {onBackToToolbox && (
+            <div className="home-back-link" onClick={onBackToToolbox}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              返回工具箱
+            </div>
+          )}
+          <h1 className="home-title">智能对账</h1>
+          <p className="home-desc">上传文件自动识别场景，或选择体验案例</p>
+        </div>
 
-      <div className="cs-home-page">
-        {!hasFiles && (
-          <div className="cs-home-features">
-            {FEATURES.map(f => (
-              <span key={f.label} className="cs-home-feature-tag">
-                <span className="cs-home-feature-icon">{f.icon}</span>
-                {f.label}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div
-          ref={uploadZoneRef}
-          className={`cs-upload-zone ${hasFiles ? 'cs-upload-zone-compact' : ''} ${dragOver || demoAnim ? 'cs-upload-zone-active' : ''}`}
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleDrop}
-        >
-          {hasFiles ? (
-            <div className="cs-upload-zone-compact-inner" onClick={() => fileInputRef.current?.click()}>
+        <div className="cs-home-page">
+          <div
+            ref={uploadZoneRef}
+            className={`cs-upload-zone cs-upload-zone-compact ${dragOver ? 'cs-upload-zone-active' : ''}`}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+          >
+            <div className="cs-upload-zone-compact-inner">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                 <polyline points="17 8 12 3 7 8" />
@@ -145,148 +135,122 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
               </svg>
               <span>继续添加文件</span>
             </div>
-          ) : (
-            <>
-              <div className="cs-upload-zone-doc-icon">
-                <svg width="64" height="64" viewBox="0 0 80 80" fill="none">
-                  <rect x="16" y="8" width="48" height="64" rx="4" fill="#fff" stroke="#d0d5dd" strokeWidth="1.5"/>
-                  <path d="M26 24h28M26 32h28M26 40h20" stroke="#d0d5dd" strokeWidth="1.5" strokeLinecap="round"/>
-                  <rect x="44" y="4" width="16" height="16" rx="2" fill="none" stroke="#d0d5dd" strokeWidth="1"/>
-                  <path d="M48 56l4-4 4 4" stroke="#bbb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <button className="cs-upload-btn-primary" onClick={() => fileInputRef.current?.click()}>
-                选择本地图片
-              </button>
-              <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
-                选择本地文档
-              </button>
-              <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
-                选择扫描全能王账号内文档
-              </button>
-              <div className="cs-upload-zone-drag-hint">或拖拽文档至此</div>
-            </>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"
+              style={{ display: 'none' }}
+              onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
+            />
+          </div>
+
+          {isProcessing && (
+            <div className="cs-loading"><div className="cs-spinner" /><span>正在解析文件...</span></div>
           )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"
-            style={{ display: 'none' }}
-            onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
-          />
+          {error && <div className="cs-error">{error}</div>}
+
+          {activeScenario && (
+            <div className="cs-home-scenario-bar">
+              <div className="cs-home-scenario-info">
+                <span className="cs-home-scenario-icon">{activeScenario.icon}</span>
+                <div>
+                  <div className="cs-home-scenario-name">{activeScenario.name}</div>
+                  <div className="cs-home-scenario-desc">{activeScenario.desc}</div>
+                </div>
+              </div>
+              <button className="cs-home-btn-switch" onClick={() => setShowScenarioPicker(true)}>切换</button>
+            </div>
+          )}
+          {!activeScenario && (
+            <div className="cs-home-scenario-bar" style={{ borderColor: 'var(--warning)' }}>
+              <div className="cs-home-scenario-info">
+                <span className="cs-home-scenario-icon">⚠️</span>
+                <div>
+                  <div className="cs-home-scenario-name">未识别到对账场景</div>
+                  <div className="cs-home-scenario-desc">请手动选择</div>
+                </div>
+              </div>
+              <button className="cs-home-btn-confirm" onClick={() => setShowScenarioPicker(true)}>选择</button>
+            </div>
+          )}
+
+          <div className="cs-file-list">
+            {parsedFiles.map((pf, i) => {
+              const ext = pf.file.name.split('.').pop().toLowerCase();
+              const isExcel = ['xlsx', 'xls', 'csv'].includes(ext);
+              const isPdf = ext === 'pdf';
+              return (
+                <div key={i} className="cs-file-item" onClick={() => {
+                  if (window.parent !== window) {
+                    window.parent.postMessage({ type: 'recon-open-file', file: { name: pf.file.name, headers: pf.parsed.headers || [], entries: (pf.parsed.entries || []).slice(0, 100), role: pf.assignedRole } }, '*');
+                  }
+                }} style={window.parent !== window ? { cursor: 'pointer' } : undefined}>
+                  <div className={`cs-file-thumb ${isExcel ? 'excel' : isPdf ? 'pdf' : 'img'}`}>
+                    {isExcel && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#217346"/><path d="M7 7h4v3H7zm0 4h4v3H7zm0 4h4v2H7zm5-8h5v3h-5zm0 4h5v3h-5zm0 4h5v2h-5z" fill="rgba(255,255,255,0.8)"/></svg>}
+                    {isPdf && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="2" width="18" height="20" rx="2" fill="#E53935"/><path d="M8 8h8M8 11h8M8 14h5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5"/></svg>}
+                    {!isExcel && !isPdf && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#7C4DFF"/><circle cx="9" cy="9" r="2" fill="rgba(255,255,255,0.7)"/></svg>}
+                  </div>
+                  <div className="cs-file-info">
+                    <div className="cs-file-name">{pf.file.name}</div>
+                    <div className="cs-file-meta">
+                      {formatSize(pf.file.size)}
+                      {pf.parsed.entries.length > 0 && <> · {pf.parsed.entries.length} 条记录</>}
+                      {pf.parsed.needsOCR && <> · 需要 OCR</>}
+                    </div>
+                    <div className="cs-file-role-row">
+                      {activeScenario && (
+                        <select
+                          className="cs-role-select"
+                          value={pf.assignedRole}
+                          onChange={e => handleAssignRole(i, e.target.value)}
+                          style={pf.assignedRole === 'auto' ? { borderColor: 'var(--danger)', color: 'var(--danger)' } : undefined}
+                        >
+                          {activeScenario.roles.map(opt => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.value === 'auto' ? '⚠ 请选择分类' : opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {pf.parsed.headers && pf.parsed.headers.length > 0 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setMappingFileIdx(i); }}
+                          style={{ padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: 'var(--blue-light)', color: 'var(--blue)', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >
+                          列映射
+                        </button>
+                      )}
+                      {pf.docType && pf.docType !== 'unknown' && (() => {
+                        const typeLabels = { bank_statement: '银行流水', company_ledger: '企业账簿', invoice: '发票', contract: '合同', receipt: '入库单', expense: '报销单', payment: '付款', payroll: '工资表', inventory: '盘点', tax: '税务', tax_detail: '税务明细', cashbook: '现金日记', asset_ledger: '资产台账', ap_ar_statement: '往来对账' };
+                        const label = typeLabels[pf.docType];
+                        if (label) {
+                          return <span className="cs-ai-tag green" style={{ whiteSpace: 'nowrap' }}>AI: {label}</span>;
+                        }
+                        return <span className="cs-ai-tag" style={{ whiteSpace: 'nowrap', background: 'var(--warning-light)', color: 'var(--warning)' }}>AI: 未识别</span>;
+                      })()}
+                    </div>
+                  </div>
+                  <button className="cs-file-remove" onClick={() => onRemoveFile(i)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="card mt-md">
+            <div className="card-header">对账期间</div>
+            <div className="card-body" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <input type="date" className="input" value={periodStart || ''} onChange={e => onSetPeriod(e.target.value, periodEnd)} style={{ flex: 1 }} />
+              <span style={{ color: 'var(--text-tertiary)' }}>至</span>
+              <input type="date" className="input" value={periodEnd || ''} onChange={e => onSetPeriod(periodStart, e.target.value)} style={{ flex: 1 }} />
+            </div>
+            <div style={{ padding: '0 16px 12px', fontSize: 'var(--font-xs)', color: 'var(--text-tertiary)' }}>
+              不填则对比全部数据
+            </div>
+          </div>
         </div>
-
-        {isProcessing && (
-          <div className="cs-loading"><div className="cs-spinner" /><span>正在解析文件...</span></div>
-        )}
-
-        {error && <div className="cs-error">{error}</div>}
-
-        {hasFiles && (
-          <>
-            {activeScenario && (
-              <div className="cs-home-scenario-bar">
-                <div className="cs-home-scenario-info">
-                  <span className="cs-home-scenario-icon">{activeScenario.icon}</span>
-                  <div>
-                    <div className="cs-home-scenario-name">{activeScenario.name}</div>
-                    <div className="cs-home-scenario-desc">{activeScenario.desc}</div>
-                  </div>
-                </div>
-                <button className="cs-home-btn-switch" onClick={() => setShowScenarioPicker(true)}>切换</button>
-              </div>
-            )}
-            {!activeScenario && (
-              <div className="cs-home-scenario-bar" style={{ borderColor: 'var(--warning)' }}>
-                <div className="cs-home-scenario-info">
-                  <span className="cs-home-scenario-icon">⚠️</span>
-                  <div>
-                    <div className="cs-home-scenario-name">未识别到对账场景</div>
-                    <div className="cs-home-scenario-desc">请手动选择</div>
-                  </div>
-                </div>
-                <button className="cs-home-btn-confirm" onClick={() => setShowScenarioPicker(true)}>选择</button>
-              </div>
-            )}
-
-            <div className="cs-file-list">
-              {parsedFiles.map((pf, i) => {
-                const ext = pf.file.name.split('.').pop().toLowerCase();
-                const isExcel = ['xlsx', 'xls', 'csv'].includes(ext);
-                const isPdf = ext === 'pdf';
-                return (
-                  <div key={i} className="cs-file-item" onClick={() => {
-                    if (window.parent !== window) {
-                      window.parent.postMessage({ type: 'recon-open-file', file: { name: pf.file.name, headers: pf.parsed.headers || [], entries: (pf.parsed.entries || []).slice(0, 100), role: pf.assignedRole } }, '*');
-                    }
-                  }} style={window.parent !== window ? { cursor: 'pointer' } : undefined}>
-                    <div className={`cs-file-thumb ${isExcel ? 'excel' : isPdf ? 'pdf' : 'img'}`}>
-                      {isExcel && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#217346"/><path d="M7 7h4v3H7zm0 4h4v3H7zm0 4h4v2H7zm5-8h5v3h-5zm0 4h5v3h-5zm0 4h5v2h-5z" fill="rgba(255,255,255,0.8)"/></svg>}
-                      {isPdf && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="2" width="18" height="20" rx="2" fill="#E53935"/><path d="M8 8h8M8 11h8M8 14h5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5"/></svg>}
-                      {!isExcel && !isPdf && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#7C4DFF"/><circle cx="9" cy="9" r="2" fill="rgba(255,255,255,0.7)"/></svg>}
-                    </div>
-                    <div className="cs-file-info">
-                      <div className="cs-file-name">{pf.file.name}</div>
-                      <div className="cs-file-meta">
-                        {formatSize(pf.file.size)}
-                        {pf.parsed.entries.length > 0 && <> · {pf.parsed.entries.length} 条记录</>}
-                        {pf.parsed.needsOCR && <> · 需要 OCR</>}
-                      </div>
-                      <div className="cs-file-role-row">
-                        {activeScenario && (
-                          <select
-                            className="cs-role-select"
-                            value={pf.assignedRole}
-                            onChange={e => handleAssignRole(i, e.target.value)}
-                            style={pf.assignedRole === 'auto' ? { borderColor: 'var(--danger)', color: 'var(--danger)' } : undefined}
-                          >
-                            {activeScenario.roles.map(opt => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.value === 'auto' ? '⚠ 请选择分类' : opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                        {pf.parsed.headers && pf.parsed.headers.length > 0 && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setMappingFileIdx(i); }}
-                            style={{ padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: 'var(--blue-light)', color: 'var(--blue)', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                          >
-                            列映射
-                          </button>
-                        )}
-                        {pf.docType && pf.docType !== 'unknown' && (() => {
-                          const typeLabels = { bank_statement: '银行流水', company_ledger: '企业账簿', invoice: '发票', contract: '合同', receipt: '入库单', expense: '报销单', payment: '付款', payroll: '工资表', inventory: '盘点', tax: '税务', tax_detail: '税务明细', cashbook: '现金日记', asset_ledger: '资产台账', ap_ar_statement: '往来对账' };
-                          const label = typeLabels[pf.docType];
-                          if (label) {
-                            return <span className="cs-ai-tag green" style={{ whiteSpace: 'nowrap' }}>AI: {label}</span>;
-                          }
-                          return <span className="cs-ai-tag" style={{ whiteSpace: 'nowrap', background: 'var(--warning-light)', color: 'var(--warning)' }}>AI: 未识别</span>;
-                        })()}
-                      </div>
-                    </div>
-                    <button className="cs-file-remove" onClick={() => onRemoveFile(i)}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="card mt-md">
-              <div className="card-header">对账期间</div>
-              <div className="card-body" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                <input type="date" className="input" value={periodStart || ''} onChange={e => onSetPeriod(e.target.value, periodEnd)} style={{ flex: 1 }} />
-                <span style={{ color: 'var(--text-tertiary)' }}>至</span>
-                <input type="date" className="input" value={periodEnd || ''} onChange={e => onSetPeriod(periodStart, e.target.value)} style={{ flex: 1 }} />
-              </div>
-              <div style={{ padding: '0 16px 12px', fontSize: 'var(--font-xs)', color: 'var(--text-tertiary)' }}>
-                不填则对比全部数据
-              </div>
-            </div>
-          </>
-        )}
 
         {showScenarioPicker && (
           <div className="cs-home-picker-overlay" onClick={() => setShowScenarioPicker(false)}>
@@ -314,23 +278,6 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
           </div>
         )}
 
-        {!hasFiles && (
-          <div className="cs-home-section">
-            <div className="cs-home-section-title">Demo 体验</div>
-            <div className="cs-home-demo-grid">
-              {DEMOS.map(d => (
-                <div key={d.id} className="cs-home-demo-card" onClick={(e) => handleDemoClick(d.id, e)}>
-                  <span className="cs-home-demo-icon">{DEMO_ICONS[d.id] || '📊'}</span>
-                  <div className="cs-home-demo-name">{d.name}</div>
-                  <div className="cs-home-demo-desc">{d.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {hasFiles && (
         <div className="cs-bottom-bar">
           <div className="cs-selected-count">
             已选择 {parsedFiles.length} 个文件
@@ -340,19 +287,118 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
           </div>
           <button className="cs-confirm-btn" disabled={!canProceed || isProcessing} onClick={onConfirmData}>下一步</button>
         </div>
+
+        {mappingFileIdx != null && parsedFiles[mappingFileIdx] && (
+          <ColumnMapper
+            headers={parsedFiles[mappingFileIdx].parsed.headers}
+            currentMapping={parsedFiles[mappingFileIdx].parsed.columnMapping}
+            onApply={(newMapping) => {
+              if (onUpdateMapping) onUpdateMapping(mappingFileIdx, newMapping);
+              setMappingFileIdx(null);
+            }}
+            onClose={() => setMappingFileIdx(null)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // 初始页面：参照 CamScanner "转 Excel" 布局
+  return (
+    <div className="cs-tool-page">
+      {onBackToToolbox && (
+        <div className="cs-tool-back" onClick={onBackToToolbox}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          返回工具箱
+        </div>
       )}
 
-      {mappingFileIdx != null && parsedFiles[mappingFileIdx] && (
-        <ColumnMapper
-          headers={parsedFiles[mappingFileIdx].parsed.headers}
-          currentMapping={parsedFiles[mappingFileIdx].parsed.columnMapping}
-          onApply={(newMapping) => {
-            if (onUpdateMapping) onUpdateMapping(mappingFileIdx, newMapping);
-            setMappingFileIdx(null);
-          }}
-          onClose={() => setMappingFileIdx(null)}
-        />
-      )}
+      <div className="cs-tool-header">
+        <span className="cs-tool-header-icon">📊</span>
+        <h1 className="cs-tool-header-title">智能对账</h1>
+        <p className="cs-tool-header-desc">上传财务文档，AI 自动识别并完成多方对账</p>
+      </div>
+
+      <div className="cs-tool-body">
+        {/* 左侧文档预览 */}
+        <div className="cs-tool-preview">
+          <div className="cs-tool-preview-doc">
+            <div className="cs-tool-preview-badge">Excel</div>
+            <table className="cs-tool-preview-table">
+              <thead>
+                <tr><th>日期</th><th>摘要</th><th>借方</th><th>贷方</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>04-01</td><td>转账-租金</td><td className="out">35,000</td><td></td></tr>
+                <tr><td>04-02</td><td>POS入账-美团</td><td></td><td className="in">47,800</td></tr>
+                <tr><td>04-03</td><td>采购-永辉超市</td><td className="out">18,500</td><td></td></tr>
+                <tr><td>04-04</td><td>代发工资(28人)</td><td className="out">89,000</td><td></td></tr>
+                <tr><td>04-05</td><td>POS入账-饿了么</td><td></td><td className="in">32,600</td></tr>
+                <tr><td>04-07</td><td>转账-燃气费</td><td className="out">4,200</td><td></td></tr>
+                <tr><td>04-08</td><td>社保代扣</td><td className="out">26,800</td><td></td></tr>
+                <tr><td>04-10</td><td>POS入账-抖音</td><td></td><td className="in">21,500</td></tr>
+                <tr><td>04-11</td><td>设备维修费</td><td className="out">3,600</td><td></td></tr>
+                <tr><td>04-12</td><td>账户管理费</td><td className="out">35.00</td><td></td></tr>
+                <tr><td>04-14</td><td>POS入账-点评</td><td></td><td className="in">15,200</td></tr>
+                <tr><td>04-15</td><td>采购-海天味业</td><td className="out">6,800</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 右侧上传区 */}
+        <div
+          ref={uploadZoneRef}
+          className={`cs-tool-upload ${dragOver || demoAnim ? 'cs-tool-upload-active' : ''}`}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+        >
+          <div className="cs-tool-upload-icon">
+            <svg width="64" height="64" viewBox="0 0 80 80" fill="none">
+              <rect x="16" y="8" width="48" height="64" rx="4" fill="#fff" stroke="#d0d5dd" strokeWidth="1.5"/>
+              <path d="M26 24h28M26 32h28M26 40h20" stroke="#d0d5dd" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M52 4h8v8" stroke="#d0d5dd" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M36 56l4-5 4 5" stroke="#999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="40" y1="51" x2="40" y2="62" stroke="#999" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <button className="cs-upload-btn-primary" onClick={() => fileInputRef.current?.click()}>
+            选择本地图片
+          </button>
+          <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
+            选择本地文档
+          </button>
+          <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
+            选择扫描全能王账号内文档
+          </button>
+          <div className="cs-upload-zone-drag-hint">或拖拽文档至此</div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"
+            style={{ display: 'none' }}
+            onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
+          />
+        </div>
+      </div>
+
+      <div className="cs-tool-footer">扫描全能王时刻守护你的文档安全</div>
+
+      {/* Demo 体验卡片 */}
+      <div className="cs-tool-demos">
+        <div className="cs-tool-demos-title">Demo 体验</div>
+        <div className="cs-home-demo-grid">
+          {DEMOS.map(d => (
+            <div key={d.id} className="cs-home-demo-card" onClick={(e) => handleDemoClick(d.id, e)}>
+              <span className="cs-home-demo-icon">{DEMO_ICONS[d.id] || '📊'}</span>
+              <div className="cs-home-demo-name">{d.name}</div>
+              <div className="cs-home-demo-desc">{d.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {demoAnim && (
         <div className="cs-demo-anim-overlay">

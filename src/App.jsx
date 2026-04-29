@@ -75,6 +75,7 @@ function AppInner() {
           onConfirmData={confirmData}
           onLoadHistory={loadHistory}
           onUpdateMapping={updateMapping}
+          onBackToToolbox={() => { reset(); setShowToolbox(true); }}
         />
       );
     }
@@ -202,6 +203,14 @@ function AppInner() {
         <main className="embed-content">
           {renderPage()}
         </main>
+      </div>
+    );
+  }
+
+  if (step === 'home' || step === 'scenario') {
+    return (
+      <div className="fullpage-layout">
+        {renderPage()}
       </div>
     );
   }
