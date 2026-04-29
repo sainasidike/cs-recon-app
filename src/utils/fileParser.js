@@ -415,6 +415,18 @@ async function parseWithOCR(file) {
 export function classifyDocumentLocal(parsed) {
   if (parsed.aiDocType && parsed.aiDocType !== 'unknown') return parsed.aiDocType;
 
+  const fileName = (parsed.fileName || '').toLowerCase();
+  if (fileName.includes('ledger') || fileName.includes('账簿') || fileName.includes('日记账')) return 'company_ledger';
+  if (fileName.includes('bank') || fileName.includes('银行') || fileName.includes('流水')) return 'bank_statement';
+  if (fileName.includes('回单') || fileName.includes('付款')) return 'payment';
+  if (fileName.includes('invoice') || fileName.includes('发票')) return 'invoice';
+  if (fileName.includes('contract') || fileName.includes('合同')) return 'contract';
+  if (fileName.includes('receipt') || fileName.includes('入库') || fileName.includes('验收')) return 'receipt';
+  if (fileName.includes('expense') || fileName.includes('报销')) return 'expense';
+  if (fileName.includes('payroll') || fileName.includes('工资')) return 'payroll';
+  if (fileName.includes('inventory') || fileName.includes('盘点')) return 'inventory';
+  if (fileName.includes('tax') || fileName.includes('税')) return 'tax';
+
   const headers = (parsed.headers || []).map(h => String(h).toLowerCase());
   const joined = headers.join(' ');
   const sampleText = (parsed.entries || []).slice(0, 5).map(e => (e.description || '')).join(' ').toLowerCase();
@@ -431,9 +443,10 @@ export function classifyDocumentLocal(parsed) {
   if (joined.includes('栏次') || (joined.includes('纳税') && joined.includes('申报')) || (joined.includes('税种方向') && joined.includes('申报'))) return 'tax';
   if (joined.includes('销项税') || joined.includes('进项税') || (joined.includes('税种方向') && joined.includes('凭证'))) return 'tax_detail';
   if (joined.includes('经办人') && joined.includes('余额') && (joined.includes('收入') || joined.includes('支出')) && !joined.includes('盘点')) return 'cashbook';
+  if (joined.includes('科目编码') || joined.includes('对方科目') || joined.includes('凭证字号') || (joined.includes('科目') && joined.includes('方向') && joined.includes('借方') && joined.includes('贷方'))) return 'company_ledger';
   if (joined.includes('对方户名') && joined.includes('借方') && !joined.includes('余额') && !joined.includes('贷方')) return 'payment';
-  if (joined.includes('对方户名') || joined.includes('流水') || (joined.includes('余额') && joined.includes('借方') && joined.includes('贷方') && joined.includes('对方'))) return 'bank_statement';
-  if ((joined.includes('余额') && joined.includes('借方') && joined.includes('贷方'))) return 'bank_statement';
+  if (joined.includes('对方户名') || joined.includes('流水') || (joined.includes('余额') && joined.includes('借方') && joined.includes('贷方') && joined.includes('对方户名'))) return 'bank_statement';
+  if ((joined.includes('余额') && joined.includes('借方') && joined.includes('贷方') && !joined.includes('科目'))) return 'bank_statement';
   if (joined.includes('凭证号') || joined.includes('科目')) return 'company_ledger';
   if (joined.includes('付款状态') && joined.includes('客户名称')) return 'ap_ar_statement';
   if (joined.includes('应付') || joined.includes('应收')) return 'company_ledger';
@@ -444,20 +457,8 @@ export function classifyDocumentLocal(parsed) {
   if (contentText.includes('合同') && contentText.includes('供应商')) return 'contract';
   if (contentText.includes('报销') && contentText.includes('审批')) return 'expense';
 
-  const fileName = (parsed.fileName || '').toLowerCase();
-  if (fileName.includes('回单') || fileName.includes('付款')) return 'payment';
-  if (fileName.includes('bank') || fileName.includes('银行') || fileName.includes('流水')) return 'bank_statement';
-  if (fileName.includes('ledger') || fileName.includes('账簿') || fileName.includes('记账')) return 'company_ledger';
-  if (fileName.includes('invoice') || fileName.includes('发票')) return 'invoice';
-  if (fileName.includes('contract') || fileName.includes('合同')) return 'contract';
-  if (fileName.includes('receipt') || fileName.includes('入库') || fileName.includes('验收')) return 'receipt';
-  if (fileName.includes('expense') || fileName.includes('报销')) return 'expense';
-  if (fileName.includes('payroll') || fileName.includes('工资')) return 'payroll';
-  if (fileName.includes('inventory') || fileName.includes('盘点')) return 'inventory';
-  if (fileName.includes('tax') || fileName.includes('税')) return 'tax';
-
   const hasBalance = parsed.columnMapping && parsed.columnMapping.balance >= 0;
-  if (hasBalance) return 'bank_statement';
+  if (hasBalance && !joined.includes('科目')) return 'bank_statement';
 
   return 'unknown';
 }
