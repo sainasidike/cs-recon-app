@@ -39,7 +39,7 @@ export default function MobileResults({ scenario, matchResults, confirmedMatches
         </div>
         <div className="m-match-detail">{sideALabel}: {m.sideA?.date} {m.sideA?.description || ''}</div>
         <div className="m-match-detail">{sideBLabel}: {m.sideB?.date} {m.sideB?.description || ''}</div>
-        {m.confidence && <div className="m-match-detail">置信度: {(m.confidence * 100).toFixed(0)}%</div>}
+        {m.confidence && <div className="m-match-detail">置信度: {m.confidence}%</div>}
         {!isConfirmed && !isRejected && (
           <div className="m-match-actions">
             <button className="m-match-btn confirm" onClick={() => onConfirmMatch(key)}>✓ 确认</button>

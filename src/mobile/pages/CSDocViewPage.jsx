@@ -3,8 +3,13 @@ import * as XLSX from 'xlsx';
 import { classifyFromText } from './CSAnalyzingPage';
 
 function getFileType(file) {
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) return 'image';
+  if (file.type) {
+    if (file.type.startsWith('image/')) return 'image';
+    if (file.type === 'application/pdf') return 'pdf';
+    if (file.type.includes('spreadsheet') || file.type.includes('excel') || file.type === 'text/csv') return 'spreadsheet';
+  }
+  const ext = (file.name || '').split('.').pop().toLowerCase();
+  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(ext)) return 'image';
   if (['pdf'].includes(ext)) return 'pdf';
   if (['xlsx', 'xls', 'csv'].includes(ext)) return 'spreadsheet';
   return 'unknown';
@@ -27,12 +32,7 @@ export default function CSDocViewPage({ files, showReconBtn, onBack, onReconcili
 
   useEffect(() => {
     if (!primaryFile) return;
-    if (fileType === 'image') {
-      const url = URL.createObjectURL(primaryFile);
-      setImageUrl(url);
-      return () => URL.revokeObjectURL(url);
-    }
-    if (fileType === 'pdf') {
+    if (fileType === 'image' || fileType === 'pdf') {
       const url = URL.createObjectURL(primaryFile);
       setImageUrl(url);
       return () => URL.revokeObjectURL(url);
@@ -41,18 +41,35 @@ export default function CSDocViewPage({ files, showReconBtn, onBack, onReconcili
 
   useEffect(() => {
     if (!primaryFile || !isSpreadsheet) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-        setTableData(data);
-      } catch (err) {
-        console.error('Parse error:', err);
-      }
-    };
-    reader.readAsArrayBuffer(primaryFile);
+    const ext = (primaryFile.name || '').split('.').pop().toLowerCase();
+
+    if (ext === 'csv') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target.result;
+          const rows = text.split(/\r?\n/).filter(line => line.trim());
+          const data = rows.map(row => row.split(','));
+          setTableData(data);
+        } catch (err) {
+          console.error('CSV parse error:', err);
+        }
+      };
+      reader.readAsText(primaryFile, 'UTF-8');
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const data = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false });
+          setTableData(data);
+        } catch (err) {
+          console.error('Parse error:', err);
+        }
+      };
+      reader.readAsArrayBuffer(primaryFile);
+    }
   }, [primaryFile, isSpreadsheet]);
 
   if (!primaryFile) {
@@ -208,8 +225,17 @@ export default function CSDocViewPage({ files, showReconBtn, onBack, onReconcili
                 <span>PDF 文档</span>
               </div>
             </object>
+          ) : imageUrl ? (
+            <img src={imageUrl} alt="文档" className="csdv-doc-img" />
           ) : (
-            imageUrl && <img src={imageUrl} alt="文档" className="csdv-doc-img" />
+            <div className="csdv-pdf-fallback">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              <span>{primaryFile.name}</span>
+            </div>
           )}
         </div>
         <div className="csdv-add-page">
