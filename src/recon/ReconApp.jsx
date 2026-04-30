@@ -62,6 +62,83 @@ const PIPELINE = [
   { key: 'report', label: '报告', icon: '📋' },
 ];
 
+const ZHIPU_KEY = import.meta.env.VITE_ZHIPU_API_KEY || 'caa4b333b81041feae2b2268a36bcc84.O0wJBlQIlcF0yEmT';
+
+const AI_CLASSIFY_PROMPT = `你是财务文档分类专家。根据文档内容判断文档类型，只返回JSON：{"type":"类型代码","scenario":"场景代码"}
+
+类型代码（必须是以下之一）：
+- bank: 银行流水/银行对账单
+- ledger: 企业账簿/总账/明细账
+- supplier_stmt: 供应商对账单/客户对账单/往来对账单
+- ar_ap: 应收账款/应付账款明细
+- invoice: 发票（增值税发票、普通发票）
+- contract: 合同/入库单/采购订单/验收单
+- expense_claim: 报销单/费用报销申请
+- receipt: 银行回单/付款凭证
+- cash_journal: 现金日记账
+- cash_receipt: 收据/小票
+- tax_return: 纳税申报表
+- tax_ledger: 税务台账/增值税明细
+- payroll: 工资表/薪资单
+- bank_payroll: 银行代发明细
+- asset_ledger: 固定资产台账
+- asset_invoice: 资产采购发票/入库单
+
+场景代码：bank/trade/invoice/expense/cash/tax/salary/asset
+
+只返回JSON，不要解释。`;
+
+async function aiClassifyDoc(file, processedUrl) {
+  try {
+    const isImage = file?.type?.startsWith('image/') || /\.(jpg|jpeg|png|bmp|webp)$/i.test(file?.name || '');
+    let messages;
+
+    if (isImage && processedUrl) {
+      messages = [
+        { role: 'system', content: AI_CLASSIFY_PROMPT },
+        { role: 'user', content: [
+          { type: 'image_url', image_url: { url: processedUrl } },
+          { type: 'text', text: `文件名: ${file?.name || '扫描文档'}。请识别这张财务文档的类型。` }
+        ]}
+      ];
+      const resp = await fetch('/zhipu-api/api/paas/v4/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ZHIPU_KEY}` },
+        body: JSON.stringify({ model: 'glm-4v-flash', messages, temperature: 0.1, max_tokens: 100 }),
+      });
+      if (!resp.ok) throw new Error('vision failed');
+      const data = await resp.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      const match = content.match(/\{[^}]+\}/);
+      if (match) return JSON.parse(match[0]);
+    }
+
+    let textContent = `文件名: ${file?.name || '未知'}`;
+    if (file && /\.(csv|xlsx|xls)$/i.test(file.name)) {
+      try {
+        const parsed = await parseFile(file);
+        textContent += `\n表头: ${(parsed.headers || []).join(', ')}\n前3行: ${(parsed.entries || []).slice(0, 3).map(e => JSON.stringify(e)).join('\n')}`;
+      } catch {}
+    }
+
+    messages = [
+      { role: 'system', content: AI_CLASSIFY_PROMPT },
+      { role: 'user', content: textContent }
+    ];
+    const resp = await fetch('/zhipu-api/api/paas/v4/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ZHIPU_KEY}` },
+      body: JSON.stringify({ model: 'glm-4-flash', messages, temperature: 0.1, max_tokens: 100 }),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    const match = content.match(/\{[^}]+\}/);
+    if (match) return JSON.parse(match[0]);
+  } catch {}
+  return null;
+}
+
 const RECON_SCENARIOS = {
   bank: { name: '银行对账', sideA: 'bank', sideB: 'ledger', labelA: '银行流水', labelB: '企业账簿' },
   trade: { name: '往来对账', sideA: 'supplier_stmt', sideB: 'ar_ap', labelA: '供应商/客户对账单', labelB: '应收/应付账款' },
@@ -127,16 +204,25 @@ const DOC_TYPE_COLOR = {
   unknown: '#999'
 };
 
-function detectScenario(docTypes) {
+function detectScenario(docTypes, docs) {
+  if (docs) {
+    const aiScenarios = docs.map(d => d.aiScenario).filter(Boolean);
+    if (aiScenarios.length > 0) {
+      const freq = {};
+      aiScenarios.forEach(s => { freq[s] = (freq[s] || 0) + 1; });
+      const best = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
+      if (RECON_SCENARIOS[best]) return best;
+    }
+  }
   for (const [key, sc] of Object.entries(RECON_SCENARIOS)) {
     if (docTypes.includes(sc.sideA) || docTypes.includes(sc.sideB)) return key;
   }
   return 'bank';
 }
 
-function getScenarioReadiness(docs) {
-  const types = docs.map(d => d.type);
-  const scenario = detectScenario(types);
+function getScenarioReadiness(docsArr) {
+  const types = docsArr.map(d => d.type);
+  const scenario = detectScenario(types, docsArr);
   const sc = RECON_SCENARIOS[scenario];
   const hasA = types.includes(sc.sideA);
   const hasB = types.includes(sc.sideB);
@@ -249,7 +335,7 @@ export default function ReconApp() {
       const newDocs = files.map((file, i) => ({
         id: Date.now() + i,
         name: file.name || `文档${i + 1}`,
-        type: classifyDoc(file.name),
+        type: 'unknown',
         previewUrl: results[i].previewUrl,
         processedUrl: results[i].processedUrl,
         file: file,
@@ -257,6 +343,13 @@ export default function ReconApp() {
       setDocs(prev => [...prev, ...newDocs]);
       setProcessedUrls(results.map(r => r.processedUrl));
       setStep('list');
+      newDocs.forEach((doc, i) => {
+        aiClassifyDoc(doc.file, doc.processedUrl).then(result => {
+          if (result?.type) {
+            setDocs(prev => prev.map(d => d.id === doc.id ? { ...d, type: result.type, aiScenario: result.scenario || null } : d));
+          }
+        });
+      });
     });
   }, [files, previewUrls, cropBoxes, selectedFilter, flowMode]);
 
@@ -658,7 +751,7 @@ export default function ReconApp() {
               <span className="rc-tb-card-name">二维码</span>
               <div className="rc-tb-card-icon">📱</div>
             </div>
-            <div className="rc-tb-card rc-tb-card-highlight" onClick={() => { setFlowMode('recon'); setStep('home'); }}>
+            <div className="rc-tb-card rc-tb-card-highlight" onClick={() => { setFlowMode('recon'); setDocs([]); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setProcessedUrls([]); setStep('home'); }}>
               <span className="rc-tb-card-name">财务对账</span>
               <div className="rc-tb-card-icon">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5">
@@ -969,7 +1062,7 @@ export default function ReconApp() {
         const allDocs = [...userDocs, ...CS_LIBRARY];
         const selectedDocs = allDocs.filter(d => selectedDocIds.has(d.id));
         const selTypes = selectedDocs.map(d => d.type);
-        const scenario = detectScenario(selTypes);
+        const scenario = detectScenario(selTypes, selectedDocs);
         const sc = RECON_SCENARIOS[scenario];
         const hasA = selTypes.includes(sc.sideA);
         const hasB = selTypes.includes(sc.sideB);
@@ -1479,14 +1572,21 @@ export default function ReconApp() {
           </div>
 
           {flowMode === 'recon' && (() => {
-            const { sc, hasA, hasB } = getScenarioReadiness(docs);
+            const { sc, hasA, hasB, scenario } = getScenarioReadiness(docs);
+            const hasAiScenario = docs.some(d => d.aiScenario);
             const missing = [];
             if (!hasA) missing.push(sc.labelA);
             if (!hasB) missing.push(sc.labelB);
             if (missing.length > 0) return (
               <div className="rc-list-doc-hint">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f5a623" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <span>还需添加 <strong>{missing.join('、')}</strong> 才能开始对账，请继续扫描或添加文件</span>
+                <span>{hasAiScenario ? `检测到「${sc.name}」场景，还需添加` : '还需添加'} <strong>{missing.join('、')}</strong> 才能开始对账</span>
+              </div>
+            );
+            if (hasA && hasB && hasAiScenario) return (
+              <div className="rc-list-doc-hint" style={{ background: 'rgba(0,180,80,0.08)', borderColor: '#00b450' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b450" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span>已识别「<strong>{sc.name}</strong>」场景，文档齐全，可以开始对账</span>
               </div>
             );
             return null;
@@ -1495,9 +1595,14 @@ export default function ReconApp() {
           <div className="rc-list-img-content">
             {docs.map((doc, i) => {
               const imgSrc = doc.processedUrl || doc.previewUrl;
+              const typeLabel = DOC_TYPE_LABEL[doc.type] || '待分类';
+              const typeColor = DOC_TYPE_COLOR[doc.type] || '#999';
               return (
                 <div key={doc.id} className="rc-list-img-page">
                   {i > 0 && <div className="rc-list-img-divider" />}
+                  <div className="rc-list-img-tag" style={{ background: typeColor }}>
+                    {doc.type === 'unknown' ? '识别中...' : typeLabel}
+                  </div>
                   {imgSrc ? (
                     <img src={imgSrc} alt={doc.name} className="rc-list-img-photo" />
                   ) : (
@@ -1534,8 +1639,7 @@ export default function ReconApp() {
               <span>转 Word</span>
             </button>
             <button className="rc-list-action rc-list-action-recon" onClick={() => {
-              const currentDocs = docs.map(d => ({ ...d, type: d.type || classifyDoc(d.name) }));
-              setDocs(currentDocs);
+              const currentDocs = docs;
               const { ready } = getScenarioReadiness(currentDocs);
               if (ready) {
                 setFlowMode('recon');

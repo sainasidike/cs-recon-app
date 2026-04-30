@@ -1515,10 +1515,23 @@ tr.rc-lt-total-row td {
   padding-bottom: 80px;
 }
 .rc-list-img-page {
+  position: relative;
   background: #fff;
   border-radius: 4px;
   overflow: hidden;
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.rc-list-img-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #fff;
+  font-weight: 500;
+  opacity: 0.92;
 }
 .rc-list-img-divider {
   height: 2px;
