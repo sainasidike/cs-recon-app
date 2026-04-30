@@ -97,6 +97,7 @@ export default function ReconApp() {
   const [rejected, setRejected] = useState({});
   const [activeResultTab, setActiveResultTab] = useState('exact');
   const [docExpanded, setDocExpanded] = useState({ bank: false, ledger: false });
+  const [showAllResults, setShowAllResults] = useState(false);
   const [history, setHistory] = useState(() => {
     try { return JSON.parse(localStorage.getItem('rc-history') || '[]'); } catch { return []; }
   });
@@ -935,6 +936,13 @@ export default function ReconApp() {
       {/* RESULTS */}
       {step === 'results' && matchResults && reconData && (
         <div className="rc-section">
+          <div className="rc-stats-row">
+            <div className="rc-stat"><div className="rc-stat-value">{matchResults.matchedCount}</div><div className="rc-stat-label">匹配</div></div>
+            <div className="rc-stat"><div className="rc-stat-value accent">{matchResults.matchRate.toFixed(0)}%</div><div className="rc-stat-label">匹配率</div></div>
+            <div className="rc-stat"><div className="rc-stat-value danger">{matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length}</div><div className="rc-stat-label">未匹配</div></div>
+            <div className="rc-stat"><div className="rc-stat-value">¥{fmt(matchResults.matchedAmt)}</div><div className="rc-stat-label">匹配额</div></div>
+          </div>
+
           {/* Documents — collapsible, one card per doc */}
           {(docs.length > 0 ? docs : [
             { id: 'demo-bank', name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'bank' },
@@ -984,39 +992,42 @@ export default function ReconApp() {
             );
           })}
 
-          <button className="rc-results-upload" onClick={() => fileInputRef.current?.click()}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            继续上传文档
-          </button>
-
-          <div className="rc-stats-row">
-            <div className="rc-stat"><div className="rc-stat-value">{matchResults.matchedCount}</div><div className="rc-stat-label">匹配</div></div>
-            <div className="rc-stat"><div className="rc-stat-value accent">{matchResults.matchRate.toFixed(0)}%</div><div className="rc-stat-label">匹配率</div></div>
-            <div className="rc-stat"><div className="rc-stat-value danger">{matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length}</div><div className="rc-stat-label">未匹配</div></div>
-            <div className="rc-stat"><div className="rc-stat-value">¥{fmt(matchResults.matchedAmt)}</div><div className="rc-stat-label">匹配额</div></div>
-          </div>
           <div className="rc-tabs">
             <button className={`rc-tab ${activeResultTab === 'exact' ? 'active' : ''}`} onClick={() => setActiveResultTab('exact')}>精确 ({matchResults.exact.length})</button>
             <button className={`rc-tab ${activeResultTab === 'fuzzy' ? 'active' : ''}`} onClick={() => setActiveResultTab('fuzzy')}>模糊 ({matchResults.fuzzy.length + matchResults.semantic.length})</button>
             <button className={`rc-tab ${activeResultTab === 'unmatched' ? 'active' : ''}`} onClick={() => setActiveResultTab('unmatched')}>未匹配 ({matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length})</button>
           </div>
 
-          {activeResultTab === 'exact' && matchResults.exact.map((m, i) => {
-            const key = `exact-${i}`;
+          {activeResultTab === 'exact' && (() => {
+            const items = matchResults.exact;
+            const visible = showAllResults ? items : items.slice(0, 3);
             return (
-              <div key={key} className="rc-match-card">
-                <div className="rc-match-head"><span className="rc-badge exact">精确</span><span className="rc-match-score">{m.score}%</span><span className="rc-match-amt">¥{fmt(getAmt(m.bank))}</span></div>
-                <div className="rc-match-pair">
-                  <div className="rc-match-side"><span className="rc-match-tag bank">银行</span><span>{m.bank.date}</span><span className="rc-match-desc">{getDesc(m.bank)}</span></div>
-                  <div className="rc-match-arrow">↔</div>
-                  <div className="rc-match-side"><span className="rc-match-tag ledger">企业</span><span>{m.ledger.date}</span><span className="rc-match-desc">{getDesc(m.ledger)}</span></div>
-                </div>
-                {!confirmed[key] && !rejected[key] && (<div className="rc-match-actions"><button className="rc-action-btn confirm" onClick={() => handleConfirm(key)}>✓ 确认</button><button className="rc-action-btn reject" onClick={() => handleReject(key)}>✗ 驳回</button></div>)}
-                {confirmed[key] && <div className="rc-match-status confirmed">✓ 已确认</div>}
-                {rejected[key] && <div className="rc-match-status rejected">✗ 已驳回</div>}
-              </div>
+              <>
+                {visible.map((m, i) => {
+                  const key = `exact-${i}`;
+                  return (
+                    <div key={key} className="rc-match-card">
+                      <div className="rc-match-head"><span className="rc-badge exact">精确</span><span className="rc-match-score">{m.score}%</span><span className="rc-match-amt">¥{fmt(getAmt(m.bank))}</span></div>
+                      <div className="rc-match-pair">
+                        <div className="rc-match-side"><span className="rc-match-tag bank">银行</span><span>{m.bank.date}</span><span className="rc-match-desc">{getDesc(m.bank)}</span></div>
+                        <div className="rc-match-arrow">↔</div>
+                        <div className="rc-match-side"><span className="rc-match-tag ledger">企业</span><span>{m.ledger.date}</span><span className="rc-match-desc">{getDesc(m.ledger)}</span></div>
+                      </div>
+                      {!confirmed[key] && !rejected[key] && (<div className="rc-match-actions"><button className="rc-action-btn confirm" onClick={() => handleConfirm(key)}>✓ 确认</button><button className="rc-action-btn reject" onClick={() => handleReject(key)}>✗ 驳回</button></div>)}
+                      {confirmed[key] && <div className="rc-match-status confirmed">✓ 已确认</div>}
+                      {rejected[key] && <div className="rc-match-status rejected">✗ 已驳回</div>}
+                    </div>
+                  );
+                })}
+                {!showAllResults && items.length > 3 && (
+                  <button className="rc-show-more" onClick={() => setShowAllResults(true)}>
+                    查看全部 {items.length} 条匹配结果
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                )}
+              </>
             );
-          })}
+          })()}
           {activeResultTab === 'fuzzy' && [...matchResults.fuzzy, ...matchResults.semantic].map((m, i) => {
             const key = `fuzzy-${i}`;
             return (

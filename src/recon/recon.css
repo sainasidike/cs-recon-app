@@ -1554,6 +1554,27 @@ tr.rc-lt-total-row td {
   color: var(--rc-accent-dark) !important;
 }
 
+/* ==================== SHOW MORE BUTTON ==================== */
+.rc-show-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px dashed #d0d5dd;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--rc-accent-dark);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rc-show-more:active {
+  background: var(--rc-accent-light);
+}
+
 /* ==================== HOME PAGE OPTIMIZED ==================== */
 .rc-home-demo-primary {
   display: flex;
