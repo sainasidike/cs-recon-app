@@ -523,6 +523,8 @@ export default function ReconApp() {
           { name: '余额调节表', type: 'result_sheet' },
           { name: 'AI分析报告', type: 'result_report' },
         ],
+        savedMatchResults: matchResults,
+        savedReconData: reconData,
       };
       const filtered = history.filter(h => !(h.status === 'pending' && h.scenario === scenario));
       const next = [record, ...filtered].slice(0, 30);
@@ -1061,8 +1063,15 @@ export default function ReconApp() {
                     <div className="rc-alldocs-filelist">
                       {allFiles.map((d, i) => (
                         <div key={i} className="rc-alldocs-filecard" onClick={() => {
-                          setDocs(allDocsProject.docs || []);
-                          setStep('list');
+                          if (d.category === 'result' && allDocsProject.savedMatchResults && allDocsProject.savedReconData) {
+                            setMatchResults(allDocsProject.savedMatchResults);
+                            setReconData(allDocsProject.savedReconData);
+                            setDocs(allDocsProject.docs || []);
+                            setStep('results');
+                          } else {
+                            setDocs(allDocsProject.docs || []);
+                            setStep('list');
+                          }
                         }}>
                           <div className="rc-alldocs-filecard-thumb">
                             {d.thumbnail ? (
