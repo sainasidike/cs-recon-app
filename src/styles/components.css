@@ -3156,3 +3156,191 @@
     flex-wrap: wrap;
   }
 }
+
+/* ===== Source Files Card (ConfirmPage sidebar) ===== */
+.source-files-card {
+  margin-bottom: 16px;
+  padding: 14px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border);
+}
+.source-files-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.source-files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.source-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+}
+.source-file-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.source-file-info {
+  flex: 1;
+  min-width: 0;
+}
+.source-file-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.source-file-meta {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+/* ===== Project Detail Page ===== */
+.pd-page {
+  max-width: 800px;
+}
+.pd-section {
+  margin-bottom: 24px;
+}
+.pd-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+.pd-file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.pd-file-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pd-file-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+.pd-file-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.pd-file-info {
+  flex: 1;
+  min-width: 0;
+}
+.pd-file-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pd-file-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+}
+.pd-file-role {
+  color: var(--accent-pressed);
+  font-weight: 500;
+}
+.pd-file-view {
+  font-size: 12px;
+  color: var(--accent-pressed);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.pd-result-card {
+  padding: 20px;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.pd-result-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.pd-result-badge {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+}
+.pd-result-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.pd-result-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pd-log-list {
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.pd-log-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+.pd-log-item:last-child {
+  border-bottom: none;
+}
+.pd-log-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: monospace;
+  white-space: nowrap;
+}
+.pd-log-action {
+  font-size: 13px;
+  color: var(--text-secondary);
+}

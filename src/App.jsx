@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useReconciliation } from './hooks/useReconciliation';
+import { useProjects } from './hooks/useProjects';
 import { ToastProvider } from './components/Toast';
 import StepIndicator from './components/StepIndicator';
 import ToolboxPage from './pages/ToolboxPage';
@@ -8,6 +9,7 @@ import ConfirmPage from './pages/ConfirmPage';
 import ResultsPage from './pages/ResultsPage';
 import ReconciliationPage from './pages/ReconciliationPage';
 import CompletePage from './pages/CompletePage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
 import HistoryListPage from './pages/HistoryListPage';
 import { getScenario } from './utils/scenarios';
 import './styles/theme.css';
@@ -67,6 +69,9 @@ function AppInner() {
     goToStep, archiveReport, reset, updateEntries, updateMapping,
   } = useReconciliation();
 
+  const projectsHook = useProjects();
+  const [viewingProject, setViewingProject] = useState(null);
+
   const params = new URLSearchParams(window.location.search);
   const autoloadId = params.get('autoload');
   const isEmbed = params.get('embed') === '1';
@@ -98,6 +103,23 @@ function AppInner() {
   }
 
   const renderPage = () => {
+    if (viewingProject) {
+      return (
+        <ProjectDetailPage
+          project={viewingProject}
+          getProjectFiles={projectsHook.getProjectFiles}
+          getProjectResult={projectsHook.getProjectResult}
+          onBack={() => setViewingProject(null)}
+          onViewReport={(result) => {
+            if (result) {
+              goToStep('reconciliation');
+              setViewingProject(null);
+            }
+          }}
+        />
+      );
+    }
+
     if (step === 'home' || step === 'scenario') {
       return (
         <HomePage
@@ -118,6 +140,8 @@ function AppInner() {
           onLoadHistory={loadHistory}
           onUpdateMapping={updateMapping}
           onBackToToolbox={isEmbed ? undefined : () => { reset(); setShowToolbox(true); }}
+          projectsHook={projectsHook}
+          onOpenProject={(project) => setViewingProject(project)}
         />
       );
     }
@@ -180,7 +204,7 @@ function AppInner() {
           onApprove={approveReport}
           onReject={rejectReport}
           onBack={() => goToStep('results')}
-          onNext={() => {
+          onNext={async () => {
             archiveReport();
             if (isEmbed) {
               window.parent.postMessage({
@@ -192,14 +216,28 @@ function AppInner() {
                 periodEnd: state.periodEnd,
               }, '*');
             } else {
-              localStorage.setItem('cs_recon_latest_result', JSON.stringify({
+              const filesMeta = (state.parsedFiles || []).map(pf => ({
+                name: pf.file?.name || 'unknown',
+                size: pf.file?.size || 0,
+                type: pf.file?.type || '',
+                role: pf.assignedRole,
+                entryCount: pf.parsed?.entries?.length || 0,
+              }));
+              const fileBlobs = (state.parsedFiles || []).map(pf => pf.file).filter(Boolean);
+              const projectName = `${scenario?.name || '对账'} - ${new Date().toLocaleDateString('zh-CN')}`;
+              const project = await projectsHook.createProject({
+                name: projectName,
+                scenarioId: state.scenarioId,
+                files: filesMeta,
+                fileBlobs,
+              });
+              await projectsHook.saveResult(project.id, {
                 reconciliation: state.reconciliation,
                 matchResults: state.matchResults,
-                scenario: scenario,
-                periodStart: state.periodStart,
-                periodEnd: state.periodEnd,
-              }));
-              window.location.href = '/cs-reader.html?showResult=latest';
+                scenario,
+              });
+              reset();
+              goToStep('home');
             }
           }}
         />

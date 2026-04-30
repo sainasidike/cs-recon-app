@@ -3,7 +3,6 @@ import ColumnMapper from '../components/ColumnMapper';
 import { useToast } from '../components/Toast';
 import { SCENARIOS, getScenario } from '../utils/scenarios';
 import { getDemoList } from '../utils/demoData';
-import { useProjects } from '../hooks/useProjects';
 
 const MAX_FILES_PER_ROLE = 10;
 
@@ -22,7 +21,7 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping, onBackToToolbox }) {
+export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping, onBackToToolbox, projectsHook, onOpenProject }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
   const uploadZoneRef = useRef(null);
@@ -30,7 +29,7 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
   const [showScenarioPicker, setShowScenarioPicker] = useState(false);
   const [demoAnim, setDemoAnim] = useState(null);
   const [mappingFileIdx, setMappingFileIdx] = useState(null);
-  const { recentProjects, archivedProjects, archiveProject, deleteProject } = useProjects();
+  const { recentProjects, archivedProjects, archiveProject, deleteProject } = projectsHook || {};
   const [docFilter, setDocFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -318,15 +317,15 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
   }
 
   // 工作站首页
-  const allProjects = docFilter === 'all' ? [...recentProjects, ...archivedProjects]
-    : docFilter === 'archived' ? archivedProjects
-    : recentProjects.filter(p => p.status === docFilter);
+  const allProjects = docFilter === 'all' ? [...(recentProjects || []), ...(archivedProjects || [])]
+    : docFilter === 'archived' ? (archivedProjects || [])
+    : (recentProjects || []).filter(p => p.status === docFilter);
 
   const filteredProjects = searchQuery
-    ? allProjects.filter(p => p.name.includes(searchQuery) || (p.files || []).some(f => f.includes(searchQuery)))
+    ? allProjects.filter(p => p.name?.includes(searchQuery) || (p.files || []).some(f => (f.name || f).includes(searchQuery)))
     : allProjects;
 
-  const hasProjects = recentProjects.length > 0 || archivedProjects.length > 0;
+  const hasProjects = (recentProjects?.length || 0) > 0 || (archivedProjects?.length || 0) > 0;
 
   const formatTime = (iso) => {
     if (!iso) return '-';
@@ -479,7 +478,7 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
                 const status = STATUS_MAP[project.status] || STATUS_MAP.active;
                 const scenarioInfo = project.scenarioId ? getScenario(project.scenarioId) : null;
                 return (
-                  <div key={project.id} className="ws-project-card" onClick={() => onLoadHistory && onLoadHistory(project.id)}>
+                  <div key={project.id} className="ws-project-card" onClick={() => onOpenProject && onOpenProject(project)}>
                     <div className="ws-project-card-top">
                       <span className="ws-project-icon">{scenarioInfo?.icon || '📋'}</span>
                       <span className={`ws-project-status ${status.cls}`}>{status.label}</span>

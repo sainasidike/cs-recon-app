@@ -166,6 +166,53 @@ function EntryModal({ entry, onSave, onDelete, onClose, mode }) {
   );
 }
 
+function SourceFileList({ sideAData, sideBData, sideCData, scenario }) {
+  const allFiles = [
+    ...(sideAData?.files || []).map(f => ({ ...f, roleLabel: scenario?.sideA?.shortLabel || 'A方' })),
+    ...(sideBData?.files || []).map(f => ({ ...f, roleLabel: scenario?.sideB?.shortLabel || 'B方' })),
+    ...(sideCData?.files || []).map(f => ({ ...f, roleLabel: scenario?.sideC?.shortLabel || 'C方' })),
+  ];
+  if (allFiles.length === 0) return null;
+
+  const formatSize = (bytes) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const getIcon = (name) => {
+    const ext = (name || '').split('.').pop().toLowerCase();
+    if (['xlsx', 'xls', 'csv'].includes(ext)) return { bg: '#217346', label: 'XLS' };
+    if (ext === 'pdf') return { bg: '#E53935', label: 'PDF' };
+    return { bg: '#7C4DFF', label: 'IMG' };
+  };
+
+  return (
+    <div className="source-files-card">
+      <div className="source-files-title">已上传文件 ({allFiles.length})</div>
+      <div className="source-files-list">
+        {allFiles.map((pf, i) => {
+          const icon = getIcon(pf.file?.name || pf.name);
+          return (
+            <div key={i} className="source-file-item">
+              <div className="source-file-badge" style={{ background: icon.bg }}>{icon.label}</div>
+              <div className="source-file-info">
+                <div className="source-file-name">{pf.file?.name || pf.name || '文件'}</div>
+                <div className="source-file-meta">
+                  {pf.roleLabel}
+                  {pf.file?.size ? ` · ${formatSize(pf.file.size)}` : ''}
+                  {pf.parsed?.entries?.length ? ` · ${pf.parsed.entries.length}条` : ''}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData, sideABalance, sideBBalance, validation, onSetBalances, onBack, onNext, onUpdateEntries }) {
   const [activeTab, setActiveTab] = useState('sideA');
   const [localABal, setLocalABal] = useState(sideABalance || 0);
@@ -243,6 +290,7 @@ export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData,
 
       <div className="confirm-layout">
         <div className="confirm-sidebar-col">
+          <SourceFileList sideAData={sideAData} sideBData={sideBData} sideCData={sideCData} scenario={scenario} />
           <div className="stats-col">
             <div className="stat-item">
               <span className="stat-item-label">{aLabel}记录</span>
