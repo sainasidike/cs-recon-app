@@ -915,22 +915,25 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
         </div>
       </section>
 
-      {/* B) Quick start bar */}
-      <section className="ws-quick-bar">
+      {/* B) Upload zone + Demo scenarios */}
+      <section className="ws-start-section">
         <div
           ref={uploadZoneRef}
-          className={`ws-quick-upload ${dragOver || demoAnim ? 'ws-quick-upload-active' : ''}`}
+          className={`ws-upload-zone ${dragOver || demoAnim ? 'ws-upload-zone-active' : ''}`}
           onClick={() => fileInputRef.current?.click()}
           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" y1="3" x2="12" y2="15" />
-          </svg>
-          <span>点击或拖拽上传文件开始对账</span>
+          <div className="ws-upload-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+          <div className="ws-upload-text">点击或拖拽上传文件开始对账</div>
+          <div className="ws-upload-hint">支持 Excel / CSV / PDF / 图片，至少上传 2 个文件</div>
           <input
             ref={fileInputRef}
             type="file"
@@ -940,13 +943,20 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
             onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
           />
         </div>
-        <div className="ws-quick-demos">
-          {DEMOS.map(d => (
-            <button key={d.id} className="ws-quick-demo-btn" onClick={(e) => handleDemoClick(d.id, e)}>
-              <span>{DEMO_ICONS[d.id] || '📊'}</span>
-              <span>{d.name}</span>
-            </button>
-          ))}
+
+        <div className="ws-demo-section">
+          <div className="ws-demo-label">或选择体验案例快速了解</div>
+          <div className="ws-demo-cards">
+            {DEMOS.map(d => (
+              <button key={d.id} className="ws-demo-card" onClick={(e) => handleDemoClick(d.id, e)}>
+                <span className="ws-demo-card-icon">{DEMO_ICONS[d.id] || '📊'}</span>
+                <div className="ws-demo-card-info">
+                  <div className="ws-demo-card-name">{d.name}</div>
+                  <div className="ws-demo-card-desc">{d.fileNames?.length || 2} 个示例文件</div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 

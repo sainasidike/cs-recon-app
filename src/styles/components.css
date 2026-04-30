@@ -3773,62 +3773,99 @@
 }
 
 /* Quick Bar */
-.ws-quick-bar {
+.ws-start-section {
+  margin-bottom: 28px;
+}
+.ws-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 36px 24px;
+  border: 2px dashed rgba(123, 168, 155, 0.4);
+  border-radius: 14px;
+  background: rgba(123, 168, 155, 0.02);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ws-upload-zone:hover,
+.ws-upload-zone-active {
+  border-color: var(--accent);
+  background: rgba(62, 207, 142, 0.05);
+  box-shadow: 0 0 0 4px rgba(62, 207, 142, 0.06);
+}
+.ws-upload-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(123, 168, 155, 0.08);
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
-  padding: 12px 16px;
-  background: #fff;
-  border: 0.5px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  justify-content: center;
+  margin-bottom: 4px;
 }
-.ws-quick-upload {
-  flex: 1;
+.ws-upload-zone:hover .ws-upload-icon {
+  background: rgba(62, 207, 142, 0.12);
+}
+.ws-upload-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ws-upload-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.ws-demo-section {
+  margin-top: 16px;
+}
+.ws-demo-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+.ws-demo-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.ws-demo-card {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  height: 48px;
-  border: 1.5px dashed rgba(123, 168, 155, 0.4);
-  border-radius: 8px;
-  background: rgba(123, 168, 155, 0.02);
-  cursor: pointer;
-  transition: all 0.15s;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.ws-quick-upload:hover,
-.ws-quick-upload-active {
-  border-color: var(--accent);
-  background: rgba(62, 207, 142, 0.04);
-  color: var(--accent-pressed);
-}
-.ws-quick-demos {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.ws-quick-demo-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
+  padding: 14px 16px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-secondary);
-  font-size: 12px;
-  color: var(--text-secondary);
+  border-radius: 10px;
+  background: var(--bg-card);
   cursor: pointer;
   transition: all 0.15s;
   font-family: inherit;
+  text-align: left;
+}
+.ws-demo-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.ws-demo-card-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.ws-demo-card-info {
+  min-width: 0;
+}
+.ws-demo-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
   white-space: nowrap;
 }
-.ws-quick-demo-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent-pressed);
-  background: var(--accent-light);
+.ws-demo-card-desc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
 }
 
 /* Records Section */
@@ -4026,12 +4063,8 @@
   .ws-stats-row {
     grid-template-columns: repeat(2, 1fr);
   }
-  .ws-quick-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .ws-quick-demos {
-    flex-wrap: wrap;
+  .ws-demo-cards {
+    grid-template-columns: 1fr;
   }
   .ws-record-grid-v2 {
     grid-template-columns: 1fr;
