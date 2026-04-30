@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getScenario } from '../utils/scenarios';
 import { exportReconciliationPDF, exportReconciliationExcel } from '../utils/reportExport';
 import { useToast } from '../components/Toast';
+import { parseFile } from '../utils/fileParser';
 
 function formatSize(bytes) {
   if (!bytes) return '';
@@ -25,11 +26,12 @@ function fmt(val) {
   return (val || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 });
 }
 
-function SplitFilePreview({ fileData, allFiles, activeIdx, onSwitchFile, onClose }) {
+function SplitFilePreview({ fileData, allFiles, activeIdx, onSwitchFile, onClose, parsedData }) {
   const name = fileData.name || '';
   const ext = name.split('.').pop().toLowerCase();
   const isImage = fileData.type?.startsWith('image/') || ['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'webp'].includes(ext);
   const isPdf = fileData.type === 'application/pdf' || ext === 'pdf';
+  const isExcel = ['xlsx', 'xls', 'csv'].includes(ext);
   const blob = fileData.blob;
 
   return (
@@ -56,12 +58,39 @@ function SplitFilePreview({ fileData, allFiles, activeIdx, onSwitchFile, onClose
         {blob && isPdf && (
           <iframe src={URL.createObjectURL(blob)} className="home-preview-iframe" title={name} />
         )}
-        {blob && !isImage && !isPdf && (
+        {blob && isExcel && parsedData && parsedData.entries?.length > 0 && (
+          <div className="home-preview-table-wrap">
+            <table className="home-preview-table">
+              <thead>
+                <tr>
+                  {parsedData.headers ? parsedData.headers.map((h, i) => <th key={i}>{h}</th>) : <><th>日期</th><th>摘要</th><th>金额</th><th>余额</th></>}
+                </tr>
+              </thead>
+              <tbody>
+                {parsedData.entries.slice(0, 100).map((e, i) => (
+                  <tr key={i}>
+                    {parsedData.headers && e.raw ? (
+                      parsedData.headers.map((h, hi) => <td key={hi}>{e.raw[hi] != null ? String(e.raw[hi]) : '-'}</td>)
+                    ) : (
+                      <>
+                        <td>{e.date || '-'}</td>
+                        <td>{e.description || e.counterparty || '-'}</td>
+                        <td className={e.direction === 'credit' ? 'amount-credit' : 'amount-debit'}>{(e.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                        <td>{e.balance != null ? e.balance.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '-'}</td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {parsedData.entries.length > 100 && (
+              <div className="home-preview-table-more">显示前 100 条 / 共 {parsedData.entries.length} 条</div>
+            )}
+          </div>
+        )}
+        {blob && isExcel && (!parsedData || parsedData.entries?.length === 0) && (
           <div className="home-preview-empty">
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Excel 文件</p>
-              {fileData.entryCount > 0 && <p style={{ fontSize: 12, marginTop: 8, color: 'var(--text-tertiary)' }}>共 {fileData.entryCount} 条数据记录</p>}
-            </div>
+            {parsedData === null ? '正在解析...' : '暂无可预览的数据'}
           </div>
         )}
         {!blob && (
@@ -77,6 +106,7 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
   const [files, setFiles] = useState(null);
   const [result, setResult] = useState(null);
   const [previewIdx, setPreviewIdx] = useState(null);
+  const [parsedPreview, setParsedPreview] = useState({});
   const [leftWidth, setLeftWidth] = useState(520);
   const draggingRef = useRef(false);
 
@@ -136,7 +166,23 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
 
   const handleOpenPreview = (idx) => {
     if (!files || !files[idx]) return;
-    setPreviewIdx(previewIdx === idx ? null : idx);
+    if (previewIdx === idx) {
+      setPreviewIdx(null);
+      return;
+    }
+    setPreviewIdx(idx);
+    const f = projectFiles[idx];
+    const ext = (f.name || '').split('.').pop().toLowerCase();
+    const isExcel = ['xlsx', 'xls', 'csv'].includes(ext);
+    if (isExcel && !parsedPreview[idx]) {
+      const blob = files[idx];
+      const fakeFile = new File([blob], f.name, { type: blob.type });
+      parseFile(fakeFile).then(parsed => {
+        setParsedPreview(prev => ({ ...prev, [idx]: parsed }));
+      }).catch(() => {
+        setParsedPreview(prev => ({ ...prev, [idx]: { entries: [] } }));
+      });
+    }
   };
 
   const getPreviewData = (idx) => {
@@ -238,8 +284,9 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
             fileData={previewData}
             allFiles={projectFiles}
             activeIdx={previewIdx}
-            onSwitchFile={(i) => files && files[i] ? setPreviewIdx(i) : null}
+            onSwitchFile={(i) => { if (files && files[i]) handleOpenPreview(i); }}
             onClose={() => setPreviewIdx(null)}
+            parsedData={parsedPreview[previewIdx] || null}
           />
         </div>
         <div className="home-split-divider" onMouseDown={handleDividerMouseDown} />
