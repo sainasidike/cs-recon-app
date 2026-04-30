@@ -229,6 +229,25 @@ function getScenarioReadiness(docsArr) {
   return { scenario, sc, hasA, hasB, ready: hasA && hasB };
 }
 
+function makeThumbnail(url) {
+  if (!url) return null;
+  try {
+    const img = new Image();
+    const cvs = document.createElement('canvas');
+    cvs.width = 80; cvs.height = 80;
+    img.src = url;
+    if (img.complete) {
+      const ctx = cvs.getContext('2d');
+      const scale = Math.max(80 / img.naturalWidth, 80 / img.naturalHeight);
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+      ctx.drawImage(img, (80 - w) / 2, (80 - h) / 2, w, h);
+      return cvs.toDataURL('image/jpeg', 0.5);
+    }
+  } catch {}
+  return url.slice(0, 200);
+}
+
 const FILTERS = [
   { key: 'original', label: '原图', filter: 'none', hot: false },
   { key: 'hd', label: '智能高清', filter: 'contrast(1.2) brightness(1.05) saturate(1.05)', hot: true },
@@ -514,32 +533,13 @@ export default function ReconApp() {
     setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
-  }, [matchResults, reconData, history, docs, makeThumbnail]);
+  }, [matchResults, reconData, history, docs]);
 
   const handleReset = useCallback(() => {
     setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
-  }, []);
-
-  const makeThumbnail = useCallback((url) => {
-    if (!url) return null;
-    try {
-      const img = new Image();
-      const cvs = document.createElement('canvas');
-      cvs.width = 80; cvs.height = 80;
-      img.src = url;
-      if (img.complete) {
-        const ctx = cvs.getContext('2d');
-        const scale = Math.max(80 / img.naturalWidth, 80 / img.naturalHeight);
-        const w = img.naturalWidth * scale;
-        const h = img.naturalHeight * scale;
-        ctx.drawImage(img, (80 - w) / 2, (80 - h) / 2, w, h);
-        return cvs.toDataURL('image/jpeg', 0.5);
-      }
-    } catch {}
-    return url.slice(0, 200);
   }, []);
 
   const savePendingProject = useCallback((docsToSave) => {
@@ -567,7 +567,7 @@ export default function ReconApp() {
       : [record, ...history];
     setHistory(next.slice(0, 30));
     try { localStorage.setItem('rc-history', JSON.stringify(next.slice(0, 30))); } catch {}
-  }, [history, makeThumbnail]);
+  }, [history]);
 
   const resumeProject = useCallback((project) => {
     if (project.status === 'pending' && project.docs?.length > 0) {
