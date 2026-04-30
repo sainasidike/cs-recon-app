@@ -2378,6 +2378,16 @@
 .embed-content .cs-home-demo-grid {
   display: none;
 }
+.embed-content .home-split-layout {
+  display: block;
+}
+.embed-content .home-split-left,
+.embed-content .home-split-divider {
+  display: none;
+}
+.embed-content .home-split-right {
+  width: 100% !important;
+}
 .embed-content .cs-home-page {
   padding: 0 0 24px;
 }
