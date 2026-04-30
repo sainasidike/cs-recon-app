@@ -367,7 +367,7 @@ export default function ReconApp() {
       setStep('list');
       newDocs.forEach((doc, i) => {
         aiClassifyDoc(doc.file, doc.processedUrl).then(result => {
-          if (result?.type) {
+          if (result?.type && doc.type === 'unknown') {
             setDocs(prev => prev.map(d => d.id === doc.id ? { ...d, type: result.type, aiScenario: result.scenario || null } : d));
           }
         });
