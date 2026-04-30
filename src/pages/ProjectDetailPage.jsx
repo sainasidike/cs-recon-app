@@ -101,12 +101,102 @@ function SplitFilePreview({ fileData, allFiles, activeIdx, onSwitchFile, onClose
   );
 }
 
+function ReportPreview({ result, scenario, onClose }) {
+  const recon = result?.reconciliation;
+  if (!recon) return <div className="home-preview-empty">无报告数据</div>;
+
+  const sideALabel = scenario?.sideA?.shortLabel || 'A方';
+  const sideBLabel = scenario?.sideB?.shortLabel || 'B方';
+  const { sideABalance, sideBBalance, sideAAdj, sideBAdj, sideAAdjusted, sideBAdjusted, isBalanced, matchSummary, useBalanceMode, matchedAmount, unmatchedAAmount, unmatchedBAmount, sideATotalAmount, sideBTotalAmount, matchRate } = recon;
+
+  return (
+    <>
+      <div className="home-preview-header">
+        <span className="home-preview-filename">{scenario?.reportTitle || '对账调节表'}</span>
+        <span style={{ cursor: 'pointer', fontSize: 18, color: 'var(--text-tertiary)', lineHeight: 1 }} onClick={onClose}>×</span>
+      </div>
+      <div className="home-preview-body" style={{ padding: 20 }}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ width: 36, height: 36, margin: '0 auto 10px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isBalanced ? 'var(--accent-light)' : 'var(--danger-light)' }}>
+            {isBalanced
+              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-pressed)" strokeWidth="2"><path d="M5 13l4 4L19 7"/></svg>
+              : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+            }
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--text-primary)', marginBottom: 4 }}>
+            {useBalanceMode
+              ? (isBalanced ? '调节后余额一致' : '调节后余额不一致')
+              : (isBalanced ? '全部单据匹配成功' : '存在未匹配单据')
+            }
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 300, color: isBalanced ? 'var(--accent-pressed)' : 'var(--danger)' }}>
+            {useBalanceMode ? `¥ ${fmt(sideAAdjusted)}` : `匹配率 ${matchRate?.toFixed(1)}%`}
+          </div>
+          {useBalanceMode && !isBalanced && (
+            <div style={{ marginTop: 6, fontSize: 13, color: 'var(--danger)' }}>
+              差额：¥ {fmt(Math.abs(sideAAdjusted - sideBAdjusted))}
+            </div>
+          )}
+        </div>
+
+        {useBalanceMode ? (
+          <>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--text-primary)' }}>{sideALabel}对账单</div>
+              <div className="report-row"><span>期末余额</span><span>¥ {fmt(sideABalance)}</span></div>
+              {sideAAdj?.adds?.map((item, i) => (
+                <div key={`aa${i}`} className="report-row" style={{ color: 'var(--accent-pressed)' }}><span>+ {item.date} {item.description || item.reason}</span><span>+ ¥ {fmt(item.amount)}</span></div>
+              ))}
+              {sideAAdj?.subs?.map((item, i) => (
+                <div key={`as${i}`} className="report-row" style={{ color: 'var(--danger)' }}><span>- {item.date} {item.description || item.reason}</span><span>- ¥ {fmt(item.amount)}</span></div>
+              ))}
+              <div className="report-row" style={{ fontWeight: 600, borderTop: '1px solid var(--border)', paddingTop: 6, marginTop: 6 }}><span>调节后余额</span><span>¥ {fmt(sideAAdjusted)}</span></div>
+            </div>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--text-primary)' }}>{sideBLabel}账面</div>
+              <div className="report-row"><span>期末余额</span><span>¥ {fmt(sideBBalance)}</span></div>
+              {sideBAdj?.adds?.map((item, i) => (
+                <div key={`ba${i}`} className="report-row" style={{ color: 'var(--accent-pressed)' }}><span>+ {item.date} {item.description || item.reason}</span><span>+ ¥ {fmt(item.amount)}</span></div>
+              ))}
+              {sideBAdj?.subs?.map((item, i) => (
+                <div key={`bs${i}`} className="report-row" style={{ color: 'var(--danger)' }}><span>- {item.date} {item.description || item.reason}</span><span>- ¥ {fmt(item.amount)}</span></div>
+              ))}
+              <div className="report-row" style={{ fontWeight: 600, borderTop: '1px solid var(--border)', paddingTop: 6, marginTop: 6 }}><span>调节后余额</span><span>¥ {fmt(sideBAdjusted)}</span></div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--text-primary)' }}>匹配汇总</div>
+              <div className="report-row"><span>匹配笔数</span><span>{(matchSummary?.exactCount || 0) + (matchSummary?.fuzzyCount || 0) + (matchSummary?.semanticCount || 0)} 笔</span></div>
+              <div className="report-row"><span>匹配金额</span><span>¥ {fmt(matchedAmount)}</span></div>
+              <div className="report-row"><span>精确匹配</span><span>{matchSummary?.exactCount || 0} 笔</span></div>
+              {(matchSummary?.fuzzyCount || 0) > 0 && <div className="report-row"><span>模糊匹配</span><span>{matchSummary.fuzzyCount} 笔</span></div>}
+              {(matchSummary?.semanticCount || 0) > 0 && <div className="report-row"><span>语义匹配</span><span>{matchSummary.semanticCount} 笔</span></div>}
+              <div className="report-row" style={{ fontWeight: 600, borderTop: '1px solid var(--border)', paddingTop: 6, marginTop: 6 }}><span>匹配率</span><span>{matchRate?.toFixed(1)}%</span></div>
+            </div>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--text-primary)' }}>各方金额</div>
+              <div className="report-row"><span>{sideALabel}总额</span><span>¥ {fmt(sideATotalAmount)}</span></div>
+              <div className="report-row"><span>{sideBLabel}总额</span><span>¥ {fmt(sideBTotalAmount)}</span></div>
+              {(matchSummary?.unmatchedACount || 0) > 0 && <div className="report-row" style={{ color: 'var(--danger)' }}><span>{sideALabel}未匹配</span><span>{matchSummary.unmatchedACount} 笔 / ¥ {fmt(unmatchedAAmount)}</span></div>}
+              {(matchSummary?.unmatchedBCount || 0) > 0 && <div className="report-row" style={{ color: 'var(--danger)' }}><span>{sideBLabel}未匹配</span><span>{matchSummary.unmatchedBCount} 笔 / ¥ {fmt(unmatchedBAmount)}</span></div>}
+              <div className="report-row" style={{ fontWeight: 600, borderTop: '1px solid var(--border)', paddingTop: 6, marginTop: 6 }}><span>核验结论</span><span style={{ color: isBalanced ? 'var(--accent-pressed)' : 'var(--danger)' }}>{isBalanced ? '全部一致' : '存在差异'}</span></div>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
 export default function ProjectDetailPage({ project, getProjectFiles, getProjectResult, onBack, onViewReport }) {
   const toast = useToast();
   const [files, setFiles] = useState(null);
   const [result, setResult] = useState(null);
   const [previewIdx, setPreviewIdx] = useState(null);
   const [parsedPreview, setParsedPreview] = useState({});
+  const [showReport, setShowReport] = useState(false);
   const [leftWidth, setLeftWidth] = useState(520);
   const draggingRef = useRef(false);
 
@@ -249,7 +339,7 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
             <div className="pd-result-actions">
               <button className="btn-pc-outline" onClick={handleExportExcel}>导出 Excel</button>
               <button className="btn-pc-outline" onClick={handleExportPDF}>导出 PDF</button>
-              <button className="btn-pc-primary" onClick={() => onViewReport && onViewReport(result)}>查看完整报告</button>
+              <button className="btn-pc-primary" onClick={() => { setPreviewIdx(null); setShowReport(true); }}>查看完整报告</button>
             </div>
           </div>
         </section>
@@ -275,19 +365,24 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
   );
 
   const previewData = getPreviewData(previewIdx);
+  const showSplit = previewData || showReport;
 
-  if (previewData) {
+  if (showSplit) {
     return (
       <div className="pc-page confirm-split-layout">
         <div className="confirm-split-left" style={{ width: leftWidth }}>
-          <SplitFilePreview
-            fileData={previewData}
-            allFiles={projectFiles}
-            activeIdx={previewIdx}
-            onSwitchFile={(i) => { if (files && files[i]) handleOpenPreview(i); }}
-            onClose={() => setPreviewIdx(null)}
-            parsedData={parsedPreview[previewIdx] || null}
-          />
+          {showReport ? (
+            <ReportPreview result={result} scenario={scenario} onClose={() => setShowReport(false)} />
+          ) : (
+            <SplitFilePreview
+              fileData={previewData}
+              allFiles={projectFiles}
+              activeIdx={previewIdx}
+              onSwitchFile={(i) => { if (files && files[i]) handleOpenPreview(i); }}
+              onClose={() => setPreviewIdx(null)}
+              parsedData={parsedPreview[previewIdx] || null}
+            />
+          )}
         </div>
         <div className="home-split-divider" onMouseDown={handleDividerMouseDown} />
         <div className="confirm-split-right">
