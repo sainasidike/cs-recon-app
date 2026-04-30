@@ -260,6 +260,7 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
       setPreviewIdx(null);
       return;
     }
+    setShowReport(false);
     setPreviewIdx(idx);
     const f = projectFiles[idx];
     const ext = (f.name || '').split('.').pop().toLowerCase();
