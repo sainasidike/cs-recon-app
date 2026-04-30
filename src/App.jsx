@@ -59,20 +59,7 @@ function MatchingAnimation({ hasSideC }) {
   );
 }
 
-function AppSidebar({ navPage, setNavPage, onNewRecon, onBackToToolbox, projectsHook, onSelectDemo }) {
-  const { recentProjects, archivedProjects } = projectsHook || {};
-
-  const sceneCounts = {
-    bank_recon: 0,
-    expense_recon: 0,
-    invoice_verify: 0,
-  };
-  const allProjects = [...(recentProjects || []), ...(archivedProjects || [])];
-  allProjects.forEach(p => {
-    if (p.scenarioId && sceneCounts[p.scenarioId] !== undefined) {
-      sceneCounts[p.scenarioId]++;
-    }
-  });
+function AppSidebar({ navPage, setNavPage, onNewRecon, onBackToToolbox }) {
 
   return (
     <aside className="app-sidebar">
@@ -108,21 +95,12 @@ function AppSidebar({ navPage, setNavPage, onNewRecon, onBackToToolbox, projects
           <span className="app-sidebar-item-label">文档管理</span>
         </div>
 
-        <div className="app-sidebar-section">对账场景</div>
-        <div className="app-sidebar-item" onClick={() => onSelectDemo('bank_recon')}>
-          <span className="app-sidebar-item-icon">🏦</span>
-          <span className="app-sidebar-item-label">银行对账</span>
-          {sceneCounts.bank_recon > 0 && <span className="app-sidebar-item-count">{sceneCounts.bank_recon}</span>}
-        </div>
-        <div className="app-sidebar-item" onClick={() => onSelectDemo('expense_recon')}>
-          <span className="app-sidebar-item-icon">💳</span>
-          <span className="app-sidebar-item-label">费用报销</span>
-          {sceneCounts.expense_recon > 0 && <span className="app-sidebar-item-count">{sceneCounts.expense_recon}</span>}
-        </div>
-        <div className="app-sidebar-item" onClick={() => onSelectDemo('invoice_verify')}>
-          <span className="app-sidebar-item-icon">🧾</span>
-          <span className="app-sidebar-item-label">发票核验</span>
-          {sceneCounts.invoice_verify > 0 && <span className="app-sidebar-item-count">{sceneCounts.invoice_verify}</span>}
+        <div
+          className={`app-sidebar-item ${navPage === 'scenarios' ? 'active' : ''}`}
+          onClick={() => setNavPage('scenarios')}
+        >
+          <span className="app-sidebar-item-icon">🎯</span>
+          <span className="app-sidebar-item-label">对账场景</span>
         </div>
 
         <div className="app-sidebar-section">工具</div>
@@ -193,9 +171,6 @@ function AppInner() {
     setViewingProject(null);
   };
 
-  const handleSceneShortcut = (demoId) => {
-    loadDemo(demoId);
-  };
 
   const renderPage = () => {
     if (viewingProject) {
@@ -390,8 +365,6 @@ function AppInner() {
           setNavPage={setNavPage}
           onNewRecon={handleNewRecon}
           onBackToToolbox={() => { reset(); setShowToolbox(true); }}
-          projectsHook={projectsHook}
-          onSelectDemo={handleSceneShortcut}
         />
       )}
       <div className={showSidebar ? 'app-main-content' : ''}>

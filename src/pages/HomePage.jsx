@@ -454,6 +454,295 @@ function DocsView({ projectsHook, onOpenProject, onSwitchNav, onAddFiles }) {
   return <div className="ws-page-v2">{mainContent}</div>;
 }
 
+const SCENARIO_DATA = [
+  {
+    id: 'bank_recon',
+    icon: '🏦',
+    name: '银行对账',
+    parties: '银行流水 vs 企业账簿',
+    frequency: '月度',
+    complexity: '低',
+    documents: ['银行对账单', '银行回单', '记账凭证'],
+    description: '每月核对银行对账单与企业记账凭证，确认资金收支一致。最常见的对账场景，几乎所有企业每月必做。',
+    diffReason: '未达账项——银行已入账企业未入账（在途款），或企业已入账银行未入账（未兑现支票）。',
+    process: ['上传银行流水 + 企业账簿', 'AI 识别日期/金额/摘要/对方户名', '三轮匹配（精确 → 模糊 → 语义）', '生成余额调节表，标注未达账项'],
+    csValue: '银行流水纸质件多，CS 扫描全能王可直接拍照识别导入，省去手动录入。AI 智能匹配替代人工逐笔比对，月末对账从 2 小时缩短到 30 秒。',
+    demoFiles: [
+      { name: '招商银行流水_星辰科技_202603', role: '银行流水', img: '/scenario-docs/bank_recon_a.png' },
+      { name: '企业账簿_星辰科技_202603', role: '企业账簿', img: '/scenario-docs/bank_recon_b.png' },
+    ],
+    demoResult: { matchRate: 84.2, matched: 16, unmatched: 3, diffs: ['银行手续费：企业未入账（¥35）', '客户回款：银行已收，企业次月入账（¥45,000）', '域名续费+ESS证书：银行已扣，企业未记账（¥1,280）'] },
+    demoId: 'bank_recon',
+  },
+  {
+    id: 'partner_recon',
+    icon: '🤝',
+    name: '往来对账',
+    parties: '企业 vs 供应商/客户',
+    frequency: '月度/季度',
+    complexity: '中',
+    documents: ['采购单', '送货单', '对账单', '发票'],
+    description: '与供应商或客户定期核对应付/应收账款余额，确认双方账目一致。常见于有大量供应商往来的制造业和贸易公司。',
+    diffReason: '入账时间差（对方已发货未到）、价格调整未同步、退货/折让未及时冲账。',
+    process: ['上传企业采购/销售记录 + 对方对账单', 'AI 识别单号/金额/日期/客户名', '按单号精确匹配 + 按金额模糊匹配', '生成差异明细和余额核对表'],
+    csValue: '供应商对账单常为纸质或 PDF 格式，CS 扫描全能王一拍即识，自动提取表格数据。免去手动抄写和逐行比对。',
+    demoFiles: [
+      { name: '企业采购记录_深圳鑫达电子_202603', role: '企业记录', img: '/scenario-docs/partner_recon_a.png' },
+      { name: '供应商对账单_深圳鑫达电子_202603', role: '供应商对账', img: '/scenario-docs/partner_recon_b.png' },
+    ],
+    demoResult: { matchRate: 78.5, matched: 8, unmatched: 3, diffs: ['退货 RET-2026-0318：企业已冲账，供应商未处理（¥7,500）', '采购 PO-2026-0310：供应商已发货，企业未收货入账（¥18,900）', '价格调整：合同变更后单价不一致（差额 ¥2,100）'] },
+    demoId: null,
+  },
+  {
+    id: 'invoice_verify',
+    icon: '🧾',
+    name: '发票核验',
+    parties: '发票 vs 合同 vs 入库单',
+    frequency: '逐笔',
+    complexity: '高',
+    documents: ['增值税发票', '采购合同', '入库验收单'],
+    description: '三单匹配：逐笔核验发票金额是否与合同约定和实际入库数量一致。是财务合规的核心环节，审计重点关注。',
+    diffReason: '发票金额与合同不符、入库数量短少、税率适用错误、跨期开票。',
+    process: ['上传增值税发票 + 合同 + 入库验收单', 'AI 识别发票号/合同号/品名/数量/金额', '三方交叉匹配（发票↔合同↔入库）', '输出匹配报告，标注差异项和风险点'],
+    csValue: '三单匹配强依赖单据识别能力，CS 扫描全能王可精准识别发票、合同表格和入库单，三方数据自动串联比对。',
+    demoFiles: [
+      { name: '增值税发票_202603', role: '发票', img: '/scenario-docs/invoice_verify_a.png' },
+      { name: '采购合同_202603', role: '合同', img: '/scenario-docs/invoice_verify_b.png' },
+      { name: '入库验收单_202603', role: '入库单', img: '/scenario-docs/invoice_verify_c.png' },
+    ],
+    demoResult: { matchRate: 76.5, matched: 4, unmatched: 2, diffs: ['入库数量短少：合同约定 500 台，实收 480 台', '税率差异：合同约定 13%，发票开具 9%（需确认适用税率）'] },
+    demoId: 'invoice_verify',
+  },
+  {
+    id: 'expense_recon',
+    icon: '💳',
+    name: '费用报销',
+    parties: '报销单 vs 发票 vs 银行付款',
+    frequency: '随时',
+    complexity: '中',
+    documents: ['费用报销单', '发票', '出差审批单', '银行回单'],
+    description: '核验员工报销申请是否有对应发票支撑，以及银行实际付款是否与审批金额一致。票据量大且类型杂，手工核对极易出错。',
+    diffReason: '发票金额与报销金额不符、重复报销、超标报销、付款金额与审批不一致。',
+    process: ['上传报销单 + 发票 + 银行付款记录', 'AI 识别报销单号/发票号/金额/日期', '报销↔发票↔付款三方匹配', '输出异常清单（超标/缺票/重复）'],
+    csValue: '报销票据种类多（餐饮/交通/住宿/办公），CS 全能王一扫全识别，自动分类归集。大批量票据秒级完成比对。',
+    demoFiles: [
+      { name: '费用报销单_星辰科技_202603', role: '报销单', img: '/scenario-docs/expense_recon_a.png' },
+      { name: '发票_星辰科技_202603', role: '发票', img: '/scenario-docs/expense_recon_b.png' },
+      { name: '银行付款回单_202603', role: '银行付款', img: '/scenario-docs/expense_recon_c.png' },
+    ],
+    demoResult: { matchRate: 91.7, matched: 11, unmatched: 1, diffs: ['差旅报销 EXP-2026-008：报销金额 ¥3,200 但发票合计仅 ¥2,850（差额 ¥350 无票据支撑）'] },
+    demoId: 'expense_recon',
+  },
+  {
+    id: 'cash_recon',
+    icon: '💰',
+    name: '现金对账',
+    parties: '现金日记账 vs 实际盘点',
+    frequency: '日/周',
+    complexity: '低',
+    documents: ['收据', '付款凭证', '现金盘点表'],
+    description: '核对现金日记账余额与实际库存现金是否一致。适用于有大量现金交易的零售、餐饮等行业。',
+    diffReason: '记账遗漏、找零误差、白条抵库、盘点计数错误。',
+    process: ['上传现金日记账 + 盘点表', 'AI 识别日期/摘要/收支金额/余额', '逐日余额对比，定位差异日期', '输出差异明细和可能原因分析'],
+    csValue: '手写收据多，CS 扫描全能王的手写体识别能力可快速数字化纸质凭证。',
+    demoFiles: [
+      { name: '现金日记账_202603', role: '日记账', img: '/scenario-docs/cash_recon_a.png' },
+      { name: '现金盘点表_20260331', role: '盘点表', img: '/scenario-docs/cash_recon_b.png' },
+    ],
+    demoResult: { matchRate: 95.0, matched: 28, unmatched: 2, diffs: ['3月15日零星采购：日记账记录 ¥280，但无对应收据', '3月28日盘点差额：账面余额 ¥12,350 vs 实盘 ¥12,300（差 ¥50）'] },
+    demoId: null,
+  },
+  {
+    id: 'tax_recon',
+    icon: '📋',
+    name: '税务对账',
+    parties: '企业账簿 vs 税务申报',
+    frequency: '月度/季度',
+    complexity: '高',
+    documents: ['纳税申报表', '完税证明', '发票汇总'],
+    description: '核对企业账面税金与税务局申报数据是否一致。季度/年度汇算清缴前的必要动作，确保税务合规。',
+    diffReason: '进项税转出未同步、免税收入归类错误、跨期发票认证时间差。',
+    process: ['上传企业增值税明细 + 纳税申报表', 'AI 识别税种/税率/计税基础/应纳税额', '按税种逐项比对（销项税/进项税/附加税）', '输出税差分析报告'],
+    csValue: '部分纳税申报表为扫描件，CS 全能王精准识别表格结构和数字，避免人工誊抄错误。',
+    demoFiles: [
+      { name: '企业账簿_增值税明细_202603', role: '企业账簿', img: '/scenario-docs/tax_recon_a.png' },
+      { name: '增值税申报表_202603', role: '申报表', img: '/scenario-docs/tax_recon_b.png' },
+    ],
+    demoResult: { matchRate: 88.0, matched: 5, unmatched: 1, diffs: ['进项税差异：账面进项 ¥45,200 vs 申报认证 ¥42,800（差额 ¥2,400 为当月取得次月认证的发票）'] },
+    demoId: null,
+  },
+  {
+    id: 'payroll_recon',
+    icon: '👥',
+    name: '工资对账',
+    parties: '工资表 vs 银行代发回单',
+    frequency: '月度',
+    complexity: '低',
+    documents: ['工资表', '银行代发明细', '个税扣缴表'],
+    description: '核对 HR 工资表与银行实际代发金额是否一致，确保每位员工实发工资准确到账。',
+    diffReason: '银行退汇（账号错误）、代扣代缴差异、离职人员未及时从名单剔除。',
+    process: ['上传工资表 + 银行代发明细', 'AI 识别姓名/工号/应发/实发/卡号', '按姓名+金额精确匹配', '输出未匹配名单（退汇/漏发/多发）'],
+    csValue: '多为电子数据，CS 全能王可快速识别银行代发回单 PDF，自动提取结构化数据进行比对。',
+    demoFiles: [
+      { name: '工资表_星辰科技_202603', role: '工资表', img: '/scenario-docs/payroll_recon_a.png' },
+      { name: '银行代发明细_星辰科技_202603', role: '银行代发', img: '/scenario-docs/payroll_recon_b.png' },
+    ],
+    demoResult: { matchRate: 92.3, matched: 12, unmatched: 1, diffs: ['员工吴磊（工号 008）：工资表实发 ¥10,600，银行代发 ¥0（银行退汇，卡号变更未更新）'] },
+    demoId: null,
+  },
+  {
+    id: 'asset_recon',
+    icon: '🏗',
+    name: '固定资产对账',
+    parties: '资产台账 vs 实物盘点',
+    frequency: '年度',
+    complexity: '中',
+    documents: ['资产卡片', '盘点表', '采购发票'],
+    description: '年度盘点时核对财务系统资产台账与实际在用资产是否一致，发现盘盈盘亏和闲置资产。',
+    diffReason: '资产报废未销账、调拨未更新台账、新购资产未及时入账、实物丢失。',
+    process: ['上传固定资产台账 + 实物盘点表', 'AI 识别资产编号/名称/规格/存放位置', '按资产编号精确匹配', '输出盘盈/盘亏/状态不符清单'],
+    csValue: '盘点表通常为手填纸质表格，CS 全能王可将手写盘点结果快速数字化，与系统台账自动比对。',
+    demoFiles: [
+      { name: '固定资产台账_星辰科技_2026', role: '资产台账', img: '/scenario-docs/asset_recon_a.png' },
+      { name: '实物盘点表_星辰科技_20260331', role: '盘点表', img: '/scenario-docs/asset_recon_b.png' },
+    ],
+    demoResult: { matchRate: 80.0, matched: 8, unmatched: 2, diffs: ['FA-2023-005（UPS 不间断电源）：台账在册，盘点未发现（疑似报废未销账）', 'FA-2026-007（17寸 PC 显示器）：台账显示"在用"，盘点标注"闲置待处理"'] },
+    demoId: null,
+  },
+];
+
+function ScenariosView({ onSelectDemo, onSwitchNav }) {
+  const [selectedId, setSelectedId] = useState(null);
+  const selected = SCENARIO_DATA.find(s => s.id === selectedId);
+
+  if (selected) {
+    return (
+      <div className="ws-page-v2 sc-detail-page">
+        <div className="sc-detail-back" onClick={() => setSelectedId(null)}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          返回场景列表
+        </div>
+
+        <div className="sc-detail-header">
+          <span className="sc-detail-icon">{selected.icon}</span>
+          <div>
+            <h2 className="sc-detail-title">{selected.name}</h2>
+            <div className="sc-detail-meta">
+              {selected.parties} · {selected.frequency} · 复杂度{selected.complexity}
+            </div>
+          </div>
+        </div>
+
+        <section className="sc-section">
+          <h3 className="sc-section-title">场景说明</h3>
+          <p className="sc-section-text">{selected.description}</p>
+          <p className="sc-section-text sc-diff-reason"><strong>常见差异原因：</strong>{selected.diffReason}</p>
+        </section>
+
+        <section className="sc-section">
+          <h3 className="sc-section-title">涉及单据</h3>
+          <div className="sc-doc-tags">
+            {selected.documents.map((doc, i) => (
+              <span key={i} className="sc-doc-tag">{doc}</span>
+            ))}
+          </div>
+        </section>
+
+        <section className="sc-section">
+          <h3 className="sc-section-title">对账流程</h3>
+          <div className="sc-process-steps">
+            {selected.process.map((step, i) => (
+              <div key={i} className="sc-process-step">
+                <span className="sc-process-num">{i + 1}</span>
+                <span className="sc-process-text">{step}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="sc-section">
+          <h3 className="sc-section-title">Demo 文件预览</h3>
+          <div className="sc-demo-files">
+            {selected.demoFiles.map((file, i) => (
+              <div key={i} className="sc-demo-file">
+                <div className="sc-demo-file-header">
+                  <span className="sc-demo-file-role">{file.role}</span>
+                  <span className="sc-demo-file-name">{file.name}</span>
+                </div>
+                <div className="sc-demo-file-preview">
+                  <img src={file.img} alt={file.name} className="sc-demo-file-img" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="sc-section">
+          <h3 className="sc-section-title">对账结果示例</h3>
+          <div className="sc-result-card">
+            <div className="sc-result-stats">
+              <div className="sc-result-stat">
+                <div className="sc-result-stat-value">{selected.demoResult.matchRate}%</div>
+                <div className="sc-result-stat-label">匹配率</div>
+              </div>
+              <div className="sc-result-stat">
+                <div className="sc-result-stat-value">{selected.demoResult.matched}</div>
+                <div className="sc-result-stat-label">已匹配</div>
+              </div>
+              <div className="sc-result-stat">
+                <div className="sc-result-stat-value sc-result-stat-warn">{selected.demoResult.unmatched}</div>
+                <div className="sc-result-stat-label">未匹配</div>
+              </div>
+            </div>
+            <div className="sc-result-diffs">
+              <div className="sc-result-diffs-title">差异原因分析：</div>
+              {selected.demoResult.diffs.map((d, i) => (
+                <div key={i} className="sc-result-diff-item">· {d}</div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="sc-section">
+          <h3 className="sc-section-title">CS 切入价值</h3>
+          <p className="sc-section-text sc-value-text">{selected.csValue}</p>
+        </section>
+
+        {selected.demoId && (
+          <div className="sc-cta-area">
+            <button className="sc-cta-btn" onClick={() => { onSelectDemo(selected.demoId); onSwitchNav('workspace'); }}>
+              ▶ 用 Demo 数据体验{selected.name}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="ws-page-v2">
+      <div className="nav-page-header">
+        <h2 className="nav-page-title">对账场景</h2>
+        <p className="sc-subtitle">覆盖企业日常 8 大对账场景，AI 自动识别单据并智能匹配</p>
+      </div>
+
+      <div className="sc-grid">
+        {SCENARIO_DATA.map(s => (
+          <div key={s.id} className="sc-card" onClick={() => setSelectedId(s.id)}>
+            <div className="sc-card-icon">{s.icon}</div>
+            <div className="sc-card-name">{s.name}</div>
+            <div className="sc-card-parties">{s.parties}</div>
+            <div className="sc-card-tags">
+              <span className="sc-card-tag">{s.frequency}</span>
+              <span className={`sc-card-tag sc-complexity-${s.complexity}`}>复杂度{s.complexity}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping, onBackToToolbox, projectsHook, onOpenProject, navPage, setNavPage }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
@@ -578,6 +867,9 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
   }
   if (navPage === 'docs') {
     return <DocsView projectsHook={projectsHook} onOpenProject={onOpenProject} onSwitchNav={setNavPage} onAddFiles={onAddFiles} />;
+  }
+  if (navPage === 'scenarios') {
+    return <ScenariosView onSelectDemo={onSelectDemo} onSwitchNav={setNavPage} />;
   }
 
   // File management view (when files are uploaded or processing)
