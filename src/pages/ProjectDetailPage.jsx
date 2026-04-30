@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getScenario } from '../utils/scenarios';
 import { exportReconciliationPDF, exportReconciliationExcel } from '../utils/reportExport';
 import { useToast } from '../components/Toast';
@@ -25,17 +25,88 @@ function fmt(val) {
   return (val || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 });
 }
 
+function SplitFilePreview({ fileData, allFiles, activeIdx, onSwitchFile, onClose }) {
+  const name = fileData.name || '';
+  const ext = name.split('.').pop().toLowerCase();
+  const isImage = fileData.type?.startsWith('image/') || ['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'webp'].includes(ext);
+  const isPdf = fileData.type === 'application/pdf' || ext === 'pdf';
+  const blob = fileData.blob;
+
+  return (
+    <>
+      <div className="home-preview-header">
+        <span className="home-preview-filename">{name}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {allFiles.length > 1 && (
+            <div className="home-preview-nav">
+              {allFiles.map((f, i) => (
+                <button key={i} className={`home-preview-tab ${i === activeIdx ? 'active' : ''}`} onClick={() => onSwitchFile(i)}>
+                  {(f.name || '').length > 12 ? f.name.slice(0, 10) + '...' : (f.name || '')}
+                </button>
+              ))}
+            </div>
+          )}
+          <span style={{ cursor: 'pointer', fontSize: 18, color: 'var(--text-tertiary)', lineHeight: 1 }} onClick={onClose}>×</span>
+        </div>
+      </div>
+      <div className="home-preview-body">
+        {blob && isImage && (
+          <img src={URL.createObjectURL(blob)} alt={name} className="home-preview-img" />
+        )}
+        {blob && isPdf && (
+          <iframe src={URL.createObjectURL(blob)} className="home-preview-iframe" title={name} />
+        )}
+        {blob && !isImage && !isPdf && (
+          <div className="home-preview-empty">
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Excel 文件</p>
+              {fileData.entryCount > 0 && <p style={{ fontSize: 12, marginTop: 8, color: 'var(--text-tertiary)' }}>共 {fileData.entryCount} 条数据记录</p>}
+            </div>
+          </div>
+        )}
+        {!blob && (
+          <div className="home-preview-empty">文件数据不可用（Demo 模式下不保存原始文件）</div>
+        )}
+      </div>
+    </>
+  );
+}
+
 export default function ProjectDetailPage({ project, getProjectFiles, getProjectResult, onBack, onViewReport }) {
   const toast = useToast();
   const [files, setFiles] = useState(null);
   const [result, setResult] = useState(null);
-  const [previewFile, setPreviewFile] = useState(null);
+  const [previewIdx, setPreviewIdx] = useState(null);
+  const [leftWidth, setLeftWidth] = useState(520);
+  const draggingRef = useRef(false);
 
   useEffect(() => {
     if (!project) return;
     getProjectFiles(project.id).then(f => setFiles(f));
     getProjectResult(project.id).then(r => setResult(r));
   }, [project, getProjectFiles, getProjectResult]);
+
+  const handleDividerMouseDown = useCallback((e) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    const startX = e.clientX;
+    const startW = leftWidth;
+    const divider = e.currentTarget;
+    divider.classList.add('dragging');
+
+    const onMouseMove = (ev) => {
+      const delta = ev.clientX - startX;
+      setLeftWidth(Math.max(300, Math.min(800, startW + delta)));
+    };
+    const onMouseUp = () => {
+      draggingRef.current = false;
+      divider.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [leftWidth]);
 
   if (!project) return null;
 
@@ -61,13 +132,20 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
     } catch (e) { toast('导出失败: ' + e.message); }
   };
 
-  const handlePreview = (fileData) => {
-    if (!fileData) return;
-    setPreviewFile(fileData);
+  const projectFiles = project.files || [];
+
+  const handleOpenPreview = (idx) => {
+    if (!files || !files[idx]) return;
+    setPreviewIdx(previewIdx === idx ? null : idx);
   };
 
-  return (
-    <div className="pc-page pd-page">
+  const getPreviewData = (idx) => {
+    if (idx === null || !projectFiles[idx]) return null;
+    return { ...projectFiles[idx], blob: files?.[idx] || null };
+  };
+
+  const detailContent = (
+    <>
       <div className="pc-page-header">
         <div className="pc-back-btn" onClick={onBack}>
           <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
@@ -76,15 +154,14 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
         <span className={`ws-project-status ${statusCls}`} style={{ marginLeft: 12 }}>{statusLabel}</span>
       </div>
 
-      {/* 源文件 */}
       <section className="pd-section">
         <div className="pd-section-header">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-pressed)" strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-          <span>源文件 ({project.files?.length || 0})</span>
+          <span>源文件 ({projectFiles.length})</span>
         </div>
         <div className="pd-file-grid">
-          {(project.files || []).map((f, i) => (
-            <div key={i} className="pd-file-card" onClick={() => files && files[i] && handlePreview({ ...f, blob: files[i] })}>
+          {projectFiles.map((f, i) => (
+            <div key={i} className={`pd-file-card ${previewIdx === i ? 'pd-file-card-active' : ''}`} onClick={() => handleOpenPreview(i)}>
               <FileIcon name={f.name} />
               <div className="pd-file-info">
                 <div className="pd-file-name">{f.name}</div>
@@ -95,14 +172,15 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
                 </div>
               </div>
               {files && files[i] && (
-                <span className="pd-file-view">查看</span>
+                <span className="pd-file-view" style={previewIdx === i ? { color: 'var(--accent)' } : undefined}>
+                  {previewIdx === i ? '收起' : '查看'}
+                </span>
               )}
             </div>
           ))}
         </div>
       </section>
 
-      {/* 对账结果 */}
       {result && (
         <section className="pd-section">
           <div className="pd-section-header">
@@ -131,7 +209,6 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
         </section>
       )}
 
-      {/* 操作日志 */}
       {project.logs && project.logs.length > 0 && (
         <section className="pd-section">
           <div className="pd-section-header">
@@ -148,37 +225,34 @@ export default function ProjectDetailPage({ project, getProjectFiles, getProject
           </div>
         </section>
       )}
+    </>
+  );
 
-      {/* 文件预览 Modal */}
-      {previewFile && (
-        <div className="cs-modal-overlay" onClick={() => setPreviewFile(null)}>
-          <div className="cs-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 700, maxHeight: '80vh' }}>
-            <div className="cs-modal-header">
-              <span>{previewFile.name}</span>
-              <span className="cs-modal-close" onClick={() => setPreviewFile(null)}>×</span>
-            </div>
-            <div className="cs-modal-body" style={{ overflow: 'auto', maxHeight: '60vh' }}>
-              {previewFile.blob && previewFile.type?.startsWith('image/') && (
-                <img src={URL.createObjectURL(previewFile.blob)} alt={previewFile.name} style={{ maxWidth: '100%', borderRadius: 8 }} />
-              )}
-              {previewFile.blob && previewFile.type === 'application/pdf' && (
-                <iframe src={URL.createObjectURL(previewFile.blob)} style={{ width: '100%', height: '55vh', border: 'none', borderRadius: 8 }} title={previewFile.name} />
-              )}
-              {previewFile.blob && !previewFile.type?.startsWith('image/') && previewFile.type !== 'application/pdf' && (
-                <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-tertiary)' }}>
-                  <p>Excel 文件已保存</p>
-                  <p style={{ fontSize: 12, marginTop: 8 }}>{previewFile.entryCount > 0 ? `共 ${previewFile.entryCount} 条数据记录` : ''}</p>
-                </div>
-              )}
-              {!previewFile.blob && (
-                <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-tertiary)' }}>
-                  文件数据不可用（Demo 模式下不保存原始文件）
-                </div>
-              )}
-            </div>
-          </div>
+  const previewData = getPreviewData(previewIdx);
+
+  if (previewData) {
+    return (
+      <div className="pc-page confirm-split-layout">
+        <div className="confirm-split-left" style={{ width: leftWidth }}>
+          <SplitFilePreview
+            fileData={previewData}
+            allFiles={projectFiles}
+            activeIdx={previewIdx}
+            onSwitchFile={(i) => files && files[i] ? setPreviewIdx(i) : null}
+            onClose={() => setPreviewIdx(null)}
+          />
         </div>
-      )}
+        <div className="home-split-divider" onMouseDown={handleDividerMouseDown} />
+        <div className="confirm-split-right">
+          {detailContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pc-page pd-page">
+      {detailContent}
     </div>
   );
 }
