@@ -3,6 +3,7 @@ import ColumnMapper from '../components/ColumnMapper';
 import { useToast } from '../components/Toast';
 import { SCENARIOS, getScenario } from '../utils/scenarios';
 import { getDemoList } from '../utils/demoData';
+import { parseFile } from '../utils/fileParser';
 
 const MAX_FILES_PER_ROLE = 10;
 
@@ -21,7 +22,439 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping, onBackToToolbox, projectsHook, onOpenProject, navPage }) {
+function formatDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+}
+
+function ReportsView({ projectsHook, onOpenProject, onSwitchNav }) {
+  const { projects, deleteProject } = projectsHook || {};
+  const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
+  const completedProjects = (projects || []).filter(p => p.status === 'completed' || p.status === 'archived');
+
+  const filtered = completedProjects.filter(p => {
+    if (filter === 'balanced' && !p.resultSummary?.isBalanced) return false;
+    if (filter === 'unbalanced' && p.resultSummary?.isBalanced !== false) return false;
+    if (searchQuery && !p.name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  const thisMonth = new Date();
+  const monthStart = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1).toISOString();
+  const thisMonthCount = completedProjects.filter(p => p.resultSummary?.completedAt >= monthStart).length;
+  const balancedRate = completedProjects.length > 0
+    ? Math.round(completedProjects.filter(p => p.resultSummary?.isBalanced).length / completedProjects.length * 100)
+    : 0;
+
+  const handleDelete = async (id) => {
+    await deleteProject(id);
+    setConfirmDelete(null);
+  };
+
+  if (completedProjects.length === 0) {
+    return (
+      <div className="ws-page-v2">
+        <div className="nav-page-header">
+          <h2 className="nav-page-title">报告中心</h2>
+        </div>
+        <div className="ws-records-empty" style={{ marginTop: 80 }}>
+          <div className="ws-records-empty-icon">📊</div>
+          <div className="ws-records-empty-text">暂无对账报告</div>
+          <div className="ws-records-empty-hint">完成对账流程后，报告将自动保存在这里</div>
+          <button className="nav-empty-cta" onClick={() => onSwitchNav('workspace')}>去工作台开始对账</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ws-page-v2">
+      <div className="nav-page-header">
+        <h2 className="nav-page-title">报告中心</h2>
+      </div>
+
+      <section className="ws-stats-row">
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value">{completedProjects.length}</div>
+          <div className="ws-stat-card-label">总报告数</div>
+        </div>
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value" style={{ color: 'var(--accent)' }}>{thisMonthCount}</div>
+          <div className="ws-stat-card-label">本月新增</div>
+        </div>
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value">{balancedRate}%</div>
+          <div className="ws-stat-card-label">平衡率</div>
+        </div>
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value">{completedProjects.reduce((s, p) => s + (p.files?.length || 0), 0)}</div>
+          <div className="ws-stat-card-label">涉及文件</div>
+        </div>
+      </section>
+
+      <section className="nav-table-section">
+        <div className="nav-table-toolbar">
+          <div className="ws-filter-tabs">
+            {[
+              { key: 'all', label: '全部' },
+              { key: 'balanced', label: '已平衡' },
+              { key: 'unbalanced', label: '未平衡' },
+            ].map(tab => (
+              <button key={tab.key} className={`ws-filter-tab ${filter === tab.key ? 'active' : ''}`} onClick={() => setFilter(tab.key)}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="ws-search-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" placeholder="搜索报告..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+          </div>
+        </div>
+
+        <div className="nav-table-wrap">
+          <table className="nav-table">
+            <thead>
+              <tr>
+                <th>项目名称</th>
+                <th>场景</th>
+                <th>匹配率</th>
+                <th>状态</th>
+                <th>完成时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(project => {
+                const scenarioInfo = project.scenarioId ? getScenario(project.scenarioId) : null;
+                const matchRate = project.resultSummary?.matchRate;
+                const isBalanced = project.resultSummary?.isBalanced;
+                return (
+                  <tr key={project.id}>
+                    <td className="nav-table-name" onClick={() => onOpenProject(project)}>
+                      <span className="nav-table-icon">{scenarioInfo?.icon || '📋'}</span>
+                      {project.name}
+                    </td>
+                    <td>{scenarioInfo?.name || '-'}</td>
+                    <td>{matchRate != null ? `${matchRate.toFixed(1)}%` : '-'}</td>
+                    <td>
+                      <span className={`nav-balance-badge ${isBalanced ? 'balanced' : 'unbalanced'}`}>
+                        {isBalanced ? '✓ 平衡' : '✗ 差异'}
+                      </span>
+                    </td>
+                    <td>{formatDate(project.resultSummary?.completedAt)}</td>
+                    <td>
+                      <div className="nav-table-actions">
+                        <button className="nav-action-btn" title="查看详情" onClick={() => onOpenProject(project)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        <button className="nav-action-btn danger" title="删除" onClick={() => setConfirmDelete(project.id)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {filtered.length === 0 && (
+            <div className="nav-table-empty">没有匹配的报告</div>
+          )}
+        </div>
+      </section>
+
+      {confirmDelete && (
+        <div className="nav-confirm-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="nav-confirm-dialog" onClick={e => e.stopPropagation()}>
+            <div className="nav-confirm-title">确认删除</div>
+            <div className="nav-confirm-desc">删除后将无法恢复该对账报告及相关数据</div>
+            <div className="nav-confirm-actions">
+              <button className="nav-confirm-cancel" onClick={() => setConfirmDelete(null)}>取消</button>
+              <button className="nav-confirm-ok" onClick={() => handleDelete(confirmDelete)}>删除</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DocsView({ projectsHook, onOpenProject, onSwitchNav, onAddFiles }) {
+  const { projects, getProjectFiles } = projectsHook || {};
+  const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [previewFile, setPreviewFile] = useState(null);
+  const [previewData, setPreviewData] = useState(null);
+  const [leftWidth, setLeftWidth] = useState('50%');
+
+  const allFiles = (projects || []).flatMap(p =>
+    (p.files || []).map(f => ({
+      ...f,
+      projectId: p.id,
+      projectName: p.name,
+      uploadedAt: p.createdAt,
+    }))
+  );
+
+  const getFileType = (name) => {
+    const ext = (name || '').split('.').pop().toLowerCase();
+    if (['xlsx', 'xls', 'csv'].includes(ext)) return 'excel';
+    if (ext === 'pdf') return 'pdf';
+    if (['jpg', 'jpeg', 'png', 'bmp', 'tiff'].includes(ext)) return 'image';
+    return 'other';
+  };
+
+  const filtered = allFiles.filter(f => {
+    const type = getFileType(f.name);
+    if (filter === 'excel' && type !== 'excel') return false;
+    if (filter === 'pdf' && type !== 'pdf') return false;
+    if (filter === 'image' && type !== 'image') return false;
+    if (searchQuery && !f.name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  const stats = {
+    total: allFiles.length,
+    excel: allFiles.filter(f => getFileType(f.name) === 'excel').length,
+    pdf: allFiles.filter(f => getFileType(f.name) === 'pdf').length,
+    image: allFiles.filter(f => getFileType(f.name) === 'image').length,
+  };
+
+  const handlePreview = async (file) => {
+    setPreviewFile(file);
+    setPreviewData(null);
+    try {
+      const blobs = await getProjectFiles(file.projectId);
+      if (!blobs) return;
+      const idx = (projects || []).find(p => p.id === file.projectId)?.files?.findIndex(f => f.name === file.name);
+      const blob = blobs[idx >= 0 ? idx : 0];
+      if (!blob) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (['xlsx', 'xls', 'csv'].includes(ext)) {
+        const fileObj = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
+        const parsed = await parseFile(fileObj);
+        setPreviewData({ type: 'table', entries: parsed.entries, headers: parsed.headers });
+      } else if (ext === 'pdf') {
+        setPreviewData({ type: 'pdf', url: URL.createObjectURL(blob) });
+      } else if (['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'webp'].includes(ext)) {
+        setPreviewData({ type: 'image', url: URL.createObjectURL(blob) });
+      }
+    } catch (e) {
+      console.warn('Preview failed:', e);
+    }
+  };
+
+  const handleReuseFile = async (file) => {
+    try {
+      const blobs = await getProjectFiles(file.projectId);
+      if (!blobs) return;
+      const idx = (projects || []).find(p => p.id === file.projectId)?.files?.findIndex(f => f.name === file.name);
+      const blob = blobs[idx >= 0 ? idx : 0];
+      if (!blob) return;
+      const fileObj = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
+      onAddFiles([fileObj]);
+      onSwitchNav('workspace');
+    } catch (e) {
+      console.warn('Reuse failed:', e);
+    }
+  };
+
+  const handleDividerMouseDown = (e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const container = e.currentTarget.parentElement;
+    const containerWidth = container.offsetWidth;
+    const startLeft = container.querySelector('.docs-preview-panel').offsetWidth;
+    const onMouseMove = (ev) => {
+      const delta = ev.clientX - startX;
+      const newWidth = Math.max(300, Math.min(containerWidth - 300, startLeft + delta));
+      setLeftWidth(newWidth + 'px');
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  if (allFiles.length === 0) {
+    return (
+      <div className="ws-page-v2">
+        <div className="nav-page-header">
+          <h2 className="nav-page-title">文档管理</h2>
+        </div>
+        <div className="ws-records-empty" style={{ marginTop: 80 }}>
+          <div className="ws-records-empty-icon">📁</div>
+          <div className="ws-records-empty-text">暂无文档</div>
+          <div className="ws-records-empty-hint">上传的对账文件将自动归档在这里，方便随时复用</div>
+          <button className="nav-empty-cta" onClick={() => onSwitchNav('workspace')}>去上传文件</button>
+        </div>
+      </div>
+    );
+  }
+
+  const mainContent = (
+    <>
+      <div className="nav-page-header">
+        <h2 className="nav-page-title">文档管理</h2>
+      </div>
+
+      <section className="ws-stats-row">
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value">{stats.total}</div>
+          <div className="ws-stat-card-label">总文件数</div>
+        </div>
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value" style={{ color: '#217346' }}>{stats.excel}</div>
+          <div className="ws-stat-card-label">Excel</div>
+        </div>
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value" style={{ color: '#E53935' }}>{stats.pdf}</div>
+          <div className="ws-stat-card-label">PDF</div>
+        </div>
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value" style={{ color: '#7C4DFF' }}>{stats.image}</div>
+          <div className="ws-stat-card-label">图片</div>
+        </div>
+      </section>
+
+      <section className="nav-table-section">
+        <div className="nav-table-toolbar">
+          <div className="ws-filter-tabs">
+            {[
+              { key: 'all', label: '全部' },
+              { key: 'excel', label: 'Excel' },
+              { key: 'pdf', label: 'PDF' },
+              { key: 'image', label: '图片' },
+            ].map(tab => (
+              <button key={tab.key} className={`ws-filter-tab ${filter === tab.key ? 'active' : ''}`} onClick={() => setFilter(tab.key)}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="ws-search-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" placeholder="搜索文件名..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+          </div>
+        </div>
+
+        <div className="nav-table-wrap">
+          <table className="nav-table">
+            <thead>
+              <tr>
+                <th>文件名</th>
+                <th>大小</th>
+                <th>所属项目</th>
+                <th>上传时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((file, i) => {
+                const type = getFileType(file.name);
+                return (
+                  <tr key={`${file.projectId}-${i}`} className={previewFile?.name === file.name && previewFile?.projectId === file.projectId ? 'nav-row-active' : ''}>
+                    <td className="nav-table-name" onClick={() => handlePreview(file)}>
+                      <span className={`nav-file-icon ${type}`}>
+                        {type === 'excel' && 'XLS'}
+                        {type === 'pdf' && 'PDF'}
+                        {type === 'image' && 'IMG'}
+                        {type === 'other' && 'FILE'}
+                      </span>
+                      {file.name}
+                    </td>
+                    <td>{file.size ? formatSize(file.size) : '-'}</td>
+                    <td className="nav-table-project" onClick={() => {
+                      const proj = (projects || []).find(p => p.id === file.projectId);
+                      if (proj) onOpenProject(proj);
+                    }}>{file.projectName || '-'}</td>
+                    <td>{formatDate(file.uploadedAt)}</td>
+                    <td>
+                      <div className="nav-table-actions">
+                        <button className="nav-action-btn" title="预览" onClick={() => handlePreview(file)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        <button className="nav-action-btn" title="复用到新对账" onClick={() => handleReuseFile(file)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {filtered.length === 0 && (
+            <div className="nav-table-empty">没有匹配的文件</div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+
+  if (previewFile && previewData) {
+    return (
+      <div className="ws-page-v2 docs-split-layout">
+        <div className="docs-preview-panel" style={{ width: leftWidth }}>
+          <div className="docs-preview-header">
+            <span className="docs-preview-filename">{previewFile.name}</span>
+            <button className="docs-preview-close" onClick={() => { setPreviewFile(null); setPreviewData(null); }}>✕</button>
+          </div>
+          <div className="docs-preview-body">
+            {previewData.type === 'pdf' && (
+              <iframe src={previewData.url} className="docs-preview-iframe" title={previewFile.name} />
+            )}
+            {previewData.type === 'image' && (
+              <img src={previewData.url} alt={previewFile.name} className="docs-preview-img" />
+            )}
+            {previewData.type === 'table' && (
+              <div className="docs-preview-table-wrap">
+                <table className="home-preview-table">
+                  <thead>
+                    <tr>
+                      {previewData.headers ? previewData.headers.map((h, i) => <th key={i}>{h}</th>) : <><th>日期</th><th>摘要</th><th>金额</th></>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewData.entries.slice(0, 100).map((e, i) => (
+                      <tr key={i}>
+                        {previewData.headers && e.raw ? (
+                          previewData.headers.map((h, hi) => <td key={hi}>{e.raw[hi] != null ? String(e.raw[hi]) : '-'}</td>)
+                        ) : (
+                          <>
+                            <td>{e.date || '-'}</td>
+                            <td>{e.description || e.counterparty || '-'}</td>
+                            <td>{(e.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {previewData.entries.length > 100 && (
+                  <div className="home-preview-table-more">显示前 100 条 / 共 {previewData.entries.length} 条</div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="home-split-divider" onMouseDown={handleDividerMouseDown} />
+        <div className="docs-main-panel">
+          {mainContent}
+        </div>
+      </div>
+    );
+  }
+
+  return <div className="ws-page-v2">{mainContent}</div>;
+}
+
+export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping, onBackToToolbox, projectsHook, onOpenProject, navPage, setNavPage }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
   const uploadZoneRef = useRef(null);
@@ -138,6 +571,14 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   }, [rightWidth]);
+
+  // === Non-workspace pages (must be checked before hasFiles early return) ===
+  if (navPage === 'reports') {
+    return <ReportsView projectsHook={projectsHook} onOpenProject={onOpenProject} onSwitchNav={setNavPage} />;
+  }
+  if (navPage === 'docs') {
+    return <DocsView projectsHook={projectsHook} onOpenProject={onOpenProject} onSwitchNav={setNavPage} onAddFiles={onAddFiles} />;
+  }
 
   // File management view (when files are uploaded or processing)
   if (hasFiles) {

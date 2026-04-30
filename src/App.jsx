@@ -238,6 +238,7 @@ function AppInner() {
           projectsHook={projectsHook}
           onOpenProject={(project) => setViewingProject(project)}
           navPage={navPage}
+          setNavPage={setNavPage}
         />
       );
     }
