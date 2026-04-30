@@ -1087,6 +1087,9 @@ export default function ReconApp() {
                             setStep('report');
                           } else {
                             setDocs(allDocsProject.docs || []);
+                            setMatchResults(null);
+                            setReconData(null);
+                            setFlowMode('scan');
                             setStep('list');
                           }
                         }}>
