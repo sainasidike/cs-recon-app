@@ -19,8 +19,11 @@ body { font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif; 
 .hero-stat { text-align: center; }
 .hero-stat .stat-val { font-size: 28px; font-weight: 700; }
 .hero-stat .stat-label { font-size: 12px; opacity: .8; margin-top: 2px; }
-.hero .try-btn { display: inline-block; background: #fff; color: #0a6b55; padding: 14px 36px; border-radius: 28px; font-size: 15px; font-weight: 600; text-decoration: none; transition: transform .2s, box-shadow .2s; box-shadow: 0 4px 20px rgba(0,0,0,.1); position: relative; z-index: 1; }
+.hero .try-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+.hero .try-btn { display: inline-block; background: #fff; color: #0a6b55; padding: 14px 36px; border-radius: 28px; font-size: 15px; font-weight: 600; text-decoration: none; transition: transform .2s, box-shadow .2s; box-shadow: 0 4px 20px rgba(0,0,0,.1); }
 .hero .try-btn:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(0,0,0,.15); }
+.hero .try-btn-outline { display: inline-block; background: transparent; color: #fff; padding: 14px 36px; border-radius: 28px; font-size: 15px; font-weight: 600; text-decoration: none; border: 2px solid rgba(255,255,255,.7); transition: transform .2s, background .2s; }
+.hero .try-btn-outline:hover { transform: scale(1.05); background: rgba(255,255,255,.12); }
 
 /* Container */
 .container { max-width: 960px; margin: 0 auto; padding: 0 28px; }
@@ -179,7 +182,10 @@ body { font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif; 
     <div class="hero-stat"><div class="stat-val">5 种</div><div class="stat-label">文件格式支持</div></div>
     <div class="hero-stat"><div class="stat-val">30 秒</div><div class="stat-label">生成调节表</div></div>
   </div>
-  <a class="try-btn" href="https://cs-pc-reconciliation.vercel.app/" target="_blank">立即体验 Demo</a>
+  <div class="try-btns">
+    <a class="try-btn" href="https://cs-pc-reconciliation.vercel.app/" target="_blank">体验对账工作台</a>
+    <a class="try-btn-outline" href="https://cs-pc-reconciliation.vercel.app/cs-reader.html" target="_blank">体验文档 List 页</a>
+  </div>
 </div>
 
 <div class="container">
