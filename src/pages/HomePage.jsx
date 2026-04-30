@@ -111,48 +111,122 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
   })();
 
   const hasFiles = parsedFiles.length > 0 || isProcessing;
+  const [previewFileIdx, setPreviewFileIdx] = useState(0);
 
   // 上传后的文件管理界面（或正在解析中）
   if (hasFiles) {
+    const previewFile = parsedFiles[previewFileIdx] || parsedFiles[0];
+    const previewExt = previewFile ? previewFile.file.name.split('.').pop().toLowerCase() : '';
+    const previewIsImage = ['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'webp'].includes(previewExt);
+    const previewIsPdf = previewExt === 'pdf';
+    const previewIsExcel = ['xlsx', 'xls', 'csv'].includes(previewExt);
+
     return (
-      <div className="pc-page">
-        <div className="home-header">
-          {onBackToToolbox && (
-            <div className="home-back-link" onClick={onBackToToolbox}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              返回工具箱
-            </div>
+      <div className="pc-page home-split-layout">
+        {/* 左侧文档预览 */}
+        <div className="home-split-left">
+          {previewFile && (
+            <>
+              <div className="home-preview-header">
+                <span className="home-preview-filename">{previewFile.file.name}</span>
+                {parsedFiles.length > 1 && (
+                  <div className="home-preview-nav">
+                    {parsedFiles.map((pf, i) => (
+                      <button key={i} className={`home-preview-tab ${i === previewFileIdx ? 'active' : ''}`} onClick={() => setPreviewFileIdx(i)}>
+                        {pf.file.name.length > 15 ? pf.file.name.slice(0, 12) + '...' : pf.file.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="home-preview-body">
+                {previewIsPdf && (
+                  <iframe src={URL.createObjectURL(previewFile.file)} className="home-preview-iframe" title={previewFile.file.name} />
+                )}
+                {previewIsImage && (
+                  <img src={URL.createObjectURL(previewFile.file)} alt={previewFile.file.name} className="home-preview-img" />
+                )}
+                {previewIsExcel && previewFile.parsed.entries.length > 0 && (
+                  <div className="home-preview-table-wrap">
+                    <table className="home-preview-table">
+                      <thead>
+                        <tr>
+                          {previewFile.parsed.headers ? previewFile.parsed.headers.map((h, i) => <th key={i}>{h}</th>) : <><th>日期</th><th>摘要/用途</th><th>金额</th><th>余额</th><th>对方户名</th></>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {previewFile.parsed.entries.slice(0, 50).map((e, i) => (
+                          <tr key={i}>
+                            {previewFile.parsed.headers && e.raw ? (
+                              previewFile.parsed.headers.map((h, hi) => <td key={hi}>{e.raw[hi] != null ? String(e.raw[hi]) : '-'}</td>)
+                            ) : (
+                              <>
+                                <td>{e.date || '-'}</td>
+                                <td>{e.description || e.counterparty || '-'}</td>
+                                <td className={e.direction === 'credit' ? 'amount-credit' : 'amount-debit'}>{(e.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                                <td>{e.balance != null ? e.balance.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '-'}</td>
+                                <td>{e.counterparty || '-'}</td>
+                              </>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {previewFile.parsed.entries.length > 50 && (
+                      <div className="home-preview-table-more">显示前 50 条 / 共 {previewFile.parsed.entries.length} 条</div>
+                    )}
+                  </div>
+                )}
+                {previewIsExcel && previewFile.parsed.entries.length === 0 && (
+                  <div className="home-preview-empty">文件解析中或暂无数据</div>
+                )}
+              </div>
+            </>
           )}
-          <h1 className="home-title">智能对账</h1>
-          <p className="home-desc">上传文件自动识别场景，或选择体验案例</p>
+          {!previewFile && (
+            <div className="home-preview-empty">上传文件后将在此处预览文档内容</div>
+          )}
         </div>
 
-        <div className="cs-home-page">
-          <div
-            ref={uploadZoneRef}
-            className={`cs-upload-zone cs-upload-zone-compact ${dragOver ? 'cs-upload-zone-active' : ''}`}
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-          >
-            <div className="cs-upload-zone-compact-inner">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              <span>继续添加文件</span>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"
-              style={{ display: 'none' }}
-              onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
-            />
+        {/* 右侧文件管理 */}
+        <div className="home-split-right">
+          <div className="home-header">
+            {onBackToToolbox && (
+              <div className="home-back-link" onClick={onBackToToolbox}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                返回工具箱
+              </div>
+            )}
+            <h1 className="home-title">智能对账</h1>
+            <p className="home-desc">上传文件自动识别场景，或选择体验案例</p>
           </div>
+
+          <div className="cs-home-page">
+            <div
+              ref={uploadZoneRef}
+              className={`cs-upload-zone cs-upload-zone-compact ${dragOver ? 'cs-upload-zone-active' : ''}`}
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+            >
+              <div className="cs-upload-zone-compact-inner">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>继续添加文件</span>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"
+                style={{ display: 'none' }}
+                onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
+              />
+            </div>
 
           {isProcessing && (
             <div className="cs-loading"><div className="cs-spinner" /><span>正在解析文件...</span></div>
@@ -190,7 +264,8 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
               const isExcel = ['xlsx', 'xls', 'csv'].includes(ext);
               const isPdf = ext === 'pdf';
               return (
-                <div key={i} className="cs-file-item" onClick={() => {
+                <div key={i} className={`cs-file-item ${previewFileIdx === i ? 'cs-file-item-active' : ''}`} onClick={() => {
+                  setPreviewFileIdx(i);
                   if (window.parent !== window) {
                     const reader = new FileReader();
                     reader.onload = (ev) => {
@@ -198,7 +273,7 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
                     };
                     reader.readAsDataURL(pf.file);
                   }
-                }} style={window.parent !== window ? { cursor: 'pointer' } : undefined}>
+                }} style={{ cursor: 'pointer' }}>
                   <div className={`cs-file-thumb ${isExcel ? 'excel' : isPdf ? 'pdf' : 'img'}`}>
                     {isExcel && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#217346"/><path d="M7 7h4v3H7zm0 4h4v3H7zm0 4h4v2H7zm5-8h5v3h-5zm0 4h5v3h-5zm0 4h5v2h-5z" fill="rgba(255,255,255,0.8)"/></svg>}
                     {isPdf && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="2" width="18" height="20" rx="2" fill="#E53935"/><path d="M8 8h8M8 11h8M8 14h5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5"/></svg>}
@@ -265,53 +340,54 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
           </div>
         </div>
 
-        {showScenarioPicker && (
-          <div className="cs-home-picker-overlay" onClick={() => setShowScenarioPicker(false)}>
-            <div className="cs-home-picker" onClick={e => e.stopPropagation()}>
-              <div className="cs-home-picker-title">选择对账场景</div>
-              <div className="cs-home-picker-list">
-                {SCENARIOS.map(s => (
-                  <div
-                    key={s.id}
-                    className={`cs-home-picker-item ${s.id === activeScenarioId ? 'active' : ''}`}
-                    onClick={() => { onSelectScenario(s.id); setShowScenarioPicker(false); }}
-                  >
-                    <span className="cs-home-picker-icon">{s.icon}</span>
-                    <div className="cs-home-picker-info">
-                      <div className="cs-home-picker-name">{s.name}</div>
-                      <div className="cs-home-picker-desc">{s.desc}</div>
+          {showScenarioPicker && (
+            <div className="cs-home-picker-overlay" onClick={() => setShowScenarioPicker(false)}>
+              <div className="cs-home-picker" onClick={e => e.stopPropagation()}>
+                <div className="cs-home-picker-title">选择对账场景</div>
+                <div className="cs-home-picker-list">
+                  {SCENARIOS.map(s => (
+                    <div
+                      key={s.id}
+                      className={`cs-home-picker-item ${s.id === activeScenarioId ? 'active' : ''}`}
+                      onClick={() => { onSelectScenario(s.id); setShowScenarioPicker(false); }}
+                    >
+                      <span className="cs-home-picker-icon">{s.icon}</span>
+                      <div className="cs-home-picker-info">
+                        <div className="cs-home-picker-name">{s.name}</div>
+                        <div className="cs-home-picker-desc">{s.desc}</div>
+                      </div>
+                      {s.id === activeScenarioId && (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                      )}
                     </div>
-                    {s.id === activeScenarioId && (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="cs-bottom-bar">
-          <div className="cs-selected-count">
-            已选择 {parsedFiles.length} 个文件
-            {!canProceed && disabledReason && (
-              <div style={{ fontSize: 'var(--font-xs)', color: 'var(--danger)', marginTop: 2 }}>{disabledReason}</div>
-            )}
+          <div className="cs-bottom-bar">
+            <div className="cs-selected-count">
+              已选择 {parsedFiles.length} 个文件
+              {!canProceed && disabledReason && (
+                <div style={{ fontSize: 'var(--font-xs)', color: 'var(--danger)', marginTop: 2 }}>{disabledReason}</div>
+              )}
+            </div>
+            <button className="cs-confirm-btn" disabled={!canProceed || isProcessing} onClick={onConfirmData}>下一步</button>
           </div>
-          <button className="cs-confirm-btn" disabled={!canProceed || isProcessing} onClick={onConfirmData}>下一步</button>
+
+          {mappingFileIdx != null && parsedFiles[mappingFileIdx] && (
+            <ColumnMapper
+              headers={parsedFiles[mappingFileIdx].parsed.headers}
+              currentMapping={parsedFiles[mappingFileIdx].parsed.columnMapping}
+              onApply={(newMapping) => {
+                if (onUpdateMapping) onUpdateMapping(mappingFileIdx, newMapping);
+                setMappingFileIdx(null);
+              }}
+              onClose={() => setMappingFileIdx(null)}
+            />
+          )}
         </div>
-
-        {mappingFileIdx != null && parsedFiles[mappingFileIdx] && (
-          <ColumnMapper
-            headers={parsedFiles[mappingFileIdx].parsed.headers}
-            currentMapping={parsedFiles[mappingFileIdx].parsed.columnMapping}
-            onApply={(newMapping) => {
-              if (onUpdateMapping) onUpdateMapping(mappingFileIdx, newMapping);
-              setMappingFileIdx(null);
-            }}
-            onClose={() => setMappingFileIdx(null)}
-          />
-        )}
       </div>
     );
   }
