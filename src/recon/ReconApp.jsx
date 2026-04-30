@@ -266,7 +266,9 @@ export default function ReconApp() {
   const [previewDocId, setPreviewDocId] = useState(null);
   const [allDocsFolder, setAllDocsFolder] = useState(null);
   const [allDocsProject, setAllDocsProject] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const savedDocsRef = useRef([]);
+  const longPressTimer = useRef(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const docsInputRef = useRef(null);
@@ -483,6 +485,7 @@ export default function ReconApp() {
       const { scenario, sc } = getScenarioReadiness(docs);
       const record = {
         id: Date.now(),
+        status: 'completed',
         company: reconData.companyInfo.name,
         period: reconData.companyInfo.period,
         scenario: scenario,
@@ -492,13 +495,18 @@ export default function ReconApp() {
         unmatchedCount: matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length,
         totalCount: reconData.bankEntries.length + reconData.ledgerEntries.length,
         time: new Date().toLocaleString('zh-CN'),
-        docs: docs.map(d => ({ id: d.id, name: d.name, type: d.type, typeLabel: DOC_TYPE_LABEL[d.type] || d.type })),
+        docs: docs.map(d => ({
+          id: d.id, name: d.name, type: d.type,
+          typeLabel: DOC_TYPE_LABEL[d.type] || d.type,
+          thumbnail: makeThumbnail(d.processedUrl || d.previewUrl),
+        })),
         resultDocs: [
           { name: '余额调节表', type: 'result_sheet' },
           { name: 'AI分析报告', type: 'result_report' },
         ],
       };
-      const next = [record, ...history].slice(0, 20);
+      const filtered = history.filter(h => !(h.status === 'pending' && h.scenario === scenario));
+      const next = [record, ...filtered].slice(0, 30);
       setHistory(next);
       try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
     }
@@ -506,13 +514,103 @@ export default function ReconApp() {
     setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
-  }, [matchResults, reconData, history, docs]);
+  }, [matchResults, reconData, history, docs, makeThumbnail]);
 
   const handleReset = useCallback(() => {
     setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
+  }, []);
+
+  const makeThumbnail = useCallback((url) => {
+    if (!url) return null;
+    try {
+      const img = new Image();
+      const cvs = document.createElement('canvas');
+      cvs.width = 80; cvs.height = 80;
+      img.src = url;
+      if (img.complete) {
+        const ctx = cvs.getContext('2d');
+        const scale = Math.max(80 / img.naturalWidth, 80 / img.naturalHeight);
+        const w = img.naturalWidth * scale;
+        const h = img.naturalHeight * scale;
+        ctx.drawImage(img, (80 - w) / 2, (80 - h) / 2, w, h);
+        return cvs.toDataURL('image/jpeg', 0.5);
+      }
+    } catch {}
+    return url.slice(0, 200);
+  }, []);
+
+  const savePendingProject = useCallback((docsToSave) => {
+    if (!docsToSave || docsToSave.length === 0) return;
+    const { scenario, sc } = getScenarioReadiness(docsToSave);
+    const existing = history.find(h => h.status === 'pending' && h.scenario === scenario);
+    const record = {
+      id: existing?.id || Date.now(),
+      status: 'pending',
+      company: '待对账',
+      period: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' }),
+      scenario,
+      scenarioName: sc.name,
+      time: new Date().toLocaleString('zh-CN'),
+      docs: docsToSave.map(d => ({
+        id: d.id, name: d.name, type: d.type,
+        typeLabel: DOC_TYPE_LABEL[d.type] || d.type,
+        thumbnail: makeThumbnail(d.processedUrl || d.previewUrl),
+        processedUrl: d.processedUrl || null,
+      })),
+      resultDocs: [],
+    };
+    const next = existing
+      ? history.map(h => h.id === existing.id ? record : h)
+      : [record, ...history];
+    setHistory(next.slice(0, 30));
+    try { localStorage.setItem('rc-history', JSON.stringify(next.slice(0, 30))); } catch {}
+  }, [history, makeThumbnail]);
+
+  const resumeProject = useCallback((project) => {
+    if (project.status === 'pending' && project.docs?.length > 0) {
+      const restoredDocs = project.docs.map(d => ({
+        id: d.id, name: d.name, type: d.type,
+        previewUrl: d.thumbnail || null,
+        processedUrl: d.processedUrl || null,
+        file: null,
+      }));
+      setDocs(restoredDocs);
+      setFlowMode('recon');
+      setStep('list');
+      setAllDocsProject(null);
+      setAllDocsFolder(null);
+    }
+  }, []);
+
+  const deleteProject = useCallback((id) => {
+    const next = history.filter(h => h.id !== id);
+    setHistory(next);
+    try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
+    setDeleteConfirmId(null);
+    if (allDocsProject?.id === id) setAllDocsProject(null);
+  }, [history, allDocsProject]);
+
+  const groupHistoryByMonth = useCallback((items) => {
+    const now = new Date();
+    const thisMonth = `${now.getFullYear()}-${now.getMonth()}`;
+    const lastMonth = `${now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()}-${now.getMonth() === 0 ? 11 : now.getMonth() - 1}`;
+    const groups = { thisMonth: [], lastMonth: [], earlier: [] };
+    items.forEach(h => {
+      const dateStr = h.time || '';
+      const match = dateStr.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+      if (match) {
+        const key = `${match[1]}-${parseInt(match[2]) - 1}`;
+        if (key === thisMonth) groups.thisMonth.push(h);
+        else if (key === lastMonth) groups.lastMonth.push(h);
+        else groups.earlier.push(h);
+      } else {
+        groups.thisMonth.push(h);
+      }
+    });
+    return groups;
   }, []);
 
   const isDocFile = files[currentFileIdx] && !files[currentFileIdx]?.type?.startsWith('image/');
@@ -938,7 +1036,11 @@ export default function ReconApp() {
               <div className="rc-alldocs-project-detail">
                 <div className="rc-alldocs-project-summary">
                   <span className="rc-alldocs-project-badge">{allDocsProject.scenarioName || '银行对账'}</span>
-                  <span className="rc-alldocs-project-rate" style={{ color: allDocsProject.matchRate >= 80 ? '#3DD598' : '#ef4444' }}>匹配率 {allDocsProject.matchRate.toFixed(0)}%</span>
+                  {allDocsProject.status === 'pending' ? (
+                    <span className="rc-alldocs-status-pending">进行中</span>
+                  ) : (
+                    <span className="rc-alldocs-project-rate" style={{ color: (allDocsProject.matchRate || 0) >= 80 ? '#3DD598' : '#ef4444' }}>匹配率 {(allDocsProject.matchRate || 0).toFixed(0)}%</span>
+                  )}
                   <span className="rc-alldocs-project-time">{allDocsProject.time}</span>
                 </div>
 
@@ -946,9 +1048,13 @@ export default function ReconApp() {
                   <div className="rc-alldocs-project-section-title">原始文档</div>
                   {(allDocsProject.docs || []).map((d, i) => (
                     <div key={i} className="rc-alldocs-file-item">
-                      <div className="rc-alldocs-file-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                      </div>
+                      {d.thumbnail ? (
+                        <img className="rc-alldocs-file-thumb" src={d.thumbnail} alt="" />
+                      ) : (
+                        <div className="rc-alldocs-file-icon">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        </div>
+                      )}
                       <div className="rc-alldocs-file-info">
                         <div className="rc-alldocs-file-name">{d.name}</div>
                         <div className="rc-alldocs-file-type">{d.typeLabel || d.type}</div>
@@ -962,28 +1068,55 @@ export default function ReconApp() {
                   )}
                 </div>
 
-                <div className="rc-alldocs-project-section">
-                  <div className="rc-alldocs-project-section-title">对账结果</div>
-                  {(allDocsProject.resultDocs || []).map((d, i) => (
-                    <div key={i} className="rc-alldocs-file-item">
-                      <div className="rc-alldocs-file-icon">
-                        {d.type === 'result_sheet' ? (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
-                        ) : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a90d9" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                        )}
+                {allDocsProject.status === 'completed' && (
+                  <div className="rc-alldocs-project-section">
+                    <div className="rc-alldocs-project-section-title">对账结果</div>
+                    {(allDocsProject.resultDocs || []).map((d, i) => (
+                      <div key={i} className="rc-alldocs-file-item">
+                        <div className="rc-alldocs-file-icon">
+                          {d.type === 'result_sheet' ? (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a90d9" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                          )}
+                        </div>
+                        <div className="rc-alldocs-file-info">
+                          <div className="rc-alldocs-file-name">{d.name}</div>
+                        </div>
                       </div>
-                      <div className="rc-alldocs-file-info">
-                        <div className="rc-alldocs-file-name">{d.name}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
-                <div className="rc-alldocs-project-stats">
-                  <div className="rc-alldocs-stat"><span>总笔数</span><strong>{allDocsProject.totalCount}</strong></div>
-                  <div className="rc-alldocs-stat"><span>匹配</span><strong>{allDocsProject.matchedCount}</strong></div>
-                  <div className="rc-alldocs-stat"><span>未达</span><strong>{allDocsProject.unmatchedCount}</strong></div>
+                {allDocsProject.status === 'completed' && (
+                  <div className="rc-alldocs-project-stats">
+                    <div className="rc-alldocs-stat"><span>总笔数</span><strong>{allDocsProject.totalCount || 0}</strong></div>
+                    <div className="rc-alldocs-stat"><span>匹配</span><strong>{allDocsProject.matchedCount || 0}</strong></div>
+                    <div className="rc-alldocs-stat"><span>未达</span><strong>{allDocsProject.unmatchedCount || 0}</strong></div>
+                  </div>
+                )}
+
+                <div className="rc-alldocs-project-actions">
+                  {allDocsProject.status === 'pending' && (
+                    <button className="rc-alldocs-action-btn rc-alldocs-action-resume" onClick={() => resumeProject(allDocsProject)}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      继续对账
+                    </button>
+                  )}
+                  {allDocsProject.status === 'completed' && (
+                    <button className="rc-alldocs-action-btn rc-alldocs-action-export" onClick={() => { /* TODO: export */ }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      导出
+                    </button>
+                  )}
+                  <button className="rc-alldocs-action-btn rc-alldocs-action-share" onClick={() => { /* TODO: share */ }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    分享
+                  </button>
+                  <button className="rc-alldocs-action-btn rc-alldocs-action-delete" onClick={() => setDeleteConfirmId(allDocsProject.id)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                    删除
+                  </button>
                 </div>
               </div>
             </div>
@@ -1002,22 +1135,68 @@ export default function ReconApp() {
                   <p>暂无对账记录</p>
                   <span>完成对账后，文档和结果将自动保存到这里</span>
                 </div>
-              ) : (
-                <div className="rc-alldocs-list">
-                  {history.map(h => (
-                    <div key={h.id} className="rc-alldocs-project" onClick={() => setAllDocsProject(h)}>
-                      <div className="rc-alldocs-project-icon">
+              ) : (() => {
+                const groups = groupHistoryByMonth(history);
+                const renderItem = (h) => (
+                  <div key={h.id} className="rc-alldocs-project"
+                    onClick={() => setAllDocsProject(h)}
+                    onTouchStart={() => { longPressTimer.current = setTimeout(() => setDeleteConfirmId(h.id), 600); }}
+                    onTouchEnd={() => clearTimeout(longPressTimer.current)}
+                    onTouchMove={() => clearTimeout(longPressTimer.current)}
+                  >
+                    <div className="rc-alldocs-project-icon">
+                      {h.status === 'pending' ? (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5a623" strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                      ) : (
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-                      </div>
-                      <div className="rc-alldocs-project-info">
-                        <div className="rc-alldocs-project-name">{h.company} · {h.period}</div>
-                        <div className="rc-alldocs-project-meta">{h.scenarioName || '银行对账'} | {h.time} | {(h.docs || []).length + (h.resultDocs || []).length} 个文件</div>
-                      </div>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                      )}
                     </div>
-                  ))}
+                    <div className="rc-alldocs-project-info">
+                      <div className="rc-alldocs-project-name">
+                        {h.company} · {h.period}
+                        {h.status === 'pending' && <span className="rc-alldocs-status-tag pending">进行中</span>}
+                        {h.status === 'completed' && <span className="rc-alldocs-status-tag completed">已完成</span>}
+                      </div>
+                      <div className="rc-alldocs-project-meta">{h.scenarioName || '银行对账'} | {(h.docs || []).length} 个文档{h.status === 'completed' ? ` | 匹配率${(h.matchRate||0).toFixed(0)}%` : ''}</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                );
+                return (
+                  <div className="rc-alldocs-list">
+                    {groups.thisMonth.length > 0 && (
+                      <>
+                        <div className="rc-alldocs-group-title">本月</div>
+                        {groups.thisMonth.map(renderItem)}
+                      </>
+                    )}
+                    {groups.lastMonth.length > 0 && (
+                      <>
+                        <div className="rc-alldocs-group-title">上月</div>
+                        {groups.lastMonth.map(renderItem)}
+                      </>
+                    )}
+                    {groups.earlier.length > 0 && (
+                      <>
+                        <div className="rc-alldocs-group-title">更早</div>
+                        {groups.earlier.map(renderItem)}
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {deleteConfirmId && (
+            <div className="rc-alldocs-delete-overlay" onClick={() => setDeleteConfirmId(null)}>
+              <div className="rc-alldocs-delete-dialog" onClick={e => e.stopPropagation()}>
+                <p>确定删除这条对账记录吗？</p>
+                <div className="rc-alldocs-delete-btns">
+                  <button onClick={() => setDeleteConfirmId(null)}>取消</button>
+                  <button className="danger" onClick={() => deleteProject(deleteConfirmId)}>删除</button>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
@@ -1606,17 +1785,23 @@ export default function ReconApp() {
             <button className="rc-btn-secondary" onClick={() => setStep('results')}>返回</button>
             <button className="rc-btn-primary" onClick={() => {
               if (matchResults && reconData) {
+                const { scenario, sc } = getScenarioReadiness(docs);
                 const record = {
                   id: Date.now(),
+                  status: 'completed',
                   company: reconData.companyInfo.name,
                   period: reconData.companyInfo.period,
+                  scenario, scenarioName: sc.name,
                   matchRate: matchResults.matchRate,
                   matchedCount: matchResults.matchedCount,
                   unmatchedCount: matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length,
                   totalCount: reconData.bankEntries.length + reconData.ledgerEntries.length,
                   time: new Date().toLocaleString('zh-CN'),
+                  docs: docs.map(d => ({ id: d.id, name: d.name, type: d.type, typeLabel: DOC_TYPE_LABEL[d.type] || d.type, thumbnail: makeThumbnail(d.processedUrl || d.previewUrl) })),
+                  resultDocs: [{ name: '余额调节表', type: 'result_sheet' }, { name: 'AI分析报告', type: 'result_report' }],
                 };
-                const next = [record, ...history].slice(0, 20);
+                const filtered = history.filter(h => !(h.status === 'pending' && h.scenario === scenario));
+                const next = [record, ...filtered].slice(0, 30);
                 setHistory(next);
                 try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
               }
@@ -1629,7 +1814,7 @@ export default function ReconApp() {
       {step === 'list' && (flowMode === 'scan' || (flowMode === 'recon' && !(matchResults && reconData))) && (
         <div className="rc-list rc-list-img">
           <div className="rc-list-topbar">
-            <button className="rc-list-back" onClick={() => { if (prevStep === 'select') { setDocs(savedDocsRef.current); setStep('select'); setPrevStep(null); } else { setStep(flowMode === 'recon' ? 'home' : 'toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); } }}>
+            <button className="rc-list-back" onClick={() => { if (prevStep === 'select') { setDocs(savedDocsRef.current); setStep('select'); setPrevStep(null); } else { if (flowMode === 'recon' && docs.length > 0) savePendingProject(docs); setStep(flowMode === 'recon' ? 'home' : 'toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); } }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div className="rc-list-title">{docs[0]?.name || '扫描文档'}</div>
