@@ -153,6 +153,7 @@ function AppInner() {
           sideAData={state.sideAData}
           sideBData={state.sideBData}
           sideCData={state.sideCData}
+          parsedFiles={state.parsedFiles}
           sideABalance={state.sideABalance}
           sideBBalance={state.sideBBalance}
           validation={state.validation}

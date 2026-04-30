@@ -225,13 +225,32 @@ function FilePreview({ pf, onClose }) {
   );
 }
 
-function SourceFileList({ sideAData, sideBData, sideCData, scenario }) {
+function SourceFileList({ sideAData, sideBData, sideCData, parsedFiles, scenario }) {
   const [previewIdx, setPreviewIdx] = useState(null);
-  const allFiles = [
-    ...(sideAData?.files || []).map(f => ({ ...f, roleLabel: scenario?.sideA?.shortLabel || 'A方' })),
-    ...(sideBData?.files || []).map(f => ({ ...f, roleLabel: scenario?.sideB?.shortLabel || 'B方' })),
-    ...(sideCData?.files || []).map(f => ({ ...f, roleLabel: scenario?.sideC?.shortLabel || 'C方' })),
-  ];
+
+  const buildFiles = () => {
+    const aFiles = sideAData?.files || [];
+    const bFiles = sideBData?.files || [];
+    const cFiles = sideCData?.files || [];
+    if (aFiles.length > 0 || bFiles.length > 0 || cFiles.length > 0) {
+      return [
+        ...aFiles.map(f => ({ ...f, roleLabel: scenario?.sideA?.shortLabel || 'A方' })),
+        ...bFiles.map(f => ({ ...f, roleLabel: scenario?.sideB?.shortLabel || 'B方' })),
+        ...cFiles.map(f => ({ ...f, roleLabel: scenario?.sideC?.shortLabel || 'C方' })),
+      ];
+    }
+    if (parsedFiles && parsedFiles.length > 0) {
+      return parsedFiles.map(pf => {
+        const role = pf.assignedRole;
+        const roleLabel = role === 'sideA' ? (scenario?.sideA?.shortLabel || 'A方')
+          : role === 'sideB' ? (scenario?.sideB?.shortLabel || 'B方')
+          : role === 'sideC' ? (scenario?.sideC?.shortLabel || 'C方') : '';
+        return { ...pf, roleLabel };
+      });
+    }
+    return [];
+  };
+  const allFiles = buildFiles();
   if (allFiles.length === 0) return null;
 
   const formatSize = (bytes) => {
@@ -278,7 +297,7 @@ function SourceFileList({ sideAData, sideBData, sideCData, scenario }) {
   );
 }
 
-export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData, sideABalance, sideBBalance, validation, onSetBalances, onBack, onNext, onUpdateEntries }) {
+export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData, parsedFiles, sideABalance, sideBBalance, validation, onSetBalances, onBack, onNext, onUpdateEntries }) {
   const [activeTab, setActiveTab] = useState('sideA');
   const [localABal, setLocalABal] = useState(sideABalance || 0);
   const [localBBal, setLocalBBal] = useState(sideBBalance || 0);
@@ -355,7 +374,7 @@ export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData,
 
       <div className="confirm-layout">
         <div className="confirm-sidebar-col">
-          <SourceFileList sideAData={sideAData} sideBData={sideBData} sideCData={sideCData} scenario={scenario} />
+          <SourceFileList sideAData={sideAData} sideBData={sideBData} sideCData={sideCData} parsedFiles={parsedFiles} scenario={scenario} />
           <div className="stats-col">
             <div className="stat-item">
               <span className="stat-item-label">{aLabel}记录</span>
