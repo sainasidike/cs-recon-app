@@ -589,7 +589,7 @@ export default function ReconApp() {
               <span className="rc-tb-card-name">二维码</span>
               <div className="rc-tb-card-icon">📱</div>
             </div>
-            <div className="rc-tb-card rc-tb-card-highlight" onClick={() => { setFlowMode('recon'); setStep('select'); }}>
+            <div className="rc-tb-card rc-tb-card-highlight" onClick={() => { setFlowMode('recon'); setStep('home'); }}>
               <span className="rc-tb-card-name">财务对账</span>
               <div className="rc-tb-card-icon">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5">
