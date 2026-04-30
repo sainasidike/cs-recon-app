@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import ApprovalPanel from '../components/ApprovalPanel';
 import AuditLogPanel from '../components/AuditLogPanel';
 import { useToast } from '../components/Toast';
@@ -126,7 +126,7 @@ export default function ReconciliationPage({ scenario, reconciliation, matchResu
 
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <div style={{ fontSize: 'var(--font-xs)', color: 'var(--accent)', fontWeight: 500, marginBottom: 4 }}>
-          RECON-{new Date().toISOString().slice(0, 10).replace(/-/g, '')}-{String(Math.floor(Math.random() * 900 + 100))}
+          RECON-{new Date().toISOString().slice(0, 10).replace(/-/g, '')}-{sessionId ? sessionId.slice(-3) : '001'}
         </div>
         <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-tertiary)' }}>
           对账期间：{period} &nbsp;|&nbsp; 生成时间：{new Date().toLocaleString('zh-CN')}
