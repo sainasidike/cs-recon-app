@@ -1084,7 +1084,7 @@ export default function ReconApp() {
                             setMatchResults(allDocsProject.savedMatchResults);
                             setReconData(allDocsProject.savedReconData);
                             setDocs(allDocsProject.docs || []);
-                            setStep('results');
+                            setStep('report');
                           } else {
                             setDocs(allDocsProject.docs || []);
                             setStep('list');
@@ -1784,7 +1784,7 @@ export default function ReconApp() {
             <div className="rc-summary-row total"><span>匹配率</span><span>{matchResults.matchRate.toFixed(1)}%</span></div>
           </div>
           <div className="rc-bottom">
-            <button className="rc-btn-secondary" onClick={() => setStep('results')}>返回</button>
+            <button className="rc-btn-secondary" onClick={() => { if (allDocsProject) { setStep('alldocs'); } else { setStep('results'); } }}>返回</button>
             <button className="rc-btn-primary" onClick={() => {
               if (matchResults && reconData) {
                 const { scenario, sc } = getScenarioReadiness(docs);
@@ -1801,6 +1801,25 @@ export default function ReconApp() {
                   time: new Date().toLocaleString('zh-CN'),
                   docs: docs.map(d => ({ id: d.id, name: d.name, type: d.type, typeLabel: DOC_TYPE_LABEL[d.type] || d.type, thumbnail: makeThumbnail(d.processedUrl || d.previewUrl) })),
                   resultDocs: [{ name: '余额调节表', type: 'result_sheet' }, { name: 'AI分析报告', type: 'result_report' }],
+                  savedMatchResults: {
+                    matchRate: matchResults.matchRate,
+                    matchedCount: matchResults.matchedCount,
+                    matchedAmt: matchResults.matchedAmt,
+                    exact: matchResults.exact.slice(0, 30),
+                    fuzzy: matchResults.fuzzy.slice(0, 20),
+                    semantic: matchResults.semantic.slice(0, 10),
+                    unmatchedBank: matchResults.unmatchedBank.slice(0, 20),
+                    unmatchedLedger: matchResults.unmatchedLedger.slice(0, 20),
+                  },
+                  savedReconData: {
+                    companyInfo: reconData.companyInfo,
+                    bankEntries: reconData.bankEntries,
+                    ledgerEntries: reconData.ledgerEntries,
+                    bankTotalOut: reconData.bankTotalOut,
+                    bankTotalIn: reconData.bankTotalIn,
+                    ledgerTotalDebit: reconData.ledgerTotalDebit,
+                    ledgerTotalCredit: reconData.ledgerTotalCredit,
+                  },
                 };
                 const filtered = history.filter(h => !(h.status === 'pending' && h.scenario === scenario));
                 const next = [record, ...filtered].slice(0, 30);
