@@ -265,6 +265,7 @@ export default function ReconApp() {
   const [selectedDocIds, setSelectedDocIds] = useState(new Set());
   const [previewDocId, setPreviewDocId] = useState(null);
   const [allDocsFolder, setAllDocsFolder] = useState(null);
+  const [allDocsProject, setAllDocsProject] = useState(null);
   const savedDocsRef = useRef([]);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -479,15 +480,23 @@ export default function ReconApp() {
 
   const handleFinish = useCallback(() => {
     if (matchResults && reconData) {
+      const { scenario, sc } = getScenarioReadiness(docs);
       const record = {
         id: Date.now(),
         company: reconData.companyInfo.name,
         period: reconData.companyInfo.period,
+        scenario: scenario,
+        scenarioName: sc.name,
         matchRate: matchResults.matchRate,
         matchedCount: matchResults.matchedCount,
         unmatchedCount: matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length,
         totalCount: reconData.bankEntries.length + reconData.ledgerEntries.length,
         time: new Date().toLocaleString('zh-CN'),
+        docs: docs.map(d => ({ id: d.id, name: d.name, type: d.type, typeLabel: DOC_TYPE_LABEL[d.type] || d.type })),
+        resultDocs: [
+          { name: '余额调节表', type: 'result_sheet' },
+          { name: 'AI分析报告', type: 'result_report' },
+        ],
       };
       const next = [record, ...history].slice(0, 20);
       setHistory(next);
@@ -497,7 +506,7 @@ export default function ReconApp() {
     setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
-  }, [matchResults, reconData, history]);
+  }, [matchResults, reconData, history, docs]);
 
   const handleReset = useCallback(() => {
     setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
@@ -917,10 +926,71 @@ export default function ReconApp() {
                 </div>
               </div>
             </div>
+          ) : allDocsProject ? (
+            <div className="rc-alldocs-body">
+              <div className="rc-alldocs-section-head">
+                <button className="rc-alldocs-folder-back" onClick={() => setAllDocsProject(null)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                  <span>{allDocsProject.company} · {allDocsProject.period}</span>
+                </button>
+              </div>
+
+              <div className="rc-alldocs-project-detail">
+                <div className="rc-alldocs-project-summary">
+                  <span className="rc-alldocs-project-badge">{allDocsProject.scenarioName || '银行对账'}</span>
+                  <span className="rc-alldocs-project-rate" style={{ color: allDocsProject.matchRate >= 80 ? '#3DD598' : '#ef4444' }}>匹配率 {allDocsProject.matchRate.toFixed(0)}%</span>
+                  <span className="rc-alldocs-project-time">{allDocsProject.time}</span>
+                </div>
+
+                <div className="rc-alldocs-project-section">
+                  <div className="rc-alldocs-project-section-title">原始文档</div>
+                  {(allDocsProject.docs || []).map((d, i) => (
+                    <div key={i} className="rc-alldocs-file-item">
+                      <div className="rc-alldocs-file-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      </div>
+                      <div className="rc-alldocs-file-info">
+                        <div className="rc-alldocs-file-name">{d.name}</div>
+                        <div className="rc-alldocs-file-type">{d.typeLabel || d.type}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!allDocsProject.docs || allDocsProject.docs.length === 0) && (
+                    <div className="rc-alldocs-file-item">
+                      <div className="rc-alldocs-file-info"><div className="rc-alldocs-file-name" style={{color:'#999'}}>暂无文档记录</div></div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="rc-alldocs-project-section">
+                  <div className="rc-alldocs-project-section-title">对账结果</div>
+                  {(allDocsProject.resultDocs || []).map((d, i) => (
+                    <div key={i} className="rc-alldocs-file-item">
+                      <div className="rc-alldocs-file-icon">
+                        {d.type === 'result_sheet' ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a90d9" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        )}
+                      </div>
+                      <div className="rc-alldocs-file-info">
+                        <div className="rc-alldocs-file-name">{d.name}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rc-alldocs-project-stats">
+                  <div className="rc-alldocs-stat"><span>总笔数</span><strong>{allDocsProject.totalCount}</strong></div>
+                  <div className="rc-alldocs-stat"><span>匹配</span><strong>{allDocsProject.matchedCount}</strong></div>
+                  <div className="rc-alldocs-stat"><span>未达</span><strong>{allDocsProject.unmatchedCount}</strong></div>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="rc-alldocs-body">
               <div className="rc-alldocs-section-head">
-                <button className="rc-alldocs-folder-back" onClick={() => setAllDocsFolder(null)}>
+                <button className="rc-alldocs-folder-back" onClick={() => { setAllDocsFolder(null); setAllDocsProject(null); }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                   <span>财务对账</span>
                 </button>
@@ -935,15 +1005,15 @@ export default function ReconApp() {
               ) : (
                 <div className="rc-alldocs-list">
                   {history.map(h => (
-                    <div key={h.id} className="rc-alldocs-project">
+                    <div key={h.id} className="rc-alldocs-project" onClick={() => setAllDocsProject(h)}>
                       <div className="rc-alldocs-project-icon">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
                       </div>
                       <div className="rc-alldocs-project-info">
                         <div className="rc-alldocs-project-name">{h.company} · {h.period}</div>
-                        <div className="rc-alldocs-project-meta">{h.time} | 匹配率 {h.matchRate.toFixed(0)}% · {h.matchedCount}笔</div>
+                        <div className="rc-alldocs-project-meta">{h.scenarioName || '银行对账'} | {h.time} | {(h.docs || []).length + (h.resultDocs || []).length} 个文件</div>
                       </div>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
                   ))}
                 </div>
