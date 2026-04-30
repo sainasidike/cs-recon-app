@@ -357,7 +357,7 @@ export default function ReconApp() {
       const newDocs = files.map((file, i) => ({
         id: Date.now() + i,
         name: file.name || `文档${i + 1}`,
-        type: 'unknown',
+        type: classifyDoc(file.name),
         previewUrl: results[i].previewUrl,
         processedUrl: results[i].processedUrl,
         file: file,
