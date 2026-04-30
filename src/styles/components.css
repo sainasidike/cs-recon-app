@@ -2713,61 +2713,40 @@
   color: var(--text-secondary);
   line-height: 1.6;
 }
-.ws-hero-stats {
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-}
-.ws-stat-card {
+.ws-hero-features {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 14px 20px;
-  background: var(--bg-card);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-md);
-  min-width: 90px;
-}
-.ws-stat-num {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--accent-pressed);
-  line-height: 1;
-}
-.ws-stat-label {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  margin-top: 6px;
-}
-.ws-demo-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 12px;
   margin-top: 8px;
 }
-.ws-demo-label {
-  font-size: 13px;
-  color: var(--text-tertiary);
-}
-.ws-demo-tag {
-  display: inline-flex;
+.ws-feature-item {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
+  gap: 12px;
 }
-.ws-demo-tag:hover {
-  border-color: var(--accent);
-  color: var(--accent-pressed);
+.ws-feature-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--accent-light);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.ws-feature-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ws-feature-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ws-feature-desc {
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 
 /* Upload Zone */
@@ -2823,6 +2802,77 @@
   font-size: 11px;
   color: var(--text-tertiary);
   margin-top: 4px;
+}
+.ws-upload-ocr {
+  font-size: 10px;
+  color: var(--accent);
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+/* Demo Section */
+.ws-demo-section {
+  padding: 32px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  margin-bottom: 40px;
+}
+.ws-demo-header {
+  margin-bottom: 20px;
+}
+.ws-demo-subtitle {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+.ws-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.ws-demo-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ws-demo-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.ws-demo-card-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.ws-demo-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.ws-demo-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.ws-demo-card-desc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ws-demo-card-action {
+  font-size: 12px;
+  color: var(--accent-pressed);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Project Management Section */
@@ -3027,36 +3077,65 @@
   color: var(--text-tertiary);
 }
 
-/* Bottom CTA */
-.ws-cta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 32px;
-  margin-top: 40px;
+/* Guide Steps (empty state) */
+.ws-guide {
+  padding: 40px 32px;
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 0.5px solid var(--border);
+  text-align: center;
 }
-.ws-cta-text {
-  font-size: 15px;
-  color: var(--text-secondary);
-  font-weight: 500;
+.ws-guide .ws-section-title {
+  margin-bottom: 28px;
 }
-.ws-cta-btn {
-  padding: 10px 24px;
-  border-radius: var(--radius-full);
+.ws-guide-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.ws-guide-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  position: relative;
+}
+.ws-guide-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   background: var(--accent);
   color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ws-guide-step-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-light);
+  border-radius: 50%;
+}
+.ws-guide-step-label {
   font-size: 14px;
   font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
+  color: var(--text-primary);
 }
-.ws-cta-btn:hover {
-  background: var(--accent-pressed);
+.ws-guide-step-desc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.ws-guide-arrow {
+  display: flex;
+  align-items: center;
+  padding-top: 12px;
 }
 
 @media (max-width: 900px) {
