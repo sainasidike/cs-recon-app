@@ -1061,10 +1061,8 @@ export default function ReconApp() {
                     <div className="rc-alldocs-filelist">
                       {allFiles.map((d, i) => (
                         <div key={i} className="rc-alldocs-filecard" onClick={() => {
-                          if (d.category === 'source') {
-                            setDocs(allDocsProject.docs);
-                            setStep('list');
-                          }
+                          setDocs(allDocsProject.docs || []);
+                          setStep('list');
                         }}>
                           <div className="rc-alldocs-filecard-thumb">
                             {d.thumbnail ? (
