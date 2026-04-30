@@ -904,6 +904,32 @@ function ScenariosView({ onSelectDemo, onSwitchNav }) {
   );
 }
 
+function HelpView() {
+  return (
+    <div className="ws-page-v2">
+      <div className="ws-header-v2">
+        <h1 className="ws-title-v2">使用帮助</h1>
+        <p className="ws-subtitle-v2">快速了解 CS 智能对账的核心功能</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 640 }}>
+        {[
+          { q: '如何开始对账？', a: '点击侧边栏「新建对账」按钮，上传文件或选择 Demo 数据即可快速体验。' },
+          { q: '支持哪些文件格式？', a: '支持 Excel（.xlsx/.xls）、CSV、PDF 和图片（JPG/PNG）格式的财务单据。' },
+          { q: '什么是 AI 智能匹配？', a: '系统通过三轮匹配（精确→模糊→语义）自动对比两方或三方数据，找出匹配项和差异项。' },
+          { q: '如何查看历史报告？', a: '在「报告中心」页面可查看所有已完成的对账报告，支持筛选和导出。' },
+          { q: '文件会被保存吗？', a: '文件仅存储在浏览器本地（IndexedDB），不会上传到服务器，清除浏览器数据后将丢失。' },
+          { q: '对账结果不准确怎么办？', a: '在结果页可手动确认或拒绝每条匹配，也可以进行手动匹配来修正 AI 的判断。' },
+        ].map((item, i) => (
+          <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>{item.q}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{item.a}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping, onBackToToolbox, projectsHook, onOpenProject, navPage, setNavPage }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
@@ -1031,6 +1057,9 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
   }
   if (navPage === 'scenarios') {
     return <ScenariosView onSelectDemo={onSelectDemo} onSwitchNav={setNavPage} />;
+  }
+  if (navPage === 'help') {
+    return <HelpView />;
   }
 
   // File management view (when files are uploaded or processing)

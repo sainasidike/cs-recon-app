@@ -104,7 +104,10 @@ function AppSidebar({ navPage, setNavPage, onNewRecon, onBackToToolbox }) {
         </div>
 
         <div className="app-sidebar-section">工具</div>
-        <div className="app-sidebar-item">
+        <div
+          className={`app-sidebar-item ${navPage === 'help' ? 'active' : ''}`}
+          onClick={() => setNavPage('help')}
+        >
           <span className="app-sidebar-item-icon">❓</span>
           <span className="app-sidebar-item-label">使用帮助</span>
         </div>

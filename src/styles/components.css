@@ -2203,7 +2203,7 @@
   font-size: 0.8rem;
   color: var(--text-secondary);
   white-space: nowrap;
-  min-width: 72px;
+  flex-shrink: 0;
 }
 
 .confirm-main-col {}
