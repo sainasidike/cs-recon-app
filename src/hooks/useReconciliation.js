@@ -48,6 +48,15 @@ export function useReconciliation() {
     }
     const saved = loadSession();
     if (saved && saved.step !== 'home' && saved.step !== 'scenario' && saved.step !== 'upload') {
+      const canRestore =
+        (saved.step === 'confirm' && saved.sideAData?.entries?.length > 0) ||
+        (saved.step === 'results' && saved.matchResults) ||
+        (saved.step === 'reconciliation' && saved.reconciliation) ||
+        (saved.step === 'complete' && saved.reconciliation);
+      if (!canRestore) {
+        clearSession();
+        return initialState;
+      }
       return {
         ...initialState,
         ...saved,
