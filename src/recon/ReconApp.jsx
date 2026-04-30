@@ -62,15 +62,86 @@ const PIPELINE = [
   { key: 'report', label: '报告', icon: '📋' },
 ];
 
+const RECON_SCENARIOS = {
+  bank: { name: '银行对账', sideA: 'bank', sideB: 'ledger', labelA: '银行流水', labelB: '企业账簿' },
+  trade: { name: '往来对账', sideA: 'supplier_stmt', sideB: 'ar_ap', labelA: '供应商/客户对账单', labelB: '应收/应付账款' },
+  invoice: { name: '发票核验', sideA: 'invoice', sideB: 'contract', labelA: '发票', labelB: '合同/入库单' },
+  expense: { name: '费用报销', sideA: 'expense_claim', sideB: 'receipt', labelA: '报销单', labelB: '发票/银行回单' },
+  cash: { name: '现金对账', sideA: 'cash_journal', sideB: 'cash_receipt', labelA: '现金日记账', labelB: '收据/小票' },
+  tax: { name: '税务对账', sideA: 'tax_return', sideB: 'tax_ledger', labelA: '纳税申报表', labelB: '账簿/发票汇总' },
+  salary: { name: '工资对账', sideA: 'payroll', sideB: 'bank_payroll', labelA: '工资表', labelB: '银行代发明细' },
+  asset: { name: '固定资产对账', sideA: 'asset_ledger', sideB: 'asset_invoice', labelA: '资产台账', labelB: '采购发票/入库单' },
+};
+
 function classifyDoc(name) {
   const n = (name || '').toLowerCase();
-  if (/银行|bank|流水|对账单|account.?statement/i.test(n)) return 'bank';
-  if (/账簿|ledger|凭证|记账|企业|voucher|总账/i.test(n)) return 'ledger';
+  // 银行对账
+  if (/银行|bank|流水|account.?statement/i.test(n)) return 'bank';
+  if (/账簿|ledger|凭证|记账|总账|voucher/i.test(n)) return 'ledger';
+  // 往来对账
+  if (/供应商|客户.*对账|往来|vendor.*statement|customer.*statement/i.test(n)) return 'supplier_stmt';
+  if (/应收|应付|ar|ap|receivable|payable/i.test(n)) return 'ar_ap';
+  // 发票核验
+  if (/发票|invoice|增值税|vat/i.test(n)) return 'invoice';
+  if (/合同|contract|入库|验收|采购订单|purchase.*order/i.test(n)) return 'contract';
+  // 费用报销
+  if (/报销|expense.*claim|reimburse/i.test(n)) return 'expense_claim';
+  if (/银行回单|回单|receipt|付款凭证/i.test(n)) return 'receipt';
+  // 现金对账
+  if (/现金.*日记|cash.*journal|现金.*账/i.test(n)) return 'cash_journal';
+  if (/收据|小票|cash.*receipt|petty/i.test(n)) return 'cash_receipt';
+  // 税务对账
+  if (/纳税|税务申报|tax.*return|报税/i.test(n)) return 'tax_return';
+  if (/税.*汇总|税.*台账|tax.*ledger|税.*明细/i.test(n)) return 'tax_ledger';
+  // 工资对账
+  if (/工资|薪资|payroll|salary|薪酬/i.test(n)) return 'payroll';
+  if (/代发|bank.*payroll|工资.*明细|代付/i.test(n)) return 'bank_payroll';
+  // 固定资产对账
+  if (/资产.*台账|asset.*ledger|固定资产.*表/i.test(n)) return 'asset_ledger';
+  if (/资产.*发票|asset.*invoice|资产.*入库/i.test(n)) return 'asset_invoice';
+  // 通用 — 按对账单关键字
+  if (/对账单|对账/i.test(n)) return 'supplier_stmt';
   return 'unknown';
 }
 
-const DOC_TYPE_LABEL = { bank: '银行流水', ledger: '企业账簿', unknown: '待分类' };
-const DOC_TYPE_COLOR = { bank: '#4a90d9', ledger: '#f5a623', unknown: '#999' };
+const DOC_TYPE_LABEL = {
+  bank: '银行流水', ledger: '企业账簿',
+  supplier_stmt: '供应商/客户对账单', ar_ap: '应收/应付',
+  invoice: '发票', contract: '合同/入库单',
+  expense_claim: '报销单', receipt: '发票/回单',
+  cash_journal: '现金日记账', cash_receipt: '收据/小票',
+  tax_return: '纳税申报', tax_ledger: '税务台账',
+  payroll: '工资表', bank_payroll: '银行代发',
+  asset_ledger: '资产台账', asset_invoice: '资产发票',
+  unknown: '待分类'
+};
+const DOC_TYPE_COLOR = {
+  bank: '#4a90d9', ledger: '#f5a623',
+  supplier_stmt: '#8b5cf6', ar_ap: '#6366f1',
+  invoice: '#ef4444', contract: '#f97316',
+  expense_claim: '#ec4899', receipt: '#14b8a6',
+  cash_journal: '#06b6d4', cash_receipt: '#0891b2',
+  tax_return: '#d97706', tax_ledger: '#b45309',
+  payroll: '#7c3aed', bank_payroll: '#2563eb',
+  asset_ledger: '#059669', asset_invoice: '#10b981',
+  unknown: '#999'
+};
+
+function detectScenario(docTypes) {
+  for (const [key, sc] of Object.entries(RECON_SCENARIOS)) {
+    if (docTypes.includes(sc.sideA) || docTypes.includes(sc.sideB)) return key;
+  }
+  return 'bank';
+}
+
+function getScenarioReadiness(docs) {
+  const types = docs.map(d => d.type);
+  const scenario = detectScenario(types);
+  const sc = RECON_SCENARIOS[scenario];
+  const hasA = types.includes(sc.sideA);
+  const hasB = types.includes(sc.sideB);
+  return { scenario, sc, hasA, hasB, ready: hasA && hasB };
+}
 
 const FILTERS = [
   { key: 'original', label: '原图', filter: 'none', hot: false },
@@ -235,15 +306,16 @@ export default function ReconApp() {
     }
 
     try {
-      const bankDocs = activeDocs.filter(d => d.type === 'bank');
-      const ledgerDocs = activeDocs.filter(d => d.type === 'ledger');
+      const { scenario, sc } = getScenarioReadiness(activeDocs);
+      const sideADocs = activeDocs.filter(d => d.type === sc.sideA);
+      const sideBDocs = activeDocs.filter(d => d.type === sc.sideB);
       const allBankEntries = [];
       const allLedgerEntries = [];
 
-      setParseSteps(prev => [...prev, `开始解析 ${activeDocs.length} 份文档...`]);
+      setParseSteps(prev => [...prev, `检测到场景: ${sc.name}，开始解析 ${activeDocs.length} 份文档...`]);
 
-      for (const doc of bankDocs) {
-        setParseSteps(prev => [...prev, `解析银行文档: ${doc.name}...`]);
+      for (const doc of sideADocs) {
+        setParseSteps(prev => [...prev, `解析${sc.labelA}: ${doc.name}...`]);
         let fileObj = doc.file;
         if (!fileObj || fileObj.type === 'processed') {
           if (doc.processedUrl) {
@@ -252,15 +324,15 @@ export default function ReconApp() {
         }
         try {
           const parsed = await parseFile(fileObj);
-          setParseSteps(prev => [...prev, `银行文档识别 ${parsed.parsedRows} 笔记录`]);
+          setParseSteps(prev => [...prev, `${sc.labelA}识别 ${parsed.parsedRows} 笔记录`]);
           allBankEntries.push(...parsed.entries);
         } catch (err) {
-          setParseSteps(prev => [...prev, `银行文档解析失败: ${err.message}`]);
+          setParseSteps(prev => [...prev, `${sc.labelA}解析失败: ${err.message}`]);
         }
       }
 
-      for (const doc of ledgerDocs) {
-        setParseSteps(prev => [...prev, `解析企业文档: ${doc.name}...`]);
+      for (const doc of sideBDocs) {
+        setParseSteps(prev => [...prev, `解析${sc.labelB}: ${doc.name}...`]);
         let fileObj = doc.file;
         if (!fileObj || fileObj.type === 'processed') {
           if (doc.processedUrl) {
@@ -269,10 +341,10 @@ export default function ReconApp() {
         }
         try {
           const parsed = await parseFile(fileObj);
-          setParseSteps(prev => [...prev, `企业文档识别 ${parsed.parsedRows} 笔记录`]);
+          setParseSteps(prev => [...prev, `${sc.labelB}识别 ${parsed.parsedRows} 笔记录`]);
           allLedgerEntries.push(...parsed.entries);
         } catch (err) {
-          setParseSteps(prev => [...prev, `企业文档解析失败: ${err.message}`]);
+          setParseSteps(prev => [...prev, `${sc.labelB}解析失败: ${err.message}`]);
         }
       }
 
@@ -281,7 +353,7 @@ export default function ReconApp() {
         return;
       }
 
-      setParseSteps(prev => [...prev, `共解析银行 ${allBankEntries.length} 笔、企业 ${allLedgerEntries.length} 笔`]);
+      setParseSteps(prev => [...prev, `共解析${sc.labelA} ${allBankEntries.length} 笔、${sc.labelB} ${allLedgerEntries.length} 笔`]);
       setParseSteps(prev => [...prev, '执行智能匹配...']);
 
       const rd = buildReconData(allBankEntries, allLedgerEntries, activeDocs.map(d => d.name));
@@ -896,14 +968,17 @@ export default function ReconApp() {
         const userDocs = docs.filter(d => !CS_LIBRARY.find(c => c.id === d.id));
         const allDocs = [...userDocs, ...CS_LIBRARY];
         const selectedDocs = allDocs.filter(d => selectedDocIds.has(d.id));
-        const hasBank = selectedDocs.some(d => d.type === 'bank');
-        const hasLedger = selectedDocs.some(d => d.type === 'ledger');
-        const canStart = hasBank && hasLedger;
-        const bankDoc = selectedDocs.find(d => d.type === 'bank');
-        const ledgerDoc = selectedDocs.find(d => d.type === 'ledger');
+        const selTypes = selectedDocs.map(d => d.type);
+        const scenario = detectScenario(selTypes);
+        const sc = RECON_SCENARIOS[scenario];
+        const hasA = selTypes.includes(sc.sideA);
+        const hasB = selTypes.includes(sc.sideB);
+        const canStart = hasA && hasB;
+        const docA = selectedDocs.find(d => d.type === sc.sideA);
+        const docB = selectedDocs.find(d => d.type === sc.sideB);
         const missing = [];
-        if (!hasBank) missing.push('银行流水');
-        if (!hasLedger) missing.push('企业账簿');
+        if (!hasA) missing.push(sc.labelA);
+        if (!hasB) missing.push(sc.labelB);
 
         const toggleSelect = (id) => {
           setSelectedDocIds(prev => {
@@ -948,18 +1023,18 @@ export default function ReconApp() {
             </div>
 
             <div className="rc-select-status">
-              <div className={`rc-select-status-item ${hasBank ? 'done' : 'missing'}`}>
-                <div className={`rc-select-status-dot ${hasBank ? 'done' : ''}`}>{hasBank ? '✓' : ''}</div>
+              <div className={`rc-select-status-item ${hasA ? 'done' : 'missing'}`}>
+                <div className={`rc-select-status-dot ${hasA ? 'done' : ''}`}>{hasA ? '✓' : ''}</div>
                 <div className="rc-select-status-info">
-                  <span className="rc-select-status-label">银行流水</span>
-                  <span className="rc-select-status-file">{bankDoc ? bankDoc.name : '未选择'}</span>
+                  <span className="rc-select-status-label">{sc.labelA}</span>
+                  <span className="rc-select-status-file">{docA ? docA.name : '未选择'}</span>
                 </div>
               </div>
-              <div className={`rc-select-status-item ${hasLedger ? 'done' : 'missing'}`}>
-                <div className={`rc-select-status-dot ${hasLedger ? 'done' : ''}`}>{hasLedger ? '✓' : ''}</div>
+              <div className={`rc-select-status-item ${hasB ? 'done' : 'missing'}`}>
+                <div className={`rc-select-status-dot ${hasB ? 'done' : ''}`}>{hasB ? '✓' : ''}</div>
                 <div className="rc-select-status-info">
-                  <span className="rc-select-status-label">企业账簿</span>
-                  <span className="rc-select-status-file">{ledgerDoc ? ledgerDoc.name : '未选择'}</span>
+                  <span className="rc-select-status-label">{sc.labelB}</span>
+                  <span className="rc-select-status-file">{docB ? docB.name : '未选择'}</span>
                 </div>
               </div>
             </div>
@@ -967,7 +1042,7 @@ export default function ReconApp() {
             <div className="rc-select-list">
               {allDocs.map(doc => {
                 const isSelected = selectedDocIds.has(doc.id);
-                const docTypeLabel = doc.type === 'bank' ? '银行流水' : doc.type === 'ledger' ? '企业账簿' : null;
+                const docTypeLabel = doc.type !== 'unknown' ? DOC_TYPE_LABEL[doc.type] : null;
                 return (
                   <div key={doc.id} className={`rc-select-item ${isSelected ? 'selected' : ''}`}>
                     <div className="rc-select-item-left" onClick={() => handlePreviewDoc(doc)}>
@@ -1108,11 +1183,10 @@ export default function ReconApp() {
           </div>
 
           {(() => {
-            const hasBank = docs.some(d => d.type === 'bank');
-            const hasLedger = docs.some(d => d.type === 'ledger');
+            const { sc, hasA, hasB } = getScenarioReadiness(docs);
             const missing = [];
-            if (!hasBank) missing.push('银行流水');
-            if (!hasLedger) missing.push('企业账簿');
+            if (!hasA) missing.push(sc.labelA);
+            if (!hasB) missing.push(sc.labelB);
             if (missing.length > 0) return (
               <div className="rc-docs-warning">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5a623" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -1168,9 +1242,7 @@ export default function ReconApp() {
 
           <div className="rc-bottom">
             {(() => {
-              const hasBank = docs.some(d => d.type === 'bank');
-              const hasLedger = docs.some(d => d.type === 'ledger');
-              const canStart = hasBank && hasLedger;
+              const { ready: canStart } = getScenarioReadiness(docs);
               return (
                 <button
                   className={`rc-btn-primary${!canStart ? ' disabled' : ''}`}
@@ -1407,11 +1479,10 @@ export default function ReconApp() {
           </div>
 
           {flowMode === 'recon' && (() => {
-            const hasBank = docs.some(d => d.type === 'bank');
-            const hasLedger = docs.some(d => d.type === 'ledger');
+            const { sc, hasA, hasB } = getScenarioReadiness(docs);
             const missing = [];
-            if (!hasBank) missing.push('银行流水');
-            if (!hasLedger) missing.push('企业账簿');
+            if (!hasA) missing.push(sc.labelA);
+            if (!hasB) missing.push(sc.labelB);
             if (missing.length > 0) return (
               <div className="rc-list-doc-hint">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f5a623" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -1465,9 +1536,8 @@ export default function ReconApp() {
             <button className="rc-list-action rc-list-action-recon" onClick={() => {
               const currentDocs = docs.map(d => ({ ...d, type: d.type || classifyDoc(d.name) }));
               setDocs(currentDocs);
-              const hasBank = currentDocs.some(d => d.type === 'bank');
-              const hasLedger = currentDocs.some(d => d.type === 'ledger');
-              if (hasBank && hasLedger) {
+              const { ready } = getScenarioReadiness(currentDocs);
+              if (ready) {
                 setFlowMode('recon');
                 const hasRealFiles = currentDocs.some(d => d.file || d.processedUrl);
                 startAnalyze(!hasRealFiles, currentDocs);
