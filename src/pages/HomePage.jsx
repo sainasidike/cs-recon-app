@@ -184,16 +184,22 @@ function ReportsView({ projectsHook, onOpenProject, onSwitchNav }) {
 }
 
 function DocsView({ projectsHook, onOpenProject, onSwitchNav, onAddFiles }) {
-  const { projects, getProjectFiles } = projectsHook || {};
+  const { projects, getProjectFiles, updateProject, deleteProject } = projectsHook || {};
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [previewFile, setPreviewFile] = useState(null);
-  const [previewData, setPreviewData] = useState(null);
-  const [leftWidth, setLeftWidth] = useState('50%');
+  const [readerFile, setReaderFile] = useState(null);
+  const [readerData, setReaderData] = useState(null);
+  const [readerPage, setReaderPage] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [renameTarget, setRenameTarget] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [thumbnails, setThumbnails] = useState({});
 
   const allFiles = (projects || []).flatMap(p =>
-    (p.files || []).map(f => ({
+    (p.files || []).map((f, idx) => ({
       ...f,
+      fileIndex: idx,
       projectId: p.id,
       projectName: p.name,
       uploadedAt: p.createdAt,
@@ -204,7 +210,7 @@ function DocsView({ projectsHook, onOpenProject, onSwitchNav, onAddFiles }) {
     const ext = (name || '').split('.').pop().toLowerCase();
     if (['xlsx', 'xls', 'csv'].includes(ext)) return 'excel';
     if (ext === 'pdf') return 'pdf';
-    if (['jpg', 'jpeg', 'png', 'bmp', 'tiff'].includes(ext)) return 'image';
+    if (['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'webp'].includes(ext)) return 'image';
     return 'other';
   };
 
@@ -224,63 +230,219 @@ function DocsView({ projectsHook, onOpenProject, onSwitchNav, onAddFiles }) {
     image: allFiles.filter(f => getFileType(f.name) === 'image').length,
   };
 
-  const handlePreview = async (file) => {
-    setPreviewFile(file);
-    setPreviewData(null);
+  useEffect(() => {
+    let cancelled = false;
+    const generateThumbs = async () => {
+      for (const file of allFiles) {
+        const key = `${file.projectId}-${file.fileIndex}`;
+        if (thumbnails[key]) continue;
+        const type = getFileType(file.name);
+        if (type === 'image') {
+          try {
+            const blobs = await getProjectFiles(file.projectId);
+            if (cancelled) return;
+            const blob = blobs?.[file.fileIndex];
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              setThumbnails(prev => ({ ...prev, [key]: url }));
+            }
+          } catch {}
+        }
+      }
+    };
+    generateThumbs();
+    return () => { cancelled = true; };
+  }, [allFiles.length]);
+
+  const openReader = async (file) => {
+    setReaderFile(file);
+    setReaderData(null);
+    setReaderPage(0);
     try {
       const blobs = await getProjectFiles(file.projectId);
       if (!blobs) return;
-      const idx = (projects || []).find(p => p.id === file.projectId)?.files?.findIndex(f => f.name === file.name);
-      const blob = blobs[idx >= 0 ? idx : 0];
+      const blob = blobs[file.fileIndex];
       if (!blob) return;
-      const ext = file.name.split('.').pop().toLowerCase();
-      if (['xlsx', 'xls', 'csv'].includes(ext)) {
+      const type = getFileType(file.name);
+      if (type === 'excel') {
         const fileObj = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
         const parsed = await parseFile(fileObj);
-        setPreviewData({ type: 'table', entries: parsed.entries, headers: parsed.headers });
-      } else if (ext === 'pdf') {
-        setPreviewData({ type: 'pdf', url: URL.createObjectURL(blob) });
-      } else if (['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'webp'].includes(ext)) {
-        setPreviewData({ type: 'image', url: URL.createObjectURL(blob) });
+        const ROWS_PER_PAGE = 50;
+        const pages = [];
+        for (let i = 0; i < parsed.entries.length; i += ROWS_PER_PAGE) {
+          pages.push(parsed.entries.slice(i, i + ROWS_PER_PAGE));
+        }
+        if (pages.length === 0) pages.push([]);
+        setReaderData({ type: 'table', pages, headers: parsed.headers, totalEntries: parsed.entries.length });
+      } else if (type === 'pdf') {
+        setReaderData({ type: 'pdf', url: URL.createObjectURL(blob), pages: [{ label: 'PDF' }] });
+      } else if (type === 'image') {
+        setReaderData({ type: 'image', url: URL.createObjectURL(blob), pages: [{ label: '图片' }] });
       }
     } catch (e) {
-      console.warn('Preview failed:', e);
+      console.warn('Reader open failed:', e);
     }
   };
 
-  const handleReuseFile = async (file) => {
+  const handleDownload = async (file) => {
     try {
       const blobs = await getProjectFiles(file.projectId);
-      if (!blobs) return;
-      const idx = (projects || []).find(p => p.id === file.projectId)?.files?.findIndex(f => f.name === file.name);
-      const blob = blobs[idx >= 0 ? idx : 0];
+      const blob = blobs?.[file.fileIndex];
       if (!blob) return;
-      const fileObj = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
-      onAddFiles([fileObj]);
-      onSwitchNav('workspace');
-    } catch (e) {
-      console.warn('Reuse failed:', e);
-    }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {}
+    setMenuOpen(null);
   };
 
-  const handleDividerMouseDown = (e) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const container = e.currentTarget.parentElement;
-    const containerWidth = container.offsetWidth;
-    const startLeft = container.querySelector('.docs-preview-panel').offsetWidth;
-    const onMouseMove = (ev) => {
-      const delta = ev.clientX - startX;
-      const newWidth = Math.max(300, Math.min(containerWidth - 300, startLeft + delta));
-      setLeftWidth(newWidth + 'px');
-    };
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+  const handleRename = (file) => {
+    setRenameTarget(file);
+    const ext = file.name.includes('.') ? '.' + file.name.split('.').pop() : '';
+    setRenameValue(file.name.replace(ext, ''));
+    setMenuOpen(null);
   };
+
+  const confirmRename = () => {
+    if (!renameTarget || !renameValue.trim()) { setRenameTarget(null); return; }
+    const ext = renameTarget.name.includes('.') ? '.' + renameTarget.name.split('.').pop() : '';
+    const newName = renameValue.trim() + ext;
+    const project = (projects || []).find(p => p.id === renameTarget.projectId);
+    if (project) {
+      const newFiles = [...project.files];
+      newFiles[renameTarget.fileIndex] = { ...newFiles[renameTarget.fileIndex], name: newName };
+      updateProject(renameTarget.projectId, { files: newFiles });
+    }
+    setRenameTarget(null);
+  };
+
+  const handleDelete = (file) => {
+    setConfirmDelete(file);
+    setMenuOpen(null);
+  };
+
+  const confirmDeleteFile = () => {
+    if (!confirmDelete) return;
+    const project = (projects || []).find(p => p.id === confirmDelete.projectId);
+    if (project) {
+      const newFiles = project.files.filter((_, i) => i !== confirmDelete.fileIndex);
+      if (newFiles.length === 0) {
+        deleteProject(confirmDelete.projectId);
+      } else {
+        updateProject(confirmDelete.projectId, { files: newFiles });
+      }
+    }
+    setConfirmDelete(null);
+  };
+
+  if (readerFile && readerData) {
+    const totalPages = readerData.type === 'table' ? readerData.pages.length : 1;
+    return (
+      <div className="doc-reader">
+        <div className="doc-reader-toolbar">
+          <button className="doc-reader-back" onClick={() => { setReaderFile(null); setReaderData(null); }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            返回
+          </button>
+          <span className="doc-reader-filename">{readerFile.name}</span>
+          <div className="doc-reader-actions">
+            <button className="doc-reader-action-btn" onClick={() => handleDownload(readerFile)}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              下载
+            </button>
+            <button className="doc-reader-action-btn danger" onClick={() => handleDelete(readerFile)}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              删除
+            </button>
+          </div>
+        </div>
+
+        <div className="doc-reader-body">
+          {readerData.type === 'table' && totalPages > 1 && (
+            <div className="doc-reader-sidebar">
+              {readerData.pages.map((_, i) => (
+                <div
+                  key={i}
+                  className={`doc-reader-sidebar-item ${i === readerPage ? 'active' : ''}`}
+                  onClick={() => setReaderPage(i)}
+                >
+                  <div className="doc-reader-sidebar-thumb">
+                    <span>{i + 1}</span>
+                  </div>
+                  <div className="doc-reader-sidebar-label">第 {i + 1} 页</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="doc-reader-content">
+            {readerData.type === 'table' && (
+              <div className="doc-reader-table-wrap">
+                <table className="home-preview-table">
+                  <thead>
+                    <tr>
+                      {readerData.headers ? readerData.headers.map((h, i) => <th key={i}>{h}</th>) : <th>数据</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(readerData.pages[readerPage] || []).map((e, i) => (
+                      <tr key={i}>
+                        {readerData.headers && e.raw ? (
+                          readerData.headers.map((h, hi) => <td key={hi}>{e.raw[hi] != null ? String(e.raw[hi]) : '-'}</td>)
+                        ) : (
+                          <>
+                            <td>{e.date || '-'}</td>
+                            <td>{e.description || e.counterparty || '-'}</td>
+                            <td>{(e.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {readerData.type === 'pdf' && (
+              <iframe src={readerData.url} className="doc-reader-iframe" title={readerFile.name} />
+            )}
+            {readerData.type === 'image' && (
+              <div className="doc-reader-image-wrap">
+                <img src={readerData.url} alt={readerFile.name} />
+              </div>
+            )}
+
+            {readerData.type === 'table' && totalPages > 1 && (
+              <div className="doc-reader-pagination">
+                <button disabled={readerPage <= 0} onClick={() => setReaderPage(p => p - 1)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <span>{readerPage + 1} / {totalPages}</span>
+                <button disabled={readerPage >= totalPages - 1} onClick={() => setReaderPage(p => p + 1)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {confirmDelete && (
+          <div className="nav-confirm-overlay" onClick={() => setConfirmDelete(null)}>
+            <div className="nav-confirm-dialog" onClick={e => e.stopPropagation()}>
+              <div className="nav-confirm-title">确认删除</div>
+              <div className="nav-confirm-desc">删除「{confirmDelete.name}」后将无法恢复</div>
+              <div className="nav-confirm-actions">
+                <button className="nav-confirm-cancel" onClick={() => setConfirmDelete(null)}>取消</button>
+                <button className="nav-confirm-ok" onClick={confirmDeleteFile}>删除</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (allFiles.length === 0) {
     return (
@@ -298,8 +460,8 @@ function DocsView({ projectsHook, onOpenProject, onSwitchNav, onAddFiles }) {
     );
   }
 
-  const mainContent = (
-    <>
+  return (
+    <div className="ws-page-v2">
       <div className="nav-page-header">
         <h2 className="nav-page-title">文档管理</h2>
       </div>
@@ -323,8 +485,8 @@ function DocsView({ projectsHook, onOpenProject, onSwitchNav, onAddFiles }) {
         </div>
       </section>
 
-      <section className="nav-table-section">
-        <div className="nav-table-toolbar">
+      <section className="docs-grid-section">
+        <div className="docs-grid-toolbar">
           <div className="ws-filter-tabs">
             {[
               { key: 'all', label: '全部' },
@@ -343,115 +505,114 @@ function DocsView({ projectsHook, onOpenProject, onSwitchNav, onAddFiles }) {
           </div>
         </div>
 
-        <div className="nav-table-wrap">
-          <table className="nav-table">
-            <thead>
-              <tr>
-                <th>文件名</th>
-                <th>大小</th>
-                <th>所属项目</th>
-                <th>上传时间</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((file, i) => {
-                const type = getFileType(file.name);
-                return (
-                  <tr key={`${file.projectId}-${i}`} className={previewFile?.name === file.name && previewFile?.projectId === file.projectId ? 'nav-row-active' : ''}>
-                    <td className="nav-table-name" onClick={() => handlePreview(file)}>
-                      <span className={`nav-file-icon ${type}`}>
-                        {type === 'excel' && 'XLS'}
-                        {type === 'pdf' && 'PDF'}
-                        {type === 'image' && 'IMG'}
-                        {type === 'other' && 'FILE'}
-                      </span>
-                      {file.name}
-                    </td>
-                    <td>{file.size ? formatSize(file.size) : '-'}</td>
-                    <td className="nav-table-project" onClick={() => {
-                      const proj = (projects || []).find(p => p.id === file.projectId);
-                      if (proj) onOpenProject(proj);
-                    }}>{file.projectName || '-'}</td>
-                    <td>{formatDate(file.uploadedAt)}</td>
-                    <td>
-                      <div className="nav-table-actions">
-                        <button className="nav-action-btn" title="预览" onClick={() => handlePreview(file)}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
-                        <button className="nav-action-btn" title="复用到新对账" onClick={() => handleReuseFile(file)}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg>
-                        </button>
+        {filtered.length > 0 ? (
+          <div className="docs-grid">
+            {filtered.map((file, i) => {
+              const type = getFileType(file.name);
+              const key = `${file.projectId}-${file.fileIndex}`;
+              const thumbUrl = thumbnails[key];
+              const isMenuOpen = menuOpen === key;
+              return (
+                <div key={key} className="docs-card" onClick={() => openReader(file)}>
+                  <div className={`docs-card-thumb ${type}`}>
+                    {type === 'image' && thumbUrl ? (
+                      <img src={thumbUrl} alt={file.name} />
+                    ) : type === 'excel' ? (
+                      <div className="docs-card-thumb-icon">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#217346"/><path d="M7 7h4v3H7zm0 4h4v3H7zm0 4h4v2H7zm5-8h5v3h-5zm0 4h5v3h-5zm0 4h5v2h-5z" fill="rgba(255,255,255,0.8)"/></svg>
+                        <span className="docs-card-thumb-ext">XLSX</span>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {filtered.length === 0 && (
-            <div className="nav-table-empty">没有匹配的文件</div>
-          )}
-        </div>
+                    ) : type === 'pdf' ? (
+                      <div className="docs-card-thumb-icon">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><rect x="3" y="2" width="18" height="20" rx="2" fill="#E53935"/><path d="M8 8h8M8 11h8M8 14h5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5"/></svg>
+                        <span className="docs-card-thumb-ext">PDF</span>
+                      </div>
+                    ) : (
+                      <div className="docs-card-thumb-icon">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#7C4DFF"/><circle cx="9" cy="9" r="2" fill="rgba(255,255,255,0.7)"/><path d="M3 16l5-5 3 3 4-4 6 6v3a2 2 0 01-2 2H5a2 2 0 01-2-2v-3z" fill="rgba(255,255,255,0.3)"/></svg>
+                        <span className="docs-card-thumb-ext">IMG</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="docs-card-info">
+                    <div className="docs-card-name" title={file.name}>{file.name}</div>
+                    <div className="docs-card-meta">
+                      {file.entryCount > 0 && <span>{file.entryCount}条</span>}
+                      {file.entryCount > 0 && <span>·</span>}
+                      <span>{formatDate(file.uploadedAt)}</span>
+                      {file.size > 0 && <><span>·</span><span>{formatSize(file.size)}</span></>}
+                    </div>
+                  </div>
+                  <button
+                    className="docs-card-menu-btn"
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen(isMenuOpen ? null : key); }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                  </button>
+                  {isMenuOpen && (
+                    <div className="docs-card-menu" onClick={e => e.stopPropagation()}>
+                      <div className="docs-card-menu-item" onClick={() => handleRename(file)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        重命名
+                      </div>
+                      <div className="docs-card-menu-item" onClick={() => handleDownload(file)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        下载
+                      </div>
+                      <div className="docs-card-menu-item danger" onClick={() => handleDelete(file)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                        删除
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="nav-table-empty">没有匹配的文件</div>
+        )}
       </section>
-    </>
-  );
 
-  if (previewFile && previewData) {
-    return (
-      <div className="ws-page-v2 docs-split-layout">
-        <div className="docs-preview-panel" style={{ width: leftWidth }}>
-          <div className="docs-preview-header">
-            <span className="docs-preview-filename">{previewFile.name}</span>
-            <button className="docs-preview-close" onClick={() => { setPreviewFile(null); setPreviewData(null); }}>✕</button>
-          </div>
-          <div className="docs-preview-body">
-            {previewData.type === 'pdf' && (
-              <iframe src={previewData.url} className="docs-preview-iframe" title={previewFile.name} />
-            )}
-            {previewData.type === 'image' && (
-              <img src={previewData.url} alt={previewFile.name} className="docs-preview-img" />
-            )}
-            {previewData.type === 'table' && (
-              <div className="docs-preview-table-wrap">
-                <table className="home-preview-table">
-                  <thead>
-                    <tr>
-                      {previewData.headers ? previewData.headers.map((h, i) => <th key={i}>{h}</th>) : <><th>日期</th><th>摘要</th><th>金额</th></>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {previewData.entries.slice(0, 100).map((e, i) => (
-                      <tr key={i}>
-                        {previewData.headers && e.raw ? (
-                          previewData.headers.map((h, hi) => <td key={hi}>{e.raw[hi] != null ? String(e.raw[hi]) : '-'}</td>)
-                        ) : (
-                          <>
-                            <td>{e.date || '-'}</td>
-                            <td>{e.description || e.counterparty || '-'}</td>
-                            <td>{(e.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {previewData.entries.length > 100 && (
-                  <div className="home-preview-table-more">显示前 100 条 / 共 {previewData.entries.length} 条</div>
-                )}
+      {renameTarget && (
+        <div className="nav-confirm-overlay" onClick={() => setRenameTarget(null)}>
+          <div className="nav-confirm-dialog" onClick={e => e.stopPropagation()}>
+            <div className="nav-confirm-title">重命名文件</div>
+            <div style={{ marginBottom: 16 }}>
+              <input
+                className="docs-rename-input"
+                type="text"
+                value={renameValue}
+                onChange={e => setRenameValue(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') confirmRename(); }}
+                autoFocus
+              />
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 6 }}>
+                扩展名将保持不变：{renameTarget.name.includes('.') ? '.' + renameTarget.name.split('.').pop() : ''}
               </div>
-            )}
+            </div>
+            <div className="nav-confirm-actions">
+              <button className="nav-confirm-cancel" onClick={() => setRenameTarget(null)}>取消</button>
+              <button className="nav-confirm-ok" style={{ background: 'var(--accent)' }} onClick={confirmRename}>确认</button>
+            </div>
           </div>
         </div>
-        <div className="home-split-divider" onMouseDown={handleDividerMouseDown} />
-        <div className="docs-main-panel">
-          {mainContent}
-        </div>
-      </div>
-    );
-  }
+      )}
 
-  return <div className="ws-page-v2">{mainContent}</div>;
+      {confirmDelete && (
+        <div className="nav-confirm-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="nav-confirm-dialog" onClick={e => e.stopPropagation()}>
+            <div className="nav-confirm-title">确认删除</div>
+            <div className="nav-confirm-desc">删除「{confirmDelete.name}」后将无法恢复</div>
+            <div className="nav-confirm-actions">
+              <button className="nav-confirm-cancel" onClick={() => setConfirmDelete(null)}>取消</button>
+              <button className="nav-confirm-ok" onClick={confirmDeleteFile}>删除</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 const SCENARIO_DATA = [
