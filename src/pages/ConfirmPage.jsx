@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 function DataTable({ entries, maxRows = 50, showDirection = true, onRowClick }) {
   if (!entries || entries.length === 0) return <div style={{ padding: 16, color: 'var(--text-tertiary)', textAlign: 'center' }}>暂无数据</div>;
@@ -166,68 +166,80 @@ function EntryModal({ entry, onSave, onDelete, onClose, mode }) {
   );
 }
 
-function FilePreview({ pf, onClose }) {
+function SplitDocPreview({ pf, allFiles, activeIdx, onSwitchFile, onClose }) {
   const file = pf.file;
   const ext = (file?.name || '').split('.').pop().toLowerCase();
   const isImage = ['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'webp'].includes(ext);
   const isPdf = ext === 'pdf';
+  const isExcel = ['xlsx', 'xls', 'csv'].includes(ext);
   const entries = pf.parsed?.entries || [];
 
   return (
-    <div className="source-file-preview">
-      <div className="source-file-preview-header">
-        <span className="source-file-preview-name">{file?.name || '文件'}</span>
-        <span className="source-file-preview-close" onClick={onClose}>×</span>
+    <>
+      <div className="home-preview-header">
+        <span className="home-preview-filename">{file?.name || '文件'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {allFiles.length > 1 && (
+            <div className="home-preview-nav">
+              {allFiles.map((f, i) => (
+                <button key={i} className={`home-preview-tab ${i === activeIdx ? 'active' : ''}`} onClick={() => onSwitchFile(i)}>
+                  {(f.file?.name || f.name || '').length > 12 ? (f.file?.name || f.name || '').slice(0, 10) + '...' : (f.file?.name || f.name || '')}
+                </button>
+              ))}
+            </div>
+          )}
+          <span style={{ cursor: 'pointer', fontSize: 18, color: 'var(--text-tertiary)', lineHeight: 1 }} onClick={onClose}>×</span>
+        </div>
       </div>
-      <div className="source-file-preview-body">
-        {isImage && file && (
-          <img src={URL.createObjectURL(file)} alt={file.name} style={{ maxWidth: '100%', borderRadius: 6 }} />
-        )}
+      <div className="home-preview-body">
         {isPdf && file && (
-          <iframe src={URL.createObjectURL(file)} style={{ width: '100%', height: 360, border: 'none', borderRadius: 6 }} title={file.name} />
+          <iframe src={URL.createObjectURL(file)} className="home-preview-iframe" title={file.name} />
         )}
-        {!isImage && !isPdf && entries.length > 0 && (
-          <div className="source-file-preview-table">
-            <table className="data-table">
+        {isImage && file && (
+          <img src={URL.createObjectURL(file)} alt={file.name} className="home-preview-img" />
+        )}
+        {isExcel && entries.length > 0 && (
+          <div className="home-preview-table-wrap">
+            <table className="home-preview-table">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>日期</th>
-                  <th>摘要</th>
-                  <th style={{ textAlign: 'right' }}>金额</th>
+                  {pf.parsed.headers ? pf.parsed.headers.map((h, i) => <th key={i}>{h}</th>) : <><th>日期</th><th>摘要</th><th>金额</th><th>余额</th></>}
                 </tr>
               </thead>
               <tbody>
-                {entries.slice(0, 30).map((e, i) => (
+                {entries.slice(0, 100).map((e, i) => (
                   <tr key={i}>
-                    <td style={{ color: 'var(--text-tertiary)' }}>{i + 1}</td>
-                    <td>{e.date || '-'}</td>
-                    <td style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description || e.counterparty || '-'}</td>
-                    <td style={{ textAlign: 'right' }}>{(e.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                    {pf.parsed.headers && e.raw ? (
+                      pf.parsed.headers.map((h, hi) => <td key={hi}>{e.raw[hi] != null ? String(e.raw[hi]) : '-'}</td>)
+                    ) : (
+                      <>
+                        <td>{e.date || '-'}</td>
+                        <td>{e.description || e.counterparty || '-'}</td>
+                        <td className={e.direction === 'credit' ? 'amount-credit' : 'amount-debit'}>{(e.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                        <td>{e.balance != null ? e.balance.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '-'}</td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
-            {entries.length > 30 && (
-              <div style={{ padding: '6px 0', fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center' }}>
-                显示前 30 条 / 共 {entries.length} 条
-              </div>
+            {entries.length > 100 && (
+              <div className="home-preview-table-more">显示前 100 条 / 共 {entries.length} 条</div>
             )}
           </div>
         )}
-        {!isImage && !isPdf && entries.length === 0 && (
-          <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
-            暂无可预览的数据
-          </div>
+        {isExcel && entries.length === 0 && (
+          <div className="home-preview-empty">暂无可预览的数据</div>
+        )}
+        {!isImage && !isPdf && !isExcel && (
+          <div className="home-preview-empty">暂不支持该格式预览</div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
-function SourceFileList({ sideAData, sideBData, sideCData, parsedFiles, scenario }) {
-  const [previewIdx, setPreviewIdx] = useState(null);
-
+function SourceFileList({ sideAData, sideBData, sideCData, parsedFiles, scenario, previewIdx, onOpenPreview }) {
   const buildFiles = () => {
     const aFiles = sideAData?.files || [];
     const bFiles = sideBData?.files || [];
@@ -275,7 +287,7 @@ function SourceFileList({ sideAData, sideBData, sideCData, parsedFiles, scenario
           const icon = getIcon(pf.file?.name || pf.name);
           const isActive = previewIdx === i;
           return (
-            <div key={i} className={`source-file-item ${isActive ? 'source-file-item-active' : ''}`} onClick={() => setPreviewIdx(isActive ? null : i)} style={{ cursor: 'pointer' }}>
+            <div key={i} className={`source-file-item ${isActive ? 'source-file-item-active' : ''}`} onClick={() => onOpenPreview(isActive ? null : i)} style={{ cursor: 'pointer' }}>
               <div className="source-file-badge" style={{ background: icon.bg }}>{icon.label}</div>
               <div className="source-file-info">
                 <div className="source-file-name">{pf.file?.name || pf.name || '文件'}</div>
@@ -285,14 +297,11 @@ function SourceFileList({ sideAData, sideBData, sideCData, parsedFiles, scenario
                   {pf.parsed?.entries?.length ? ` · ${pf.parsed.entries.length}条` : ''}
                 </div>
               </div>
-              <span className="source-file-arrow">{isActive ? '▲' : '▼'}</span>
+              <span className="source-file-arrow" style={{ color: 'var(--accent)', fontSize: 12 }}>预览</span>
             </div>
           );
         })}
       </div>
-      {previewIdx !== null && allFiles[previewIdx] && (
-        <FilePreview pf={allFiles[previewIdx]} onClose={() => setPreviewIdx(null)} />
-      )}
     </div>
   );
 }
@@ -305,6 +314,44 @@ export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData,
   const [localAEntries, setLocalAEntries] = useState(null);
   const [localBEntries, setLocalBEntries] = useState(null);
   const [localCEntries, setLocalCEntries] = useState(null);
+
+  const [previewFileIdx, setPreviewFileIdx] = useState(null);
+  const [leftWidth, setLeftWidth] = useState(520);
+  const draggingRef = useRef(false);
+
+  const handleDividerMouseDown = useCallback((e) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    const startX = e.clientX;
+    const startW = leftWidth;
+    const divider = e.currentTarget;
+    divider.classList.add('dragging');
+
+    const onMouseMove = (ev) => {
+      const delta = ev.clientX - startX;
+      setLeftWidth(Math.max(300, Math.min(800, startW + delta)));
+    };
+    const onMouseUp = () => {
+      draggingRef.current = false;
+      divider.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [leftWidth]);
+
+  const getAllPreviewFiles = () => {
+    const aFiles = sideAData?.files || [];
+    const bFiles = sideBData?.files || [];
+    const cFiles = sideCData?.files || [];
+    if (aFiles.length > 0 || bFiles.length > 0 || cFiles.length > 0) {
+      return [...aFiles, ...bFiles, ...cFiles];
+    }
+    if (parsedFiles && parsedFiles.length > 0) return parsedFiles;
+    return [];
+  };
+  const allPreviewFiles = getAllPreviewFiles();
 
   const aEntries = localAEntries || sideAData?.entries || [];
   const bEntries = localBEntries || sideBData?.entries || [];
@@ -358,8 +405,8 @@ export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData,
     onNext();
   };
 
-  return (
-    <div className="pc-page">
+  const confirmContent = (
+    <>
       <div className="pc-page-header">
         <div className="pc-back-btn" onClick={onBack}>
           <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
@@ -374,7 +421,7 @@ export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData,
 
       <div className="confirm-layout">
         <div className="confirm-sidebar-col">
-          <SourceFileList sideAData={sideAData} sideBData={sideBData} sideCData={sideCData} parsedFiles={parsedFiles} scenario={scenario} />
+          <SourceFileList sideAData={sideAData} sideBData={sideBData} sideCData={sideCData} parsedFiles={parsedFiles} scenario={scenario} previewIdx={previewFileIdx} onOpenPreview={setPreviewFileIdx} />
           <div className="stats-col">
             <div className="stat-item">
               <span className="stat-item-label">{aLabel}记录</span>
@@ -459,6 +506,32 @@ export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData,
           onClose={() => setEditModal(null)}
         />
       )}
+    </>
+  );
+
+  if (previewFileIdx !== null && allPreviewFiles[previewFileIdx]) {
+    return (
+      <div className="pc-page confirm-split-layout">
+        <div className="confirm-split-left" style={{ width: leftWidth }}>
+          <SplitDocPreview
+            pf={allPreviewFiles[previewFileIdx]}
+            allFiles={allPreviewFiles}
+            activeIdx={previewFileIdx}
+            onSwitchFile={setPreviewFileIdx}
+            onClose={() => setPreviewFileIdx(null)}
+          />
+        </div>
+        <div className="home-split-divider" onMouseDown={handleDividerMouseDown} />
+        <div className="confirm-split-right">
+          {confirmContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pc-page">
+      {confirmContent}
     </div>
   );
 }
