@@ -333,6 +333,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans
 .cs-recon-page-info { color: #666; }
 
 /* Spreadsheet Mode */
+.ss-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #666;
+  margin-right: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.ss-back-btn:hover { background: #f0f0f0; color: #333; }
+
 .ss-formula-bar {
   height: 32px;
   background: #fff;
@@ -918,6 +932,26 @@ function renderReconReport(data) {
   return html;
 }
 
+// 从电子表格返回阅读模式
+function exitSpreadsheet() {
+  document.getElementById('spreadsheetMode').style.display = 'none';
+  document.querySelector('.cs-reader-main').style.display = 'flex';
+  readMode.style.display = 'flex';
+  viewbar.style.display = 'flex';
+  readerFooter.style.display = 'flex';
+  document.querySelector('.cs-reader-tabs').style.display = 'flex';
+  document.querySelector('.cs-reader-logo span').textContent = '扫描全能王 2026...';
+  // 移除返回按钮
+  var backBtn = document.querySelector('.ss-back-btn');
+  if (backBtn) backBtn.remove();
+  // 恢复顶栏按钮
+  var actionsEl = document.querySelector('.cs-reader-actions');
+  actionsEl.innerHTML = '<button class="cs-reader-btn-share"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>分享</button><button class="cs-reader-btn-save"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>保存</button>';
+  // 恢复阅读 tab 为 active
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  tabs[0].classList.add('active');
+}
+
 // 保存结果后：打开电子表格视图
 function showResultFullPage(data) {
   var recon = data.reconciliation;
@@ -940,8 +974,15 @@ function showResultFullPage(data) {
   var period = (periodStart && periodEnd) ? (periodStart + ' ~ ' + periodEnd) : '';
   document.querySelector('.cs-reader-logo span').textContent = reportTitle + (period ? '_' + period : '');
 
-  // 切换顶栏为表格模式
+  // 切换顶栏为表格模式：添加返回按钮
   document.querySelector('.cs-reader-tabs').style.display = 'none';
+  var logoEl = document.querySelector('.cs-reader-logo');
+  var backBtn = document.createElement('span');
+  backBtn.className = 'ss-back-btn';
+  backBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>';
+  backBtn.addEventListener('click', exitSpreadsheet);
+  logoEl.parentNode.insertBefore(backBtn, logoEl);
+
   var actionsEl = document.querySelector('.cs-reader-actions');
   actionsEl.innerHTML = '<button class="cs-reader-btn-share" style="gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载</button><button class="cs-reader-btn-share"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>分享</button><button class="cs-reader-btn-save" style="background:#00c4a1;color:#fff;border-color:#00c4a1;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>编辑</button>';
 
