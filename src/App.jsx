@@ -169,6 +169,7 @@ function AppInner() {
     reset();
     goToStep('home');
     setViewingProject(null);
+    setNavPage('workspace');
   };
 
 
