@@ -1315,11 +1315,19 @@ export default function ReconApp() {
               <span>转 Word</span>
             </button>
             <button className="rc-list-action rc-list-action-recon" onClick={() => {
-              setFlowMode('recon');
               const currentDocs = docs.map(d => ({ ...d, type: d.type || classifyDoc(d.name) }));
               setDocs(currentDocs);
-              setSelectedDocIds(new Set(currentDocs.map(d => d.id)));
-              setStep('select');
+              const hasBank = currentDocs.some(d => d.type === 'bank');
+              const hasLedger = currentDocs.some(d => d.type === 'ledger');
+              if (hasBank && hasLedger) {
+                setFlowMode('recon');
+                const hasRealFiles = currentDocs.some(d => d.file || d.processedUrl);
+                startAnalyze(!hasRealFiles, currentDocs);
+              } else {
+                setFlowMode('recon');
+                setSelectedDocIds(new Set(currentDocs.map(d => d.id)));
+                setStep('select');
+              }
             }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
               <span>财务对账</span>
