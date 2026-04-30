@@ -523,8 +523,25 @@ export default function ReconApp() {
           { name: '余额调节表', type: 'result_sheet' },
           { name: 'AI分析报告', type: 'result_report' },
         ],
-        savedMatchResults: matchResults,
-        savedReconData: reconData,
+        savedMatchResults: {
+          matchRate: matchResults.matchRate,
+          matchedCount: matchResults.matchedCount,
+          matchedAmt: matchResults.matchedAmt,
+          exact: matchResults.exact.slice(0, 30),
+          fuzzy: matchResults.fuzzy.slice(0, 20),
+          semantic: matchResults.semantic.slice(0, 10),
+          unmatchedBank: matchResults.unmatchedBank.slice(0, 20),
+          unmatchedLedger: matchResults.unmatchedLedger.slice(0, 20),
+        },
+        savedReconData: {
+          companyInfo: reconData.companyInfo,
+          bankEntries: reconData.bankEntries,
+          ledgerEntries: reconData.ledgerEntries,
+          bankTotalOut: reconData.bankTotalOut,
+          bankTotalIn: reconData.bankTotalIn,
+          ledgerTotalDebit: reconData.ledgerTotalDebit,
+          ledgerTotalCredit: reconData.ledgerTotalCredit,
+        },
       };
       const filtered = history.filter(h => !(h.status === 'pending' && h.scenario === scenario));
       const next = [record, ...filtered].slice(0, 30);
@@ -1264,16 +1281,16 @@ export default function ReconApp() {
           {history.length > 0 && (
             <div className="rc-history" style={{ marginTop: 24 }}>
               <div className="rc-history-title">历史记录</div>
-              {history.map(h => (
+              {history.filter(h => h.status === 'completed').map(h => (
                 <div key={h.id} className="rc-history-item">
                   <div className="rc-history-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
                   </div>
                   <div className="rc-history-info">
                     <div className="rc-history-name">{h.company} · {h.period}</div>
-                    <div className="rc-history-meta">匹配率 {h.matchRate.toFixed(0)}% · {h.matchedCount}笔匹配 · {h.unmatchedCount}笔未达 · {h.time}</div>
+                    <div className="rc-history-meta">匹配率 {(h.matchRate || 0).toFixed(0)}% · {h.matchedCount || 0}笔匹配 · {h.unmatchedCount || 0}笔未达 · {h.time}</div>
                   </div>
-                  <span className="rc-history-rate" style={{ color: h.matchRate >= 80 ? 'var(--rc-accent-dark)' : 'var(--rc-danger)' }}>{h.matchRate.toFixed(0)}%</span>
+                  <span className="rc-history-rate" style={{ color: (h.matchRate || 0) >= 80 ? 'var(--rc-accent-dark)' : 'var(--rc-danger)' }}>{(h.matchRate || 0).toFixed(0)}%</span>
                   <button className="rc-history-del" onClick={(e) => {
                     e.stopPropagation();
                     const next = history.filter(item => item.id !== h.id);
