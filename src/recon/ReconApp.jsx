@@ -183,12 +183,8 @@ export default function ReconApp() {
         file: file,
       }));
       setDocs(prev => [...prev, ...newDocs]);
-      if (flowMode === 'scan') {
-        setProcessedUrls(results.map(r => r.processedUrl));
-        setStep('list');
-      } else {
-        setStep('docs');
-      }
+      setProcessedUrls(results.map(r => r.processedUrl));
+      setStep('list');
     });
   }, [files, previewUrls, cropBoxes, selectedFilter, flowMode]);
 
@@ -696,7 +692,7 @@ export default function ReconApp() {
           <div className="rc-home-divider"><span>或上传您的文档</span></div>
 
           <div className="rc-home-upload-row">
-            <button className="rc-home-upload-btn" onClick={() => { setFlowMode('scan'); fileInputRef.current?.click(); }}>
+            <button className="rc-home-upload-btn" onClick={() => fileInputRef.current?.click()}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
@@ -704,7 +700,7 @@ export default function ReconApp() {
               </svg>
               <span>选择文件</span>
             </button>
-            <button className="rc-home-upload-btn" onClick={() => { setFlowMode('scan'); cameraInputRef.current?.click(); }}>
+            <button className="rc-home-upload-btn" onClick={() => cameraInputRef.current?.click()}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                 <circle cx="12" cy="13" r="4" />
@@ -1243,10 +1239,10 @@ export default function ReconApp() {
         </div>
       )}
       {/* LIST — Document view (scan) or Balance Reconciliation Sheet (recon) */}
-      {step === 'list' && flowMode === 'scan' && (
+      {step === 'list' && (flowMode === 'scan' || (flowMode === 'recon' && !(matchResults && reconData))) && (
         <div className="rc-list rc-list-img">
           <div className="rc-list-topbar">
-            <button className="rc-list-back" onClick={() => { if (prevStep === 'select') { setDocs(savedDocsRef.current); setStep('select'); setPrevStep(null); } else { setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); } }}>
+            <button className="rc-list-back" onClick={() => { if (prevStep === 'select') { setDocs(savedDocsRef.current); setStep('select'); setPrevStep(null); } else { setStep(flowMode === 'recon' ? 'home' : 'toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); } }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div className="rc-list-title">{docs[0]?.name || '扫描文档'}</div>
@@ -1258,7 +1254,7 @@ export default function ReconApp() {
             </div>
           </div>
 
-          {(() => {
+          {flowMode === 'recon' && (() => {
             const hasBank = docs.some(d => d.type === 'bank');
             const hasLedger = docs.some(d => d.type === 'ledger');
             const missing = [];
