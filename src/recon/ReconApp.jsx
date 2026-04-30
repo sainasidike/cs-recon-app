@@ -1226,6 +1226,10 @@ export default function ReconApp() {
       {/* HOME */}
       {step === 'home' && (
         <div className="rc-section rc-center" style={{ padding: '32px 20px' }}>
+          <button className="rc-home-back" onClick={() => setStep('toolbox')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            <span>返回工具箱</span>
+          </button>
           <div className="rc-home-logo">
             <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.3">
               <rect x="3" y="3" width="18" height="18" rx="2" />

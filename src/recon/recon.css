@@ -97,6 +97,7 @@ body {
   padding: 16px;
 }
 .rc-center {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -745,6 +746,22 @@ body {
 }
 
 /* Home */
+.rc-home-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.rc-home-back:active { background: #f0f0f0; }
 .rc-home-logo {
   width: 80px; height: 80px; border-radius: 20px;
   background: var(--rc-accent-light); display: grid; place-items: center;
