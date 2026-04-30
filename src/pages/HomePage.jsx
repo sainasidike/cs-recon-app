@@ -21,7 +21,7 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping, onBackToToolbox, projectsHook, onOpenProject }) {
+export default function HomePage({ parsedFiles, isProcessing, error, scenarioId, detectedScenarioId, periodStart, periodEnd, onAddFiles, onRemoveFile, onAssignRole, onSelectScenario, onSetPeriod, onSelectDemo, onConfirmData, onLoadHistory, onUpdateMapping, onBackToToolbox, projectsHook, onOpenProject, navPage }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
   const uploadZoneRef = useRef(null);
@@ -139,7 +139,7 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
     document.addEventListener('mouseup', onMouseUp);
   }, [rightWidth]);
 
-  // 上传后的文件管理界面（或正在解析中）
+  // File management view (when files are uploaded or processing)
   if (hasFiles) {
     const previewFile = parsedFiles[previewFileIdx] || parsedFiles[0];
     const previewExt = previewFile ? previewFile.file.name.split('.').pop().toLowerCase() : '';
@@ -149,7 +149,7 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
 
     return (
       <div className="pc-page home-split-layout">
-        {/* 左侧文档预览 */}
+        {/* Left document preview */}
         <div className="home-split-left">
           {previewFile && (
             <>
@@ -214,10 +214,10 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
           )}
         </div>
 
-        {/* 拖拽分隔线 */}
+        {/* Drag divider */}
         <div className="home-split-divider" onMouseDown={handleDividerMouseDown} />
 
-        {/* 右侧文件管理 */}
+        {/* Right file manager */}
         <div className="home-split-right" style={{ width: rightWidth }}>
           <div className="home-header">
             {onBackToToolbox && (
@@ -421,7 +421,7 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
     );
   }
 
-  // 工作站首页
+  // === Workspace homepage (new layout) ===
   const allProjects = docFilter === 'all' ? [...(recentProjects || []), ...(archivedProjects || [])]
     : docFilter === 'archived' ? (archivedProjects || [])
     : (recentProjects || []).filter(p => p.status === docFilter);
@@ -444,212 +444,172 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
     return d.toLocaleDateString('zh-CN');
   };
 
+  // Compute stats
+  const totalProjects = allProjects.length;
+  const completedProjects = allProjects.filter(p => p.resultSummary?.completedAt);
+  const avgMatchRate = completedProjects.length > 0
+    ? Math.round(completedProjects.reduce((sum, p) => sum + (p.resultSummary?.matchRate || 0), 0) / completedProjects.length)
+    : 0;
+  const totalFiles = allProjects.reduce((sum, p) => sum + (p.files?.length || 0), 0);
+
   return (
-    <div className="ws-page">
-      {onBackToToolbox && (
-        <div className="cs-tool-back" onClick={onBackToToolbox}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          返回工具箱
+    <div className="ws-page-v2">
+      {/* A) Stats overview */}
+      <section className="ws-stats-row">
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value">{totalProjects}</div>
+          <div className="ws-stat-card-label">总对账数</div>
         </div>
-      )}
-
-      {/* Hero + Upload */}
-      <section className="ws-hero">
-        <div className="ws-hero-left">
-          <h1 className="ws-hero-title">AI 智能对账助手</h1>
-          <p className="ws-hero-subtitle">上传财务文档，AI 自动识别场景并完成多方智能对账</p>
-          <div className="ws-hero-features">
-            <div className="ws-feature-item">
-              <div className="ws-feature-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-pressed)" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              </div>
-              <div className="ws-feature-text">
-                <span className="ws-feature-name">智能识别</span>
-                <span className="ws-feature-desc">自动识别文档格式与对账场景</span>
-              </div>
-            </div>
-            <div className="ws-feature-item">
-              <div className="ws-feature-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-pressed)" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              </div>
-              <div className="ws-feature-text">
-                <span className="ws-feature-name">三轮匹配</span>
-                <span className="ws-feature-desc">精确 → 模糊 → 语义逐层匹配</span>
-              </div>
-            </div>
-            <div className="ws-feature-item">
-              <div className="ws-feature-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-pressed)" strokeWidth="1.5"><path d="M9 17H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-4"/><polyline points="12 15 12 21"/><polyline points="8 21 16 21"/></svg>
-              </div>
-              <div className="ws-feature-text">
-                <span className="ws-feature-name">一键报告</span>
-                <span className="ws-feature-desc">生成调节表 + AI 分析报告</span>
-              </div>
-            </div>
-          </div>
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value" style={{ color: 'var(--accent)' }}>{completedProjects.length}</div>
+          <div className="ws-stat-card-label">已完成</div>
         </div>
-
-        <div className="ws-hero-right">
-          <div
-            ref={uploadZoneRef}
-            className={`ws-upload-zone ${dragOver || demoAnim ? 'ws-upload-zone-active' : ''}`}
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-          >
-            <div className="ws-upload-icon">
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-            </div>
-            <div className="ws-upload-text">拖拽文件到此处，或点击选择</div>
-            <button className="ws-upload-btn" onClick={() => fileInputRef.current?.click()}>
-              选择文件
-            </button>
-            <div className="ws-upload-formats">
-              支持多文件同时上传 · Excel / CSV / PDF / 图片
-            </div>
-            <div className="ws-upload-ocr">TextIn OCR 赋能，图片与扫描件自动识别</div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"
-              style={{ display: 'none' }}
-              onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
-            />
-          </div>
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value">{avgMatchRate}%</div>
+          <div className="ws-stat-card-label">平均匹配率</div>
+        </div>
+        <div className="ws-stat-card">
+          <div className="ws-stat-card-value">{totalFiles}</div>
+          <div className="ws-stat-card-label">处理文档</div>
         </div>
       </section>
 
-      {/* Demo 体验区 */}
-      <section className="ws-demo-section">
-        <div className="ws-demo-header">
-          <h2 className="ws-section-title">Demo 快速体验</h2>
-          <p className="ws-demo-subtitle">无需上传文件，一键加载示例数据体验完整对账流程</p>
+      {/* B) Quick start bar */}
+      <section className="ws-quick-bar">
+        <div
+          ref={uploadZoneRef}
+          className={`ws-quick-upload ${dragOver || demoAnim ? 'ws-quick-upload-active' : ''}`}
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <span>点击或拖拽上传文件开始对账</span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"
+            style={{ display: 'none' }}
+            onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
+          />
         </div>
-        <div className="ws-demo-grid">
+        <div className="ws-quick-demos">
           {DEMOS.map(d => (
-            <div key={d.id} className="ws-demo-card" onClick={(e) => handleDemoClick(d.id, e)}>
-              <span className="ws-demo-card-icon">{DEMO_ICONS[d.id] || '📊'}</span>
-              <div className="ws-demo-card-body">
-                <div className="ws-demo-card-name">{d.name}</div>
-                <div className="ws-demo-card-desc">{d.desc}</div>
-              </div>
-              <span className="ws-demo-card-action">立即体验 →</span>
-            </div>
+            <button key={d.id} className="ws-quick-demo-btn" onClick={(e) => handleDemoClick(d.id, e)}>
+              <span>{DEMO_ICONS[d.id] || '📊'}</span>
+              <span>{d.name}</span>
+            </button>
           ))}
         </div>
       </section>
 
-      {/* 项目管理 / 快速引导 */}
-      <section className="ws-projects">
-        {hasProjects ? (
-          <>
-            <div className="ws-projects-header">
-              <h2 className="ws-section-title">对账记录</h2>
-              <div className="ws-projects-toolbar">
-                <div className="ws-filter-tabs">
-                  {[
-                    { key: 'all', label: '全部' },
-                    { key: 'active', label: '进行中' },
-                    { key: 'completed', label: '已完成' },
-                    { key: 'archived', label: '已归档' },
-                  ].map(tab => (
-                    <button
-                      key={tab.key}
-                      className={`ws-filter-tab ${docFilter === tab.key ? 'active' : ''}`}
-                      onClick={() => setDocFilter(tab.key)}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="ws-search-box">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                  <input
-                    type="text"
-                    placeholder="搜索项目或文件..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
+      {/* C) Records list */}
+      <section className="ws-records-section">
+        <div className="ws-records-header">
+          <h2 className="ws-records-title">最近对账</h2>
+          <div className="ws-records-toolbar">
+            <div className="ws-filter-tabs">
+              {[
+                { key: 'all', label: '全部' },
+                { key: 'active', label: '进行中' },
+                { key: 'completed', label: '已完成' },
+                { key: 'archived', label: '已归档' },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  className={`ws-filter-tab ${docFilter === tab.key ? 'active' : ''}`}
+                  onClick={() => setDocFilter(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
-            <div className="ws-project-grid">
-              {filteredProjects.map(project => {
-                const status = STATUS_MAP[project.status] || STATUS_MAP.active;
-                const scenarioInfo = project.scenarioId ? getScenario(project.scenarioId) : null;
-                return (
-                  <div key={project.id} className="ws-project-card" onClick={() => onOpenProject && onOpenProject(project)}>
-                    <div className="ws-project-card-top">
-                      <span className="ws-project-icon">{scenarioInfo?.icon || '📋'}</span>
-                      <span className={`ws-project-status ${status.cls}`}>{status.label}</span>
-                    </div>
-                    <div className="ws-project-name">{project.name}</div>
-                    <div className="ws-project-meta">
-                      <span>{(project.files || []).length} 个文件</span>
-                      <span>{formatTime(project.updatedAt)}</span>
-                    </div>
-                    {project.logs && project.logs.length > 0 && (
-                      <div className="ws-project-log">
-                        {project.logs[project.logs.length - 1].action}
-                      </div>
-                    )}
-                    <div className="ws-project-actions" onClick={e => e.stopPropagation()}>
-                      {project.status !== 'archived' && (
-                        <button className="ws-action-btn" onClick={() => archiveProject(project.id)} title="归档">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
-                        </button>
-                      )}
-                      <button className="ws-action-btn ws-action-danger" onClick={() => deleteProject(project.id)} title="删除">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <div className="ws-guide">
-            <h2 className="ws-section-title">如何开始</h2>
-            <div className="ws-guide-steps">
-              <div className="ws-guide-step">
-                <div className="ws-guide-step-num">1</div>
-                <div className="ws-guide-step-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-pressed)" strokeWidth="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                </div>
-                <span className="ws-guide-step-label">上传文件</span>
-                <span className="ws-guide-step-desc">上传 2 个以上财务文件</span>
-              </div>
-              <div className="ws-guide-arrow">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </div>
-              <div className="ws-guide-step">
-                <div className="ws-guide-step-num">2</div>
-                <div className="ws-guide-step-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-pressed)" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                </div>
-                <span className="ws-guide-step-label">AI 智能匹配</span>
-                <span className="ws-guide-step-desc">三轮引擎自动比对</span>
-              </div>
-              <div className="ws-guide-arrow">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </div>
-              <div className="ws-guide-step">
-                <div className="ws-guide-step-num">3</div>
-                <div className="ws-guide-step-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-pressed)" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                </div>
-                <span className="ws-guide-step-label">获取报告</span>
-                <span className="ws-guide-step-desc">调节表 + AI 分析</span>
-              </div>
+            <div className="ws-search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input
+                type="text"
+                placeholder="搜索项目或文件..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
+        </div>
+
+        {filteredProjects.length > 0 ? (
+          <div className="ws-record-grid-v2">
+            {filteredProjects.map(project => {
+              const status = STATUS_MAP[project.status] || STATUS_MAP.active;
+              const scenarioInfo = project.scenarioId ? getScenario(project.scenarioId) : null;
+              const fileCount = (project.files || []).length;
+              const entryCount = (project.files || []).reduce((s, f) => s + (f.entryCount || 0), 0);
+              const matchRate = project.resultSummary?.matchRate;
+              const isBalanced = project.resultSummary?.isBalanced;
+
+              return (
+                <div key={project.id} className="ws-record-card-v2" onClick={() => onOpenProject && onOpenProject(project)}>
+                  <div className="ws-record-card-top">
+                    <span className="ws-record-card-icon">{scenarioInfo?.icon || '📋'}</span>
+                    <span className="ws-record-card-name">{project.name}</span>
+                    <span className={`ws-project-status ${status.cls}`}>{status.label}</span>
+                  </div>
+                  <div className="ws-record-card-meta">
+                    <span>{project.createdAt ? new Date(project.createdAt).toLocaleDateString('zh-CN') : '-'}</span>
+                    <span>{fileCount} 个文件</span>
+                    {entryCount > 0 && <span>{entryCount} 条记录</span>}
+                  </div>
+                  <div className="ws-record-card-result">
+                    {matchRate != null ? (
+                      <span className="ws-record-card-rate">{matchRate.toFixed(1)}% 匹配率</span>
+                    ) : isBalanced != null ? (
+                      <span className={`ws-record-card-balance ${isBalanced ? 'balanced' : 'unbalanced'}`}>
+                        {isBalanced ? '账平' : '有差异'}
+                      </span>
+                    ) : (
+                      <span className="ws-record-card-progress">进行中</span>
+                    )}
+                  </div>
+                  <div className="ws-record-card-bottom">
+                    <div className="ws-record-card-actions" onClick={e => e.stopPropagation()}>
+                      {project.status === 'completed' && (
+                        <button className="ws-record-action-btn" title="导出">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          导出
+                        </button>
+                      )}
+                      <button className="ws-record-action-btn" title="预览">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        预览
+                      </button>
+                    </div>
+                    <span className="ws-record-card-time">{formatTime(project.updatedAt)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="ws-records-empty">
+            <div className="ws-records-empty-icon">📋</div>
+            <div className="ws-records-empty-text">暂无对账记录</div>
+            <div className="ws-records-empty-hint">上传文件或选择 Demo 开始第一次对账</div>
+          </div>
         )}
+      </section>
+
+      {/* D) Bottom tip card */}
+      <section className="ws-tip-card">
+        <div className="ws-tip-card-icon">💡</div>
+        <div className="ws-tip-card-content">
+          <div className="ws-tip-card-title">提示</div>
+          <div className="ws-tip-card-desc">上传 2 个以上财务文件（Excel/CSV/PDF），AI 将自动识别对账场景并完成三轮智能匹配，生成调节表和分析报告。</div>
+        </div>
       </section>
 
       {demoAnim && (

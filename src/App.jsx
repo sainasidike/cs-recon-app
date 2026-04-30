@@ -59,6 +59,90 @@ function MatchingAnimation({ hasSideC }) {
   );
 }
 
+function AppSidebar({ navPage, setNavPage, onNewRecon, onBackToToolbox, projectsHook, onSelectDemo }) {
+  const { recentProjects, archivedProjects } = projectsHook || {};
+
+  const sceneCounts = {
+    bank_recon: 0,
+    expense_recon: 0,
+    invoice_verify: 0,
+  };
+  const allProjects = [...(recentProjects || []), ...(archivedProjects || [])];
+  allProjects.forEach(p => {
+    if (p.scenarioId && sceneCounts[p.scenarioId] !== undefined) {
+      sceneCounts[p.scenarioId]++;
+    }
+  });
+
+  return (
+    <aside className="app-sidebar">
+      <div className="app-sidebar-logo">
+        <div className="app-sidebar-logo-title">CS 智能对账</div>
+        <div className="app-sidebar-logo-desc">AI 驱动的财务对账助手</div>
+      </div>
+
+      <button className="app-sidebar-cta" onClick={onNewRecon}>
+        <span>✨</span> 新建对账
+      </button>
+
+      <nav className="app-sidebar-nav">
+        <div
+          className={`app-sidebar-item ${navPage === 'workspace' ? 'active' : ''}`}
+          onClick={() => setNavPage('workspace')}
+        >
+          <span className="app-sidebar-item-icon">🏠</span>
+          <span className="app-sidebar-item-label">对账工作台</span>
+        </div>
+        <div
+          className={`app-sidebar-item ${navPage === 'reports' ? 'active' : ''}`}
+          onClick={() => setNavPage('reports')}
+        >
+          <span className="app-sidebar-item-icon">📊</span>
+          <span className="app-sidebar-item-label">报告中心</span>
+        </div>
+        <div
+          className={`app-sidebar-item ${navPage === 'docs' ? 'active' : ''}`}
+          onClick={() => setNavPage('docs')}
+        >
+          <span className="app-sidebar-item-icon">📁</span>
+          <span className="app-sidebar-item-label">文档管理</span>
+        </div>
+
+        <div className="app-sidebar-section">对账场景</div>
+        <div className="app-sidebar-item" onClick={() => onSelectDemo('bank_recon')}>
+          <span className="app-sidebar-item-icon">🏦</span>
+          <span className="app-sidebar-item-label">银行对账</span>
+          {sceneCounts.bank_recon > 0 && <span className="app-sidebar-item-count">{sceneCounts.bank_recon}</span>}
+        </div>
+        <div className="app-sidebar-item" onClick={() => onSelectDemo('expense_recon')}>
+          <span className="app-sidebar-item-icon">💳</span>
+          <span className="app-sidebar-item-label">费用报销</span>
+          {sceneCounts.expense_recon > 0 && <span className="app-sidebar-item-count">{sceneCounts.expense_recon}</span>}
+        </div>
+        <div className="app-sidebar-item" onClick={() => onSelectDemo('invoice_verify')}>
+          <span className="app-sidebar-item-icon">🧾</span>
+          <span className="app-sidebar-item-label">发票核验</span>
+          {sceneCounts.invoice_verify > 0 && <span className="app-sidebar-item-count">{sceneCounts.invoice_verify}</span>}
+        </div>
+
+        <div className="app-sidebar-section">工具</div>
+        <div className="app-sidebar-item">
+          <span className="app-sidebar-item-icon">❓</span>
+          <span className="app-sidebar-item-label">使用帮助</span>
+        </div>
+      </nav>
+
+      <div className="app-sidebar-bottom">
+        {onBackToToolbox && (
+          <div className="app-sidebar-back" onClick={onBackToToolbox}>
+            ← 返回工具箱
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}
+
 function AppInner() {
   const {
     state,
@@ -71,6 +155,7 @@ function AppInner() {
 
   const projectsHook = useProjects();
   const [viewingProject, setViewingProject] = useState(null);
+  const [navPage, setNavPage] = useState('workspace');
 
   const params = new URLSearchParams(window.location.search);
   const autoloadId = params.get('autoload');
@@ -101,6 +186,16 @@ function AppInner() {
   if (showToolbox && !isEmbed) {
     return <ToolboxPage onEnterRecon={() => setShowToolbox(false)} />;
   }
+
+  const handleNewRecon = () => {
+    reset();
+    goToStep('home');
+    setViewingProject(null);
+  };
+
+  const handleSceneShortcut = (demoId) => {
+    loadDemo(demoId);
+  };
 
   const renderPage = () => {
     if (viewingProject) {
@@ -142,6 +237,7 @@ function AppInner() {
           onBackToToolbox={isEmbed ? undefined : () => { reset(); setShowToolbox(true); }}
           projectsHook={projectsHook}
           onOpenProject={(project) => setViewingProject(project)}
+          navPage={navPage}
         />
       );
     }
@@ -281,12 +377,26 @@ function AppInner() {
     );
   }
 
-  const showStepIndicator = ['home', 'scenario', 'confirm', 'results', 'reconciliation'].includes(step);
+  // Show sidebar only when on the home/scenario step and not viewing project detail in flow
+  const showSidebar = (step === 'home' || step === 'scenario') && !showToolbox;
+  const showStepIndicator = !showSidebar && ['confirm', 'results', 'reconciliation'].includes(step);
 
   return (
-    <div className="fullpage-layout">
-      {showStepIndicator && <StepIndicator currentStep={step} />}
-      {renderPage()}
+    <div className={`fullpage-layout ${showSidebar ? 'app-layout' : ''}`}>
+      {showSidebar && (
+        <AppSidebar
+          navPage={navPage}
+          setNavPage={setNavPage}
+          onNewRecon={handleNewRecon}
+          onBackToToolbox={() => { reset(); setShowToolbox(true); }}
+          projectsHook={projectsHook}
+          onSelectDemo={handleSceneShortcut}
+        />
+      )}
+      <div className={showSidebar ? 'app-main-content' : ''}>
+        {showStepIndicator && <StepIndicator currentStep={step} />}
+        {renderPage()}
+      </div>
     </div>
   );
 }
