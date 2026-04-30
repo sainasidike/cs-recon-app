@@ -348,7 +348,7 @@ export default function ReconApp() {
               <div className="rc-landing-badge">CamScanner AI</div>
               <h1 className="rc-landing-title">智能财务对账</h1>
               <p className="rc-landing-subtitle">拍照即对账，AI 三层匹配引擎<br/>让财务核对从 3 小时缩短到 3 分钟</p>
-              <button className="rc-landing-cta" onClick={() => setStep('toolbox')}>
+              <button className="rc-landing-cta" onClick={() => setStep('home')}>
                 <span>立即体验</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
@@ -530,7 +530,7 @@ export default function ReconApp() {
               </svg>
               <span>CamScanner AI · 智能财务对账</span>
             </div>
-            <button className="rc-landing-footer-cta" onClick={() => setStep('toolbox')}>
+            <button className="rc-landing-footer-cta" onClick={() => setStep('home')}>
               开始体验 Demo
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
@@ -634,7 +634,7 @@ export default function ReconApp() {
       )}
 
       {/* Pipeline Progress */}
-      {step !== 'home' && step !== 'toolbox' && step !== 'list' && flowMode === 'recon' && (
+      {step !== 'home' && step !== 'toolbox' && step !== 'landing' && step !== 'list' && flowMode === 'recon' && (
         <div className="rc-pipeline">
           {PIPELINE.map((s, i) => (
             <div key={s.key} className={`rc-pip-step ${i < stepIdx ? 'done' : ''} ${i === stepIdx ? 'active' : ''}`}>
@@ -648,64 +648,59 @@ export default function ReconApp() {
 
       {/* HOME */}
       {step === 'home' && (
-        <div className="rc-section rc-center" style={{ padding: '40px 20px' }}>
+        <div className="rc-section rc-center" style={{ padding: '32px 20px' }}>
           <div className="rc-home-logo">
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.3">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.3">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <path d="M3 9h18M3 15h18M9 3v18" />
             </svg>
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: '16px 0 6px' }}>CS 智能对账</h2>
-          <p style={{ fontSize: 13, color: 'var(--rc-text2)', marginBottom: 32, textAlign: 'center', lineHeight: 1.6 }}>
-            扫描或上传银行对账单、企业账簿等财务文档<br />AI 自动识别、匹配、生成调节表
+          <h2 style={{ fontSize: 20, fontWeight: 700, margin: '12px 0 6px' }}>CS 智能对账</h2>
+          <p style={{ fontSize: 13, color: 'var(--rc-text2)', marginBottom: 24, textAlign: 'center', lineHeight: 1.5 }}>
+            AI 自动识别财务文档、智能匹配、生成调节表
           </p>
 
-          <div className="rc-upload-area">
-            <div className="rc-upload-actions">
-              <button className="rc-upload-btn camera" onClick={() => cameraInputRef.current?.click()}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-                <span>拍照扫描</span>
-              </button>
-              <button className="rc-upload-btn gallery" onClick={() => fileInputRef.current?.click()}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
-                </svg>
-                <span>从相册导入</span>
-              </button>
-              <button className="rc-upload-btn file" onClick={() => fileInputRef.current?.click()}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
-                </svg>
-                <span>导入文档</span>
-              </button>
-            </div>
-            <p className="rc-upload-hint">支持 JPG、PNG、PDF、Excel、CSV</p>
-          </div>
-
-          <div className="rc-divider"><span>或使用示例数据</span></div>
-
-          <button className="rc-demo-btn" onClick={() => {
+          <button className="rc-home-demo-primary" onClick={() => {
             setFiles([{ name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'demo' }]);
             setPreviewUrls([null]);
             startAnalyze(true);
           }}>
-            <div className="rc-demo-icon">🏦</div>
-            <div className="rc-demo-info">
-              <div className="rc-demo-name">锦鲤餐饮 · 银行对账</div>
-              <div className="rc-demo-desc">20笔银行流水 vs 20笔企业账簿 · 2026年4月</div>
+            <div className="rc-home-demo-left">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5">
+                <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                <polyline points="13 2 13 9 20 9"/>
+              </svg>
             </div>
-            <span className="rc-demo-arrow">→</span>
+            <div className="rc-home-demo-info">
+              <div className="rc-home-demo-title">体验 Demo 对账</div>
+              <div className="rc-home-demo-desc">锦鲤餐饮 · 20笔银行流水 vs 20笔账簿</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
 
+          <div className="rc-home-divider"><span>或上传您的文档</span></div>
+
+          <div className="rc-home-upload-row">
+            <button className="rc-home-upload-btn" onClick={() => fileInputRef.current?.click()}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
+              <span>选择文件</span>
+            </button>
+            <button className="rc-home-upload-btn" onClick={() => cameraInputRef.current?.click()}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              <span>拍照扫描</span>
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--rc-text3)', textAlign: 'center', marginTop: 8 }}>支持 JPG、PNG、PDF、Excel、CSV</p>
+
           {history.length > 0 && (
-            <div className="rc-history">
+            <div className="rc-history" style={{ marginTop: 24 }}>
               <div className="rc-history-title">历史记录</div>
               {history.map(h => (
                 <div key={h.id} className="rc-history-item">
