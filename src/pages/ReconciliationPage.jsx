@@ -124,8 +124,13 @@ export default function ReconciliationPage({ scenario, reconciliation, matchResu
         <h2 className="pc-page-title">{reportTitle}</h2>
       </div>
 
-      <div style={{ textAlign: 'center', marginBottom: 24, fontSize: 'var(--font-xs)', color: 'var(--text-tertiary)' }}>
-        对账期间：{period} &nbsp;|&nbsp; 生成时间：{new Date().toLocaleString('zh-CN')}
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <div style={{ fontSize: 'var(--font-xs)', color: 'var(--accent)', fontWeight: 500, marginBottom: 4 }}>
+          RECON-{new Date().toISOString().slice(0, 10).replace(/-/g, '')}-{String(Math.floor(Math.random() * 900 + 100))}
+        </div>
+        <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-tertiary)' }}>
+          对账期间：{period} &nbsp;|&nbsp; 生成时间：{new Date().toLocaleString('zh-CN')}
+        </div>
       </div>
 
       {/* Result banner */}
@@ -331,6 +336,13 @@ export default function ReconciliationPage({ scenario, reconciliation, matchResu
       </div>
 
       <AuditLogPanel sessionId={sessionId} />
+
+      {/* 签章区 */}
+      <div style={{ marginTop: 32, padding: '20px 24px', background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '0.5px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-xs)', color: 'var(--text-tertiary)' }}>
+        <span>制表：AI 智能对账系统</span>
+        <span>审核：________________</span>
+        <span>日期：{new Date().toISOString().slice(0, 10)}</span>
+      </div>
 
       <div className="btn-row" style={{ marginTop: 24 }}>
         <button className="btn-pc-outline" onClick={handleExportExcel}>导出 Excel</button>

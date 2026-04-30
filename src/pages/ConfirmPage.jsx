@@ -234,6 +234,9 @@ export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData,
           <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
         </div>
         <h2 className="pc-page-title">数据确认</h2>
+        <span style={{ marginLeft: 'auto', fontSize: 'var(--font-xs)', color: 'var(--text-tertiary)' }}>
+          共 {aEntries.length + bEntries.length + cEntries.length} 条记录
+        </span>
       </div>
 
       <ValidationPanel validation={validation} />
@@ -264,14 +267,17 @@ export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData,
           {scenario?.hasBalance && (
             <div className="balance-card">
               <div className="balance-card-title">期末余额</div>
+              <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-tertiary)', padding: '0 0 10px', lineHeight: 1.5 }}>
+                请输入对账单/账簿最后一行的期末余额数字
+              </div>
               <div className="balance-inputs">
                 <div className="balance-input-group">
                   <span className="balance-input-label">{scenario.balanceLabels?.sideA || `${aLabel}余额`}</span>
-                  <input className="input" type="number" step="0.01" value={localABal} onChange={e => setLocalABal(e.target.value)} placeholder="请输入余额" />
+                  <input className="input" type="number" step="0.01" value={localABal} onChange={e => setLocalABal(e.target.value)} placeholder="对账单最后一行余额" />
                 </div>
                 <div className="balance-input-group">
                   <span className="balance-input-label">{scenario.balanceLabels?.sideB || `${bLabel}余额`}</span>
-                  <input className="input" type="number" step="0.01" value={localBBal} onChange={e => setLocalBBal(e.target.value)} placeholder="请输入余额" />
+                  <input className="input" type="number" step="0.01" value={localBBal} onChange={e => setLocalBBal(e.target.value)} placeholder="账簿最后一行余额" />
                 </div>
               </div>
             </div>

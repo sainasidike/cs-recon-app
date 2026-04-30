@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useReconciliation } from './hooks/useReconciliation';
 import { ToastProvider } from './components/Toast';
+import StepIndicator from './components/StepIndicator';
 import ToolboxPage from './pages/ToolboxPage';
 import HomePage from './pages/HomePage';
 import ConfirmPage from './pages/ConfirmPage';
@@ -12,6 +13,50 @@ import { getScenario } from './utils/scenarios';
 import './styles/theme.css';
 import './styles/components.css';
 import './styles/toolbox.css';
+
+function MatchingAnimation({ hasSideC }) {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 600);
+    const t2 = setTimeout(() => setStage(2), 1400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  const stages = [
+    { label: '精确匹配', desc: '日期+金额完全一致', icon: '🎯' },
+    { label: '模糊匹配', desc: '金额一致+日期相近', icon: '🔍' },
+    { label: hasSideC ? '多维匹配' : '语义匹配', desc: hasSideC ? '三方数据交叉验证' : '描述相似+金额匹配', icon: '🧠' },
+  ];
+
+  return (
+    <div className="loading-page" style={{ paddingTop: 40 }}>
+      <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>AI 智能匹配中</div>
+      <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--font-sm)', marginBottom: 32 }}>
+        正在帮你省下数小时的手工对账时间...
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 360 }}>
+        {stages.map((s, i) => {
+          const isDone = i < stage;
+          const isActive = i === stage;
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 12, background: isDone ? 'var(--accent-light)' : isActive ? 'var(--bg-card)' : 'var(--bg-input)', border: isActive ? '1.5px solid var(--accent)' : '1px solid var(--border)', transition: 'all 0.3s' }}>
+              <span style={{ fontSize: 22 }}>{isDone ? '✓' : s.icon}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: isDone ? 'var(--accent)' : isActive ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+                  第{i + 1}轮：{s.label}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{s.desc}</div>
+              </div>
+              {isActive && <div className="cs-spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />}
+              {isDone && <span style={{ color: 'var(--accent)', fontSize: 12, fontWeight: 600 }}>完成</span>}
+            </div>
+          );
+        })}
+      </div>
+      <style>{`.cs-spinner { border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
 
 function AppInner() {
   const {
@@ -99,22 +144,8 @@ function AppInner() {
     if (step === 'matching') {
       return (
         <div className="pc-page">
-          <div className="loading-page">
-            <div className="progress-ring-wrap">
-              <svg viewBox="0 0 120 120">
-                <circle className="progress-ring-bg" cx="60" cy="60" r="52" />
-                <circle className="progress-ring-fill" cx="60" cy="60" r="52"
-                  style={{ strokeDasharray: 327, strokeDashoffset: 80, animation: 'spin 1.5s linear infinite' }} />
-              </svg>
-              <div className="progress-ring-text">
-                <div className="progress-pct" style={{ fontSize: 18 }}>比对中</div>
-              </div>
-            </div>
-            <p style={{ color: 'var(--text-secondary)', marginTop: 20, fontSize: 'var(--font-sm)' }}>
-              {scenario?.sideC ? '正在执行多维智能匹配...' : '正在执行三轮智能匹配...'}
-            </p>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
+          <StepIndicator currentStep="matching" />
+          <MatchingAnimation hasSideC={!!scenario?.sideC} />
         </div>
       );
     }
@@ -212,8 +243,11 @@ function AppInner() {
     );
   }
 
+  const showStepIndicator = ['home', 'scenario', 'confirm', 'results', 'reconciliation'].includes(step);
+
   return (
     <div className="fullpage-layout">
+      {showStepIndicator && <StepIndicator currentStep={step} />}
       {renderPage()}
     </div>
   );

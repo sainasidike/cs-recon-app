@@ -398,13 +398,17 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
 
       {/* Demo 体验卡片 */}
       <div className="cs-tool-demos">
-        <div className="cs-tool-demos-title">Demo 体验</div>
+        <div className="cs-tool-demos-title">
+          <span>Demo 体验</span>
+          <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 400 }}>点击加载示例数据，快速体验完整流程</span>
+        </div>
         <div className="cs-home-demo-grid">
           {DEMOS.map(d => (
             <div key={d.id} className="cs-home-demo-card" onClick={(e) => handleDemoClick(d.id, e)}>
               <span className="cs-home-demo-icon">{DEMO_ICONS[d.id] || '📊'}</span>
               <div className="cs-home-demo-name">{d.name}</div>
               <div className="cs-home-demo-desc">{d.desc}</div>
+              <div style={{ marginTop: 8, fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>⚡ 一键体验</div>
             </div>
           ))}
         </div>
