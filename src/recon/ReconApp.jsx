@@ -349,7 +349,7 @@ export default function ReconApp() {
               <div className="rc-landing-badge">CamScanner AI</div>
               <h1 className="rc-landing-title">智能财务对账</h1>
               <p className="rc-landing-subtitle">拍照即对账，AI 三层匹配引擎<br/>让财务核对从 3 小时缩短到 3 分钟</p>
-              <button className="rc-landing-cta" onClick={() => setStep('home')}>
+              <button className="rc-landing-cta" onClick={() => setStep('toolbox')}>
                 <span>立即体验</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
@@ -531,7 +531,7 @@ export default function ReconApp() {
               </svg>
               <span>CamScanner AI · 智能财务对账</span>
             </div>
-            <button className="rc-landing-footer-cta" onClick={() => setStep('home')}>
+            <button className="rc-landing-footer-cta" onClick={() => setStep('toolbox')}>
               开始体验 Demo
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
