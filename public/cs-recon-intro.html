@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能对账 — AI 财务对账助手 | 扫描全能王</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif; color: #1a2b3c; background: #f7f8fa; line-height: 1.7; }
+
+/* Hero */
+.hero { background: linear-gradient(135deg, #0a6b55 0%, #0ea47a 40%, #2dd4a8 100%); color: #fff; padding: 72px 40px 64px; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 600px; height: 600px; border-radius: 50%; background: rgba(255,255,255,.04); }
+.hero::after { content: ''; position: absolute; bottom: -30%; left: -10%; width: 400px; height: 400px; border-radius: 50%; background: rgba(255,255,255,.03); }
+.hero-badge { display: inline-block; background: rgba(255,255,255,.18); border-radius: 20px; padding: 5px 18px; font-size: 13px; margin-bottom: 22px; backdrop-filter: blur(4px); letter-spacing: 0.5px; }
+.hero h1 { font-size: 40px; font-weight: 800; margin-bottom: 14px; letter-spacing: -0.5px; position: relative; z-index: 1; }
+.hero .subtitle { font-size: 17px; opacity: .92; max-width: 620px; margin: 0 auto 32px; line-height: 1.8; position: relative; z-index: 1; }
+.hero-stats { display: flex; justify-content: center; gap: 48px; margin-bottom: 36px; position: relative; z-index: 1; }
+.hero-stat { text-align: center; }
+.hero-stat .stat-val { font-size: 28px; font-weight: 700; }
+.hero-stat .stat-label { font-size: 12px; opacity: .8; margin-top: 2px; }
+.hero .try-btn { display: inline-block; background: #fff; color: #0a6b55; padding: 14px 36px; border-radius: 28px; font-size: 15px; font-weight: 600; text-decoration: none; transition: transform .2s, box-shadow .2s; box-shadow: 0 4px 20px rgba(0,0,0,.1); position: relative; z-index: 1; }
+.hero .try-btn:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(0,0,0,.15); }
+
+/* Container */
+.container { max-width: 960px; margin: 0 auto; padding: 0 28px; }
+
+/* Sections */
+.section { padding: 56px 0; }
+.section-title { font-size: 26px; font-weight: 700; margin-bottom: 8px; color: #1a2b3c; }
+.section-desc { font-size: 15px; color: #666; margin-bottom: 32px; }
+.divider { height: 1px; background: #e8eaed; margin: 0; }
+
+/* Pain Cards */
+.pain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pain-card { background: #fff; border-radius: 14px; padding: 28px; border: 1px solid #f0f0f0; transition: box-shadow .2s; }
+.pain-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.05); }
+.pain-card .pain-icon { font-size: 30px; margin-bottom: 12px; }
+.pain-card .pain-title { font-size: 16px; font-weight: 600; color: #1a2b3c; margin-bottom: 8px; }
+.pain-card .pain-desc { font-size: 13px; color: #888; line-height: 1.7; }
+
+/* Scene Cards */
+.scene-list { display: flex; flex-direction: column; gap: 24px; }
+.scene-card { background: #fff; border-radius: 14px; padding: 28px 32px; border: 1px solid #f0f0f0; display: flex; gap: 24px; align-items: flex-start; transition: box-shadow .2s; }
+.scene-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.05); }
+.scene-num { flex-shrink: 0; width: 38px; height: 38px; line-height: 38px; text-align: center; border-radius: 50%; background: linear-gradient(135deg, #0a6b55, #2dd4a8); color: #fff; font-size: 16px; font-weight: 700; }
+.scene-body { flex: 1; }
+.scene-title { font-size: 17px; font-weight: 600; color: #1a2b3c; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.scene-tag { font-size: 11px; background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+.scene-context { font-size: 13px; color: #999; margin-bottom: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; border-left: 3px solid #e8eaed; line-height: 1.7; }
+.scene-pain { font-size: 14px; color: #c0392b; margin-bottom: 10px; line-height: 1.7; }
+.scene-pain strong { color: #c0392b; }
+.scene-solve { font-size: 14px; color: #0a6b55; line-height: 1.7; }
+.scene-solve strong { color: #0a6b55; }
+
+/* Flow */
+.flow-wrap { background: #fff; border-radius: 16px; padding: 40px 32px; border: 1px solid #f0f0f0; }
+.flow { display: flex; align-items: flex-start; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.flow-step { text-align: center; min-width: 110px; flex: 1; }
+.flow-step .flow-icon { width: 52px; height: 52px; line-height: 52px; border-radius: 14px; background: linear-gradient(135deg, #e8f8f3, #d4f1e8); font-size: 22px; margin: 0 auto 10px; }
+.flow-step .flow-label { font-size: 13px; color: #1a2b3c; font-weight: 600; margin-bottom: 4px; }
+.flow-step .flow-desc { font-size: 11px; color: #999; line-height: 1.4; }
+.flow-arrow { color: #2dd4a8; font-size: 18px; font-weight: 700; margin-top: 16px; }
+
+/* Detail Steps */
+.steps-detail { margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.step-item { display: flex; gap: 12px; align-items: flex-start; padding: 16px; background: #f9fafb; border-radius: 10px; }
+.step-item .step-num { flex-shrink: 0; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 6px; background: #0ea47a; color: #fff; font-size: 12px; font-weight: 600; }
+.step-item .step-text { font-size: 13px; color: #555; line-height: 1.6; }
+.step-item .step-text strong { color: #1a2b3c; }
+
+/* Feature Cards */
+.feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.feat-card { background: #fff; border-radius: 12px; padding: 24px; border: 1px solid #f0f0f0; transition: box-shadow .2s; }
+.feat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.05); }
+.feat-num { display: inline-block; background: linear-gradient(135deg, #e8f8f3, #d4f1e8); color: #0a6b55; font-size: 12px; font-weight: 700; width: 26px; height: 26px; line-height: 26px; text-align: center; border-radius: 7px; margin-bottom: 12px; }
+.feat-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: #1a2b3c; }
+.feat-card p { font-size: 13px; color: #888; line-height: 1.6; }
+
+/* Tags */
+.tag-section { display: flex; gap: 32px; flex-wrap: wrap; }
+.tag-group { flex: 1; min-width: 280px; }
+.tag-group-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 12px; }
+.tag-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag { background: #f0f7f4; color: #0a6b55; padding: 6px 14px; border-radius: 16px; font-size: 13px; }
+.tag.planned { background: #f5f5f5; color: #999; }
+
+/* Tech Table */
+.tech-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #f0f0f0; }
+.tech-table th { background: #f7f8fa; padding: 14px 24px; text-align: left; font-size: 13px; color: #888; font-weight: 500; border-bottom: 1px solid #f0f0f0; }
+.tech-table td { padding: 14px 24px; font-size: 14px; border-bottom: 1px solid #f7f8fa; color: #444; }
+.tech-table tr:last-child td { border-bottom: none; }
+
+/* Notice */
+.notice { background: #fff8f0; border: 1px solid #ffe0b2; border-radius: 12px; padding: 24px 28px; }
+.notice-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 14px; color: #555; line-height: 1.6; }
+.notice-item:last-child { margin-bottom: 0; }
+.notice-icon { color: #f57c00; font-size: 16px; flex-shrink: 0; margin-top: 3px; }
+
+/* CS Integration */
+.cs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cs-card { background: #fff; border-radius: 12px; padding: 24px; border-left: 3px solid #2dd4a8; transition: box-shadow .2s; }
+.cs-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.05); }
+.cs-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #1a2b3c; }
+.cs-card p { font-size: 13px; color: #888; line-height: 1.6; }
+
+/* Comparison */
+.compare-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #f0f0f0; }
+.compare-table th { padding: 14px 20px; text-align: center; font-size: 13px; font-weight: 600; border-bottom: 1px solid #f0f0f0; }
+.compare-table th:first-child { text-align: left; background: #f7f8fa; color: #888; font-weight: 500; }
+.compare-table th:nth-child(2) { background: #fef2f2; color: #c0392b; }
+.compare-table th:nth-child(3) { background: #f0fdf9; color: #0a6b55; }
+.compare-table td { padding: 12px 20px; font-size: 13px; border-bottom: 1px solid #f7f8fa; text-align: center; }
+.compare-table td:first-child { text-align: left; color: #666; }
+.compare-table .bad { color: #c0392b; }
+.compare-table .good { color: #0a6b55; font-weight: 500; }
+
+/* Plan */
+.plan-row { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+.plan-badge { flex-shrink: 0; padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; min-width: 52px; text-align: center; }
+.plan-badge.short { background: #e8f8f3; color: #0a6b55; }
+.plan-badge.mid { background: #e3f2fd; color: #1565c0; }
+.plan-badge.long { background: #f3e5f5; color: #7b1fa2; }
+.plan-text { font-size: 14px; color: #555; line-height: 1.6; }
+
+/* Status Bar */
+.status-bar { background: #fff; border-radius: 14px; padding: 28px; border: 1px solid #f0f0f0; display: flex; justify-content: space-around; text-align: center; margin-top: 36px; }
+.status-item .status-val { font-size: 28px; font-weight: 700; color: #0a6b55; }
+.status-item .status-label { font-size: 12px; color: #999; margin-top: 4px; }
+
+/* Footer */
+.footer { text-align: center; padding: 48px 0; color: #ccc; font-size: 12px; }
+
+/* Demo Flow Section */
+.demo-flow { background: #fff; border-radius: 16px; border: 1px solid #f0f0f0; overflow: hidden; }
+.demo-flow-header { background: linear-gradient(135deg, #f0fdf9, #e8f8f3); padding: 24px 32px; border-bottom: 1px solid #e8eaed; display: flex; align-items: center; justify-content: space-between; }
+.demo-flow-header h3 { font-size: 18px; font-weight: 700; color: #1a2b3c; }
+.demo-flow-header .demo-btn { display: inline-block; background: linear-gradient(135deg, #0a6b55, #0ea47a); color: #fff; padding: 10px 24px; border-radius: 20px; font-size: 13px; font-weight: 600; text-decoration: none; transition: transform .2s; }
+.demo-flow-header .demo-btn:hover { transform: scale(1.03); }
+.demo-steps { padding: 32px; }
+.demo-step { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 28px; position: relative; }
+.demo-step:last-child { margin-bottom: 0; }
+.demo-step::before { content: ''; position: absolute; left: 19px; top: 40px; bottom: -28px; width: 2px; background: #e8f8f3; }
+.demo-step:last-child::before { display: none; }
+.demo-step-num { flex-shrink: 0; width: 40px; height: 40px; line-height: 40px; text-align: center; border-radius: 50%; background: linear-gradient(135deg, #0a6b55, #2dd4a8); color: #fff; font-size: 15px; font-weight: 700; position: relative; z-index: 1; }
+.demo-step-body { flex: 1; padding-top: 6px; }
+.demo-step-title { font-size: 15px; font-weight: 600; color: #1a2b3c; margin-bottom: 6px; }
+.demo-step-desc { font-size: 13px; color: #888; line-height: 1.6; }
+.demo-step-tips { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.demo-tip { font-size: 11px; background: #f0f7f4; color: #0a6b55; padding: 3px 10px; border-radius: 4px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero { padding: 48px 20px 40px; }
+  .hero h1 { font-size: 28px; }
+  .hero-stats { gap: 24px; }
+  .hero-stat .stat-val { font-size: 22px; }
+  .pain-grid, .feat-grid, .cs-grid { grid-template-columns: 1fr; }
+  .scene-card { flex-direction: column; gap: 12px; }
+  .flow { flex-direction: column; align-items: center; }
+  .flow-arrow { transform: rotate(90deg); }
+  .steps-detail { grid-template-columns: 1fr; }
+  .status-bar { flex-direction: column; gap: 20px; }
+  .tag-section { flex-direction: column; gap: 20px; }
+  .compare-table { font-size: 12px; }
+  .demo-flow-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">CS 文档 Agent Skill</div>
+  <h1>智能对账 — AI 财务对账助手</h1>
+  <p class="subtitle">上传银行流水和企业账簿，AI 自动识别、三轮匹配、生成余额调节表。<br>把财务月底最头疼的事，变成一次拍照上传。</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="stat-val">3 轮</div><div class="stat-label">智能匹配引擎</div></div>
+    <div class="hero-stat"><div class="stat-val">5 种</div><div class="stat-label">文件格式支持</div></div>
+    <div class="hero-stat"><div class="stat-val">30 秒</div><div class="stat-label">生成调节表</div></div>
+  </div>
+  <a class="try-btn" href="https://cs-pc-reconciliation.vercel.app/" target="_blank">立即体验 Demo</a>
+</div>
+
+<div class="container">
+
+<!-- 解决什么问题 -->
+<div class="section">
+  <div class="section-title">解决什么问题</div>
+  <div class="section-desc">每个财务人月底都会遇到的对账困境</div>
+  <div class="pain-grid">
+    <div class="pain-card">
+      <div class="pain-icon">&#128553;</div>
+      <div class="pain-title">手工太慢</div>
+      <div class="pain-desc">几百笔流水逐条比对，月底加班到凌晨是常态。一个人做完一个账户的余额调节，至少半天。</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">&#128560;</div>
+      <div class="pain-title">容易出错</div>
+      <div class="pain-desc">眼花看串行、金额对反方向、漏勾重复勾。查错比做账还累，一个小数点差异能折腾一下午。</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">&#129327;</div>
+      <div class="pain-title">跨期头疼</div>
+      <div class="pain-desc">未达账项散落在多个月份，银行已收企业未收、企业已付银行未付，手工追踪极易遗漏。</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">&#128203;</div>
+      <div class="pain-title">流程断裂</div>
+      <div class="pain-desc">对完账还要手写调节表、截图发审批、等领导签字。没有系统闭环，每次都是临时拼凑。</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 传统 vs AI -->
+<div class="section">
+  <div class="section-title">传统方式 vs AI 对账</div>
+  <div class="section-desc">同样的工作，完全不同的体验</div>
+  <table class="compare-table">
+    <tr>
+      <th>环节</th>
+      <th>传统手工</th>
+      <th>AI 智能对账</th>
+    </tr>
+    <tr>
+      <td>数据录入</td>
+      <td class="bad">手动录入/逐行复制</td>
+      <td class="good">拍照上传，OCR 自动识别</td>
+    </tr>
+    <tr>
+      <td>文档分类</td>
+      <td class="bad">人工辨认文件类型</td>
+      <td class="good">AI 自动分类银行/账簿</td>
+    </tr>
+    <tr>
+      <td>逐笔匹配</td>
+      <td class="bad">肉眼比对，逐行标记</td>
+      <td class="good">三轮引擎自动匹配</td>
+    </tr>
+    <tr>
+      <td>差异处理</td>
+      <td class="bad">手动查找、反复核对</td>
+      <td class="good">自动归类未达账项</td>
+    </tr>
+    <tr>
+      <td>生成报告</td>
+      <td class="bad">手动制作 Excel 调节表</td>
+      <td class="good">一键生成正式调节表</td>
+    </tr>
+    <tr>
+      <td>耗时</td>
+      <td class="bad">3-4 小时 / 账户</td>
+      <td class="good">30 秒 - 5 分钟</td>
+    </tr>
+  </table>
+</div>
+
+<div class="divider"></div>
+
+<!-- 真实场景 -->
+<div class="section">
+  <div class="section-title">真实场景：从痛点到解决</div>
+  <div class="section-desc">每个场景都来自真实财务工作经历</div>
+  <div class="scene-list">
+
+    <div class="scene-card">
+      <div class="scene-num">1</div>
+      <div class="scene-body">
+        <div class="scene-title">月末银行余额调节</div>
+        <div class="scene-context">小张每月底从网银导出流水，打开企业账簿，开始逐行比对。312笔交易，手续费差异、日期跨月、摘要不一致的笔笔都要单独标记。经常对到晚上10点，最后还要手动在Excel里做调节表。</div>
+        <div class="scene-pain"><strong>痛点：</strong>逐条匹配耗时巨大，遇到金额拆分、合并付款、摘要表述不一致就卡住。做完匹配还要手工制表，整个过程4小时起步。</div>
+        <div class="scene-solve"><strong>AI 解决：</strong>上传银行流水+企业账簿 → AI 自动识别分类 → 三轮匹配（精确→模糊→语义）自动找出对应关系 → 未匹配项自动归类为"银行已收企业未收""企业已付银行未付" → 一键生成正式余额调节表，含调节明细和签章区。</div>
+      </div>
+    </div>
+
+    <div class="scene-card">
+      <div class="scene-num">2</div>
+      <div class="scene-body">
+        <div class="scene-title">纸质单据的数字化对账</div>
+        <div class="scene-context">老会计习惯打印银行回单存档，柜子里攒了一摞。月底对账时需要把纸质单据的数据手工录入Excel，然后再和系统里的账簿逐条比对。</div>
+        <div class="scene-pain"><strong>痛点：</strong>手工录入耗时且易错，一个小数点打错后面全对不上。而且纸质单据格式各异，日期写法、金额位置都不统一。</div>
+        <div class="scene-solve"><strong>AI 解决：</strong>手机拍照或扫描仪扫描上传 → TextIn OCR 自动识别表格结构 → 智能提取日期、金额、摘要、对方账户 → 结构化数据直接进入匹配流程，彻底告别手工录入。</div>
+      </div>
+    </div>
+
+    <div class="scene-card">
+      <div class="scene-num">3</div>
+      <div class="scene-body">
+        <div class="scene-title">交接期快速理清历史</div>
+        <div class="scene-context">新来的财务小刘接手前任留下的一堆对账单据。前任走得急，没有交接文档。小刘面对三个月的流水和账簿，不知道哪些已经核完、哪些还挂着差异。</div>
+        <div class="scene-pain"><strong>痛点：</strong>没有历史核销记录，只能从头逐笔核对。300+笔交易×3个月=近千笔，手工做至少一周。</div>
+        <div class="scene-solve"><strong>AI 解决：</strong>批量上传历史流水和账簿 → AI 快速匹配已核销部分 → 未匹配的自动标记为遗留问题 → 生成差异清单，一目了然哪些需要处理，半天搞定三个月。</div>
+      </div>
+    </div>
+
+    <div class="scene-card">
+      <div class="scene-num">4</div>
+      <div class="scene-body">
+        <div class="scene-title">供应商往来核销<span class="scene-tag">规划中</span></div>
+        <div class="scene-context">采购部每月和供应商对账，付款单、发票、入库单三方核对。供应商发来的对账单格式五花八门，有的是PDF，有的是Excel，还有的是微信图片。</div>
+        <div class="scene-pain"><strong>痛点：</strong>三方数据来源不同、格式不统一，人工匹配费时费力。遇到部分付款、预付款冲抵更加复杂。</div>
+        <div class="scene-solve"><strong>AI 解决：</strong>支持多方数据上传 → AI 自动关联采购订单、发票、付款 → 智能识别部分核销和预付冲抵 → 找出未核销应付款，生成核销报告。</div>
+      </div>
+    </div>
+
+    <div class="scene-card">
+      <div class="scene-num">5</div>
+      <div class="scene-body">
+        <div class="scene-title">审计前突击清账<span class="scene-tag">规划中</span></div>
+        <div class="scene-context">年审前审计师要求提供所有银行账户的余额调节表。公司有8个银行账户，每个都要做一份。留给财务的时间只有两天。</div>
+        <div class="scene-pain"><strong>痛点：</strong>8个账户×每个4小时=32小时的工作量，两天根本做不完。加班加点也难免出错。</div>
+        <div class="scene-solve"><strong>AI 解决：</strong>批量上传所有账户的流水和账簿 → 按账户自动分组 → 并行生成8份调节表 → 统一格式、统一审批，半天完成。</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- AI工作机制 -->
+<div class="section">
+  <div class="section-title">AI 工作机制</div>
+  <div class="section-desc">从上传到报告，每一步清晰可控</div>
+  <div class="flow-wrap">
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-icon">&#128194;</div>
+        <div class="flow-label">上传文件</div>
+        <div class="flow-desc">拖拽/拍照</div>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step">
+        <div class="flow-icon">&#128269;</div>
+        <div class="flow-label">OCR 识别</div>
+        <div class="flow-desc">结构化提取</div>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step">
+        <div class="flow-icon">&#127991;</div>
+        <div class="flow-label">智能分类</div>
+        <div class="flow-desc">银行/账簿</div>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step">
+        <div class="flow-icon">&#9989;</div>
+        <div class="flow-label">数据确认</div>
+        <div class="flow-desc">预览+余额</div>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step">
+        <div class="flow-icon">&#129302;</div>
+        <div class="flow-label">三轮匹配</div>
+        <div class="flow-desc">精确→模糊→语义</div>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step">
+        <div class="flow-icon">&#128200;</div>
+        <div class="flow-label">生成报告</div>
+        <div class="flow-desc">调节表+审批</div>
+      </div>
+    </div>
+    <div class="steps-detail">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-text"><strong>上传文件</strong> — 支持 JPG/PNG/PDF/Excel/CSV，拖拽或点击上传，多文件同时处理</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-text"><strong>OCR 识别</strong> — TextIn 表格识别引擎，自动提取日期、金额、摘要、对方账户等字段</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-text"><strong>智能分类</strong> — 基于文件名+内容关键词，自动区分银行流水/企业账簿/辅助数据</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-text"><strong>数据确认</strong> — 预览解析结果、设置对账期间、输入期末余额，异常数据标黄提醒</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">5</div>
+        <div class="step-text"><strong>三轮匹配</strong> — 精确匹配（日期+金额完全一致）→ 模糊匹配（容差±3天/手续费）→ 语义匹配（描述相似度+多对一合并）</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">6</div>
+        <div class="step-text"><strong>生成报告</strong> — 余额调节表（银行调节+企业调节明细）、匹配统计、审批流、导出分享</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Demo体验流程 -->
+<div class="section">
+  <div class="section-title">Demo 体验流程</div>
+  <div class="section-desc">完整走通一次对账只需 2 分钟</div>
+  <div class="demo-flow">
+    <div class="demo-flow-header">
+      <h3>跟着步骤体验完整流程</h3>
+      <a class="demo-btn" href="https://cs-pc-reconciliation.vercel.app/" target="_blank">打开 Demo &#8594;</a>
+    </div>
+    <div class="demo-steps">
+      <div class="demo-step">
+        <div class="demo-step-num">1</div>
+        <div class="demo-step-body">
+          <div class="demo-step-title">进入工具箱，点击「智能对账」</div>
+          <div class="demo-step-desc">打开 Demo 首先看到 CS 工具箱页面，找到带有 NEW 标签的「智能对账」卡片，点击进入对账流程。</div>
+        </div>
+      </div>
+      <div class="demo-step">
+        <div class="demo-step-num">2</div>
+        <div class="demo-step-body">
+          <div class="demo-step-title">上传文件 / 加载示例数据</div>
+          <div class="demo-step-desc">上传银行流水和企业账簿文件（图片/PDF/Excel），或点击「Demo 示例」快速加载预置数据体验完整流程。</div>
+          <div class="demo-step-tips">
+            <span class="demo-tip">支持拖拽上传</span>
+            <span class="demo-tip">多文件同时上传</span>
+            <span class="demo-tip">自动 OCR 识别</span>
+          </div>
+        </div>
+      </div>
+      <div class="demo-step">
+        <div class="demo-step-num">3</div>
+        <div class="demo-step-body">
+          <div class="demo-step-title">确认 AI 分类结果</div>
+          <div class="demo-step-desc">AI 自动识别哪个文件是银行流水、哪个是企业账簿，并推荐对账场景。确认无误后，可设置对账期间。</div>
+          <div class="demo-step-tips">
+            <span class="demo-tip">自动分类</span>
+            <span class="demo-tip">可手动调整角色</span>
+            <span class="demo-tip">场景自动推荐</span>
+          </div>
+        </div>
+      </div>
+      <div class="demo-step">
+        <div class="demo-step-num">4</div>
+        <div class="demo-step-body">
+          <div class="demo-step-title">数据预览 & 输入余额</div>
+          <div class="demo-step-desc">预览 OCR 解析出的交易条目，确认数据准确性。输入银行对账单和企业账簿的期末余额，然后点击「开始匹配」。</div>
+          <div class="demo-step-tips">
+            <span class="demo-tip">查看解析明细</span>
+            <span class="demo-tip">输入期末余额</span>
+            <span class="demo-tip">可编辑修正</span>
+          </div>
+        </div>
+      </div>
+      <div class="demo-step">
+        <div class="demo-step-num">5</div>
+        <div class="demo-step-body">
+          <div class="demo-step-title">查看匹配结果，人工复核</div>
+          <div class="demo-step-desc">AI 三轮匹配完成后，展示所有匹配对和未匹配项。可以逐条确认/拒绝匹配结果，或进行手工补配。</div>
+          <div class="demo-step-tips">
+            <span class="demo-tip">精确匹配</span>
+            <span class="demo-tip">模糊匹配</span>
+            <span class="demo-tip">语义匹配</span>
+            <span class="demo-tip">手工补配</span>
+          </div>
+        </div>
+      </div>
+      <div class="demo-step">
+        <div class="demo-step-num">6</div>
+        <div class="demo-step-body">
+          <div class="demo-step-title">生成余额调节表</div>
+          <div class="demo-step-desc">点击「生成报告」，系统自动计算调节项并生成正式的银行余额调节表，包含银行端调节和企业端调节的完整明细。</div>
+          <div class="demo-step-tips">
+            <span class="demo-tip">银行调节明细</span>
+            <span class="demo-tip">企业调节明细</span>
+            <span class="demo-tip">平衡验证</span>
+          </div>
+        </div>
+      </div>
+      <div class="demo-step">
+        <div class="demo-step-num">7</div>
+        <div class="demo-step-body">
+          <div class="demo-step-title">审批 & 保存结果</div>
+          <div class="demo-step-desc">可提交审批（模拟审批流程），审批通过后点击「保存结果」，以正式文档形式在 CS Reader 中查看和归档。</div>
+          <div class="demo-step-tips">
+            <span class="demo-tip">提交审批</span>
+            <span class="demo-tip">审批通过/驳回</span>
+            <span class="demo-tip">文档归档</span>
+            <span class="demo-tip">CS Reader 查看</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 十大核心功能 -->
+<div class="section">
+  <div class="section-title">十大核心功能</div>
+  <div class="section-desc">从上传到归档的完整闭环</div>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-num">1</div>
+      <h3>OCR 智能识别</h3>
+      <p>拍照/上传即识别，基于 TextIn 引擎自动提取表格结构，支持图片、PDF、Excel 多格式混传</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">2</div>
+      <h3>文档自动分类</h3>
+      <p>AI 基于文件名+内容关键词判断银行流水/企业账簿/辅助数据，准确率高且可手动调整</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">3</div>
+      <h3>场景自动推荐</h3>
+      <p>根据上传文件内容自动推荐对账场景（银行余额调节/供应商核销等），减少用户决策负担</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">4</div>
+      <h3>三轮智能匹配</h3>
+      <p>精确匹配（日期+金额完全一致）→ 模糊匹配（容差范围内）→ 语义匹配（描述相似度），逐层递进最大化匹配率</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">5</div>
+      <h3>多对一合并匹配</h3>
+      <p>智能识别拆分付款、合并付款场景。多笔小额合计等于一笔大额时，自动建立配对关系</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">6</div>
+      <h3>人工补配</h3>
+      <p>AI 给出匹配建议和置信度，财务人员可逐条确认/拒绝，对未匹配项可手动选择配对</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">7</div>
+      <h3>余额调节表</h3>
+      <p>自动生成正式银行余额调节表，含银行端调节明细、企业端调节明细、调节后余额验证</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">8</div>
+      <h3>审批流程</h3>
+      <p>内置提交→审核→通过/驳回流程，支持审批意见填写，实现对账到审批的完整闭环</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">9</div>
+      <h3>历史归档</h3>
+      <p>每次对账结果自动归档，支持查看历史记录、加载历史数据对比，形成完整的对账档案</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">10</div>
+      <h3>PC Reader 文档展示</h3>
+      <p>生成的调节表在 CS Reader 中以正式文档形式展示，支持缩略图导航、多页浏览、导出分享</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 支持场景 & 格式 -->
+<div class="section">
+  <div class="section-title">支持的场景与格式</div>
+  <div class="tag-section">
+    <div class="tag-group">
+      <div class="tag-group-title">对账场景</div>
+      <div class="tag-wrap">
+        <span class="tag">银行余额调节</span>
+        <span class="tag">银企对账</span>
+        <span class="tag planned">供应商往来核销</span>
+        <span class="tag planned">内部往来对账</span>
+        <span class="tag planned">费用报销核对</span>
+        <span class="tag planned">多账户归集</span>
+      </div>
+    </div>
+    <div class="tag-group">
+      <div class="tag-group-title">文件格式</div>
+      <div class="tag-wrap">
+        <span class="tag">JPG / PNG 图片</span>
+        <span class="tag">PDF 文档</span>
+        <span class="tag">Excel (.xlsx)</span>
+        <span class="tag">CSV 表格</span>
+        <span class="tag">扫描件</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 技术方案 -->
+<div class="section">
+  <div class="section-title">技术方案</div>
+  <table class="tech-table">
+    <tr><th>模块</th><th>方案</th></tr>
+    <tr><td>OCR 识别</td><td>TextIn 通用表格识别 API（多页表格、混合排版）</td></tr>
+    <tr><td>匹配引擎</td><td>三轮规则引擎 — 精确匹配 → 模糊匹配（容差算法）→ 语义匹配（相似度计算）</td></tr>
+    <tr><td>文档分类</td><td>优先级规则：文件名关键词 > 强关键词命中 > 弱关键词组合命中</td></tr>
+    <tr><td>前端框架</td><td>React + Vite，移动端优先响应式设计</td></tr>
+    <tr><td>部署</td><td>Vercel Serverless（当前 Demo）/ 内网服务器（后续）</td></tr>
+    <tr><td>数据存储</td><td>前端 localStorage（Demo 阶段），后续迁移后端数据库</td></tr>
+    <tr><td>图片压缩</td><td>客户端 Canvas 压缩（最大 1600px，质量 0.8），降低上传耗时</td></tr>
+  </table>
+</div>
+
+<div class="divider"></div>
+
+<!-- 注意事项 -->
+<div class="section">
+  <div class="section-title">注意事项</div>
+  <div class="notice">
+    <div class="notice-item"><span class="notice-icon">&#9888;</span><span>AI 匹配结果仅供参考，最终确认权在财务人员，请人工复核后再确认</span></div>
+    <div class="notice-item"><span class="notice-icon">&#9888;</span><span>不替代审计意见，不做税务建议，不作为法律依据</span></div>
+    <div class="notice-item"><span class="notice-icon">&#9888;</span><span>Demo 阶段数据仅存储在浏览器本地（localStorage），关闭浏览器后可能丢失</span></div>
+    <div class="notice-item"><span class="notice-icon">&#9888;</span><span>OCR 识别准确率受图片清晰度影响，建议使用高清扫描件或清晰照片</span></div>
+    <div class="notice-item"><span class="notice-icon">&#9888;</span><span>当前 Demo 仅支持人民币单一币种对账，多币种场景后续支持</span></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 与CS结合 -->
+<div class="section">
+  <div class="section-title">与扫描全能王的结合</div>
+  <div class="section-desc">文档 Agent Skill 的核心场景验证</div>
+  <div class="cs-grid">
+    <div class="cs-card">
+      <h4>扫描即触发</h4>
+      <p>CS 扫描完成后自动识别文档类型，检测到银行流水/账簿自动弹出「开始对账」入口</p>
+    </div>
+    <div class="cs-card">
+      <h4>工具箱入口</h4>
+      <p>CS 工具箱页增加「智能对账」技能卡片，与 PDF 转换、OCR 识别等工具并列</p>
+    </div>
+    <div class="cs-card">
+      <h4>PC Reader 嵌入</h4>
+      <p>点击「财务对账」Tab 进入左右分栏模式：左侧查看原始文档，右侧运行对账流程</p>
+    </div>
+    <div class="cs-card">
+      <h4>结果文档化</h4>
+      <p>生成的余额调节表以 CS 文档形式归档，在 Reader 中浏览、导出、分享</p>
+    </div>
+    <div class="cs-card">
+      <h4>价值延伸</h4>
+      <p>从「扫描存档」升级为「扫描 + 理解 + 对账」，提升文档智能化深度</p>
+    </div>
+    <div class="cs-card">
+      <h4>可复制模式</h4>
+      <p>同一架构可扩展：医疗报告解读、合同审查、智能记账、作业批改等 Agent Skill</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 后续规划 -->
+<div class="section">
+  <div class="section-title">后续规划</div>
+  <div class="plan-row"><span class="plan-badge short">短期</span><span class="plan-text">Demo 体验优化（步骤条引导、匹配动画、一键体验）、OCR 测试覆盖更多银行格式、匹配算法调优</span></div>
+  <div class="plan-row"><span class="plan-badge short">短期</span><span class="plan-text">首页渐进式引导、匹配结果页仪表盘 + Tab 分类、报告正式化（文档编号、签章区）</span></div>
+  <div class="plan-row"><span class="plan-badge mid">中期</span><span class="plan-text">接入 CS 扫描流程、供应商往来核销场景、后端数据库持久化、批量多账户对账</span></div>
+  <div class="plan-row"><span class="plan-badge mid">中期</span><span class="plan-text">匹配结果可视化（连线图）、历史对账趋势分析、团队协作与权限管理</span></div>
+  <div class="plan-row"><span class="plan-badge long">长期</span><span class="plan-text">对接企业 ERP / 财务系统 API、审计报告自动生成、多币种支持、AI 异常检测预警</span></div>
+  <div class="plan-row"><span class="plan-badge long">长期</span><span class="plan-text">扩展更多 Agent Skill（合同审查、医疗报告、智能记账），形成文档智能平台</span></div>
+</div>
+
+<!-- 状态栏 -->
+<div class="status-bar">
+  <div class="status-item"><div class="status-val">v1.0</div><div class="status-label">当前版本</div></div>
+  <div class="status-item"><div class="status-val">2</div><div class="status-label">对账场景</div></div>
+  <div class="status-item"><div class="status-val">10</div><div class="status-label">核心功能</div></div>
+  <div class="status-item"><div class="status-val">5</div><div class="status-label">文件格式</div></div>
+  <div class="status-item"><div class="status-val">3 轮</div><div class="status-label">匹配引擎</div></div>
+</div>
+
+</div><!-- container -->
+
+<div class="footer">
+  智能对账 — AI 财务对账助手 v1.0 &middot; 2026-04-30 &middot; CS 产品团队
+</div>
+
+</body>
+</html>
