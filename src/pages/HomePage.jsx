@@ -112,6 +112,32 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
 
   const hasFiles = parsedFiles.length > 0 || isProcessing;
   const [previewFileIdx, setPreviewFileIdx] = useState(0);
+  const splitRef = useRef(null);
+  const [rightWidth, setRightWidth] = useState(420);
+  const draggingRef = useRef(false);
+
+  const handleDividerMouseDown = useCallback((e) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    const startX = e.clientX;
+    const startWidth = rightWidth;
+    const divider = e.currentTarget;
+    divider.classList.add('dragging');
+
+    const onMouseMove = (ev) => {
+      const delta = startX - ev.clientX;
+      const newWidth = Math.max(320, Math.min(700, startWidth + delta));
+      setRightWidth(newWidth);
+    };
+    const onMouseUp = () => {
+      draggingRef.current = false;
+      divider.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [rightWidth]);
 
   // 上传后的文件管理界面（或正在解析中）
   if (hasFiles) {
@@ -188,8 +214,11 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
           )}
         </div>
 
+        {/* 拖拽分隔线 */}
+        <div className="home-split-divider" onMouseDown={handleDividerMouseDown} />
+
         {/* 右侧文件管理 */}
-        <div className="home-split-right">
+        <div className="home-split-right" style={{ width: rightWidth }}>
           <div className="home-header">
             {onBackToToolbox && (
               <div className="home-back-link" onClick={onBackToToolbox}>
