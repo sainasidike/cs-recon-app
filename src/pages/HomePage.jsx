@@ -3,11 +3,18 @@ import ColumnMapper from '../components/ColumnMapper';
 import { useToast } from '../components/Toast';
 import { SCENARIOS, getScenario } from '../utils/scenarios';
 import { getDemoList } from '../utils/demoData';
+import { useProjects } from '../hooks/useProjects';
 
 const MAX_FILES_PER_ROLE = 10;
 
 const DEMOS = getDemoList().filter(d => d.id !== 'bank_jinli');
 const DEMO_ICONS = { bank_recon: '🏦', expense_recon: '💳', invoice_verify: '🧾' };
+
+const STATUS_MAP = {
+  active: { label: '进行中', cls: 'ws-status-active' },
+  completed: { label: '已完成', cls: 'ws-status-done' },
+  archived: { label: '已归档', cls: 'ws-status-archived' },
+};
 
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
@@ -23,6 +30,9 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
   const [showScenarioPicker, setShowScenarioPicker] = useState(false);
   const [demoAnim, setDemoAnim] = useState(null);
   const [mappingFileIdx, setMappingFileIdx] = useState(null);
+  const { recentProjects, archivedProjects, archiveProject, deleteProject } = useProjects();
+  const [docFilter, setDocFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleFiles = useCallback((files) => {
     const valid = Array.from(files).filter(f => {
@@ -307,9 +317,29 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
     );
   }
 
-  // 初始页面：参照 CamScanner "转 Excel" 布局
+  // 工作站首页
+  const allProjects = docFilter === 'all' ? [...recentProjects, ...archivedProjects]
+    : docFilter === 'archived' ? archivedProjects
+    : recentProjects.filter(p => p.status === docFilter);
+
+  const filteredProjects = searchQuery
+    ? allProjects.filter(p => p.name.includes(searchQuery) || (p.files || []).some(f => f.includes(searchQuery)))
+    : allProjects;
+
+  const formatTime = (iso) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)} 天前`;
+    return d.toLocaleDateString('zh-CN');
+  };
+
   return (
-    <div className="cs-tool-page">
+    <div className="ws-page">
       {onBackToToolbox && (
         <div className="cs-tool-back" onClick={onBackToToolbox}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -317,102 +347,159 @@ export default function HomePage({ parsedFiles, isProcessing, error, scenarioId,
         </div>
       )}
 
-      <div className="cs-tool-header">
-        <span className="cs-tool-header-icon">📊</span>
-        <h1 className="cs-tool-header-title">智能对账</h1>
-        <p className="cs-tool-header-desc">上传财务文档，AI 自动识别并完成多方对账</p>
-      </div>
-
-      <div className="cs-tool-body">
-        {/* 左侧文档预览（小尺寸，微倾斜，模拟桌面照片） */}
-        <div className="cs-tool-preview">
-          <div className="cs-tool-preview-doc">
-            <div className="cs-tool-preview-badge">Excel</div>
-            <div style={{ fontSize: 9, color: '#999', marginBottom: 6 }}>杭州锦鲤餐饮管理有限公司 · 银行流水</div>
-            <table className="cs-tool-preview-table">
-              <thead>
-                <tr><th>序号</th><th>摘要</th><th>金额</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>1</td><td>转账-租金</td><td className="out">¥35,000.00</td></tr>
-                <tr><td>2</td><td>POS入账-美团</td><td className="in">¥47,800.00</td></tr>
-                <tr><td>3</td><td>采购-永辉超市</td><td className="out">¥18,500.00</td></tr>
-                <tr><td>4</td><td>代发工资(28人)</td><td className="out">¥89,000.00</td></tr>
-                <tr><td>5</td><td>POS入账-饿了么</td><td className="in">¥32,600.00</td></tr>
-                <tr><td>6</td><td>转账-燃气费</td><td className="out">¥4,200.00</td></tr>
-                <tr><td>7</td><td>社保代扣</td><td className="out">¥26,800.00</td></tr>
-                <tr><td>8</td><td>POS入账-抖音</td><td className="in">¥21,500.00</td></tr>
-                <tr><td>9</td><td>设备维修费</td><td className="out">¥3,600.00</td></tr>
-                <tr><td>10</td><td>账户管理费</td><td className="out">¥35.00</td></tr>
-                <tr><td>11</td><td>POS入账-点评</td><td className="in">¥15,200.00</td></tr>
-                <tr><td>12</td><td>采购-海天味业</td><td className="out">¥6,800.00</td></tr>
-                <tr><td>13</td><td>转账-水电费</td><td className="out">¥7,500.00</td></tr>
-                <tr><td>14</td><td>POS入账-现金</td><td className="in">¥8,350.00</td></tr>
-                <tr><td>15</td><td>采购-调料(大量)</td><td className="out">¥4,500.00</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* 右侧上传区 */}
-        <div
-          ref={uploadZoneRef}
-          className={`cs-tool-upload ${dragOver || demoAnim ? 'cs-tool-upload-active' : ''}`}
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleDrop}
-        >
-          <div className="cs-tool-upload-icon">
-            <svg width="80" height="100" viewBox="0 0 80 100" fill="none">
-              <rect x="12" y="10" width="50" height="65" rx="3" fill="#fff" stroke="#ccc" strokeWidth="1"/>
-              <rect x="18" y="6" width="50" height="65" rx="3" fill="#fff" stroke="#ccc" strokeWidth="1"/>
-              <path d="M28 30h30M28 38h30M28 46h20M28 54h25" stroke="#ddd" strokeWidth="1.5" strokeLinecap="round"/>
-              <rect x="24" y="2" width="50" height="65" rx="3" fill="#fff" stroke="#bbb" strokeWidth="1.2" strokeDasharray="3 2"/>
-              <path d="M38 30h20M38 38h18M38 46h12" stroke="#ccc" strokeWidth="1.2" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <div className="cs-tool-upload-btns">
-            <button className="cs-upload-btn-primary" onClick={() => fileInputRef.current?.click()}>
-              选择本地图片
-            </button>
-            <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
-              选择本地文档
-            </button>
-            <button className="cs-upload-btn-outline" onClick={() => fileInputRef.current?.click()}>
-              选择扫描全能王账号内文档
-            </button>
-          </div>
-          <div className="cs-upload-zone-drag-hint">或拖拽文档至此</div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"
-            style={{ display: 'none' }}
-            onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
-          />
-        </div>
-      </div>
-
-      <div className="cs-tool-footer">扫描全能王时刻守护你的文档安全</div>
-
-      {/* Demo 体验卡片 */}
-      <div className="cs-tool-demos">
-        <div className="cs-tool-demos-title">
-          <span>Demo 体验</span>
-          <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 400 }}>点击加载示例数据，快速体验完整流程</span>
-        </div>
-        <div className="cs-home-demo-grid">
-          {DEMOS.map(d => (
-            <div key={d.id} className="cs-home-demo-card" onClick={(e) => handleDemoClick(d.id, e)}>
-              <span className="cs-home-demo-icon">{DEMO_ICONS[d.id] || '📊'}</span>
-              <div className="cs-home-demo-name">{d.name}</div>
-              <div className="cs-home-demo-desc">{d.desc}</div>
-              <div style={{ marginTop: 8, fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>⚡ 一键体验</div>
+      {/* Module 1: Hero + Upload */}
+      <section className="ws-hero">
+        <div className="ws-hero-left">
+          <h1 className="ws-hero-title">AI 智能对账助手</h1>
+          <p className="ws-hero-subtitle">上传财务文档，AI 自动识别场景并完成多方智能对账</p>
+          <div className="ws-hero-stats">
+            <div className="ws-stat-card">
+              <span className="ws-stat-num">10x</span>
+              <span className="ws-stat-label">效率提升</span>
             </div>
-          ))}
+            <div className="ws-stat-card">
+              <span className="ws-stat-num">6+</span>
+              <span className="ws-stat-label">支持格式</span>
+            </div>
+            <div className="ws-stat-card">
+              <span className="ws-stat-num">99%</span>
+              <span className="ws-stat-label">匹配准确率</span>
+            </div>
+          </div>
+          <div className="ws-demo-row">
+            <span className="ws-demo-label">快速体验：</span>
+            {DEMOS.map(d => (
+              <button key={d.id} className="ws-demo-tag" onClick={(e) => handleDemoClick(d.id, e)}>
+                {DEMO_ICONS[d.id] || '📊'} {d.name}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+
+        <div className="ws-hero-right">
+          <div
+            ref={uploadZoneRef}
+            className={`ws-upload-zone ${dragOver || demoAnim ? 'ws-upload-zone-active' : ''}`}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+          >
+            <div className="ws-upload-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <div className="ws-upload-text">拖拽文件到此处，或点击选择</div>
+            <button className="ws-upload-btn" onClick={() => fileInputRef.current?.click()}>
+              选择文件
+            </button>
+            <div className="ws-upload-formats">
+              支持 Excel / CSV / PDF / 图片（JPG、PNG）
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"
+              style={{ display: 'none' }}
+              onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Module 7: Project & Document Management */}
+      <section className="ws-projects">
+        <div className="ws-projects-header">
+          <h2 className="ws-section-title">项目管理</h2>
+          <div className="ws-projects-toolbar">
+            <div className="ws-filter-tabs">
+              {[
+                { key: 'all', label: '全部' },
+                { key: 'active', label: '进行中' },
+                { key: 'completed', label: '已完成' },
+                { key: 'archived', label: '已归档' },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  className={`ws-filter-tab ${docFilter === tab.key ? 'active' : ''}`}
+                  onClick={() => setDocFilter(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <div className="ws-search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input
+                type="text"
+                placeholder="搜索项目或文件..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {filteredProjects.length === 0 ? (
+          <div className="ws-empty">
+            <div className="ws-empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="1">
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+              </svg>
+            </div>
+            <p className="ws-empty-text">暂无对账项目</p>
+            <p className="ws-empty-hint">上传财务文件开始第一次智能对账，或点击 Demo 快速体验</p>
+          </div>
+        ) : (
+          <div className="ws-project-grid">
+            {filteredProjects.map(project => {
+              const status = STATUS_MAP[project.status] || STATUS_MAP.active;
+              const scenarioInfo = project.scenarioId ? getScenario(project.scenarioId) : null;
+              return (
+                <div key={project.id} className="ws-project-card" onClick={() => onLoadHistory && onLoadHistory(project.id)}>
+                  <div className="ws-project-card-top">
+                    <span className="ws-project-icon">{scenarioInfo?.icon || '📋'}</span>
+                    <span className={`ws-project-status ${status.cls}`}>{status.label}</span>
+                  </div>
+                  <div className="ws-project-name">{project.name}</div>
+                  <div className="ws-project-meta">
+                    <span>{(project.files || []).length} 个文件</span>
+                    <span>{formatTime(project.updatedAt)}</span>
+                  </div>
+                  {project.logs && project.logs.length > 0 && (
+                    <div className="ws-project-log">
+                      {project.logs[project.logs.length - 1].action}
+                    </div>
+                  )}
+                  <div className="ws-project-actions" onClick={e => e.stopPropagation()}>
+                    {project.status !== 'archived' && (
+                      <button className="ws-action-btn" onClick={() => archiveProject(project.id)} title="归档">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                      </button>
+                    )}
+                    <button className="ws-action-btn ws-action-danger" onClick={() => deleteProject(project.id)} title="删除">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Module 8: Bottom CTA */}
+      {filteredProjects.length === 0 && (
+        <section className="ws-cta">
+          <span className="ws-cta-text">开始你的第一次智能对账</span>
+          <button className="ws-cta-btn" onClick={() => fileInputRef.current?.click()}>
+            上传文件开始
+          </button>
+        </section>
+      )}
 
       {demoAnim && (
         <div className="cs-demo-anim-overlay">
