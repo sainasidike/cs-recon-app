@@ -553,17 +553,19 @@ export default function ReconApp() {
       setHistory(next);
       try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
     }
-    setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
+    setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
+    setAllDocsProject(null); setAllDocsFolder(null);
   }, [matchResults, reconData, history, docs]);
 
   const handleReset = useCallback(() => {
-    setStep('home'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
+    setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
+    setAllDocsProject(null); setAllDocsFolder(null);
   }, []);
 
   const savePendingProject = useCallback((docsToSave) => {
