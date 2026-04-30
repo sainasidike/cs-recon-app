@@ -415,6 +415,11 @@ export default function ReconApp() {
         setReconData(rd);
         const results = runMatching(BANK_DATA, LEDGER_DATA);
         setMatchResults(results);
+        setDocs([
+          { id: 'demo-bank', name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'bank', typeLabel: '银行流水' },
+          { id: 'demo-ledger', name: '企业账簿_锦鲤餐饮_202604.xlsx', type: 'ledger', typeLabel: '企业账簿' },
+        ]);
+        setFlowMode('recon');
         setStep('results');
       }, 3000);
       return;
@@ -1090,6 +1095,7 @@ export default function ReconApp() {
                             setMatchResults(null);
                             setReconData(null);
                             setFlowMode('scan');
+                            setPrevStep('alldocs');
                             setStep('list');
                           }
                         }}>
@@ -1838,7 +1844,7 @@ export default function ReconApp() {
       {step === 'list' && (flowMode === 'scan' || (flowMode === 'recon' && !(matchResults && reconData))) && (
         <div className="rc-list rc-list-img">
           <div className="rc-list-topbar">
-            <button className="rc-list-back" onClick={() => { if (prevStep === 'select') { setDocs(savedDocsRef.current); setStep('select'); setPrevStep(null); } else { if (flowMode === 'recon' && docs.length > 0) savePendingProject(docs); setStep(flowMode === 'recon' ? 'home' : 'toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); } }}>
+            <button className="rc-list-back" onClick={() => { if (prevStep === 'alldocs') { setStep('alldocs'); setPrevStep(null); } else if (prevStep === 'select') { setDocs(savedDocsRef.current); setStep('select'); setPrevStep(null); } else { if (flowMode === 'recon' && docs.length > 0) savePendingProject(docs); setStep(flowMode === 'recon' ? 'home' : 'toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); } }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div className="rc-list-title">{docs[0]?.name || '扫描文档'}</div>
