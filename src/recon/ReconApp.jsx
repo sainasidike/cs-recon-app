@@ -107,6 +107,7 @@ export default function ReconApp() {
   const [prevStep, setPrevStep] = useState(null);
   const [selectedDocIds, setSelectedDocIds] = useState(new Set());
   const [previewDocId, setPreviewDocId] = useState(null);
+  const [allDocsFolder, setAllDocsFolder] = useState(null);
   const savedDocsRef = useRef([]);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -636,7 +637,7 @@ export default function ReconApp() {
           <div style={{ height: 80 }} />
           <div className="rc-tb-tabbar">
             <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>首页</span></div>
-            <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>全部文档</span></div>
+            <div className="rc-tb-tabbar-item" onClick={() => { setAllDocsFolder(null); setStep('alldocs'); }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>全部文档</span></div>
             <div className="rc-tb-tabbar-camera" onClick={() => { setFlowMode('scan'); scanCameraRef.current?.click(); }}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
             <div className="rc-tb-tabbar-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>工具箱</span></div>
             <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>我的</span></div>
@@ -644,8 +645,159 @@ export default function ReconApp() {
         </div>
       )}
 
+      {/* ALL DOCS — CS-style file manager */}
+      {step === 'alldocs' && (
+        <div className="rc-alldocs">
+          <div className="rc-alldocs-header">
+            <h2 className="rc-alldocs-title">文档</h2>
+            <div className="rc-alldocs-search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <span>试试搜索文档</span>
+            </div>
+          </div>
+
+          <div className="rc-alldocs-actions">
+            <div className="rc-alldocs-action-item">
+              <div className="rc-alldocs-action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4a90d9" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              </div>
+              <span>导入文档</span>
+            </div>
+            <div className="rc-alldocs-action-item">
+              <div className="rc-alldocs-action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4a90d9" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <span>导入图片</span>
+            </div>
+            <div className="rc-alldocs-action-item">
+              <div className="rc-alldocs-action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+              </div>
+              <span>新建文件夹</span>
+            </div>
+          </div>
+
+          {!allDocsFolder ? (
+            <div className="rc-alldocs-body">
+              <div className="rc-alldocs-section-head">
+                <span className="rc-alldocs-count">所有文档 ({history.length + 5}) ▾</span>
+                <div className="rc-alldocs-view-opts">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.8"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/><polyline points="16 16 18 18 22 14"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+                </div>
+              </div>
+
+              <div className="rc-alldocs-list">
+                <div className="rc-alldocs-folder" onClick={() => setAllDocsFolder('recon')}>
+                  <div className="rc-alldocs-folder-icon rc-alldocs-folder-recon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+                  </div>
+                  <div className="rc-alldocs-folder-info">
+                    <div className="rc-alldocs-folder-name">财务对账</div>
+                    <div className="rc-alldocs-folder-meta">{new Date().toLocaleDateString('zh-CN')} | 日 {history.length}</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </div>
+
+                <div className="rc-alldocs-folder">
+                  <div className="rc-alldocs-folder-icon rc-alldocs-folder-sign">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                  </div>
+                  <div className="rc-alldocs-folder-info">
+                    <div className="rc-alldocs-folder-name">合合签文档</div>
+                  </div>
+                </div>
+
+                <div className="rc-alldocs-folder">
+                  <div className="rc-alldocs-folder-icon rc-alldocs-folder-convert">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                  </div>
+                  <div className="rc-alldocs-folder-info">
+                    <div className="rc-alldocs-folder-name">文档转换结果</div>
+                  </div>
+                </div>
+
+                <div className="rc-alldocs-folder">
+                  <div className="rc-alldocs-folder-icon rc-alldocs-folder-normal">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                  </div>
+                  <div className="rc-alldocs-folder-info">
+                    <div className="rc-alldocs-folder-name">文件夹 A</div>
+                    <div className="rc-alldocs-folder-meta">2026/1/13 12:59 | 日 15</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </div>
+
+                <div className="rc-alldocs-folder">
+                  <div className="rc-alldocs-folder-icon rc-alldocs-folder-lock">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  </div>
+                  <div className="rc-alldocs-folder-info">
+                    <div className="rc-alldocs-folder-name">私密文件夹</div>
+                    <div className="rc-alldocs-folder-meta">2025/8/25 15:10 | 日 2</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </div>
+
+                <div className="rc-alldocs-folder">
+                  <div className="rc-alldocs-folder-icon rc-alldocs-folder-backup">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                  </div>
+                  <div className="rc-alldocs-folder-info">
+                    <div className="rc-alldocs-folder-name">备份</div>
+                    <div className="rc-alldocs-folder-meta">2025/8/21 15:34 | 日 1</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rc-alldocs-body">
+              <div className="rc-alldocs-section-head">
+                <button className="rc-alldocs-folder-back" onClick={() => setAllDocsFolder(null)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                  <span>财务对账</span>
+                </button>
+              </div>
+
+              {history.length === 0 ? (
+                <div className="rc-alldocs-empty">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <p>暂无对账记录</p>
+                  <span>完成对账后，文档和结果将自动保存到这里</span>
+                </div>
+              ) : (
+                <div className="rc-alldocs-list">
+                  {history.map(h => (
+                    <div key={h.id} className="rc-alldocs-project">
+                      <div className="rc-alldocs-project-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                      </div>
+                      <div className="rc-alldocs-project-info">
+                        <div className="rc-alldocs-project-name">{h.company} · {h.period}</div>
+                        <div className="rc-alldocs-project-meta">{h.time} | 匹配率 {h.matchRate.toFixed(0)}% · {h.matchedCount}笔</div>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="rc-tb-tabbar">
+            <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>首页</span></div>
+            <div className="rc-tb-tabbar-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>全部文档</span></div>
+            <div className="rc-tb-tabbar-camera" onClick={() => { setFlowMode('scan'); scanCameraRef.current?.click(); }}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+            <div className="rc-tb-tabbar-item" onClick={() => setStep('toolbox')}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>工具箱</span></div>
+            <div className="rc-tb-tabbar-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>我的</span></div>
+          </div>
+        </div>
+      )}
+
       {/* Pipeline Progress */}
-      {step !== 'home' && step !== 'toolbox' && step !== 'landing' && step !== 'select' && step !== 'list' && flowMode === 'recon' && (
+      {step !== 'home' && step !== 'toolbox' && step !== 'landing' && step !== 'select' && step !== 'list' && step !== 'alldocs' && flowMode === 'recon' && (
         <div className="rc-pipeline">
           {PIPELINE.map((s, i) => (
             <div key={s.key} className={`rc-pip-step ${i < stepIdx ? 'done' : ''} ${i === stepIdx ? 'active' : ''}`}>
