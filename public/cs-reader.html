@@ -331,6 +331,153 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans
 .cs-recon-page-btn { cursor: pointer; color: #999; }
 .cs-recon-page-btn:hover { color: #333; }
 .cs-recon-page-info { color: #666; }
+
+/* Spreadsheet Mode */
+.ss-formula-bar {
+  height: 32px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.ss-cell-ref {
+  width: 72px;
+  text-align: center;
+  font-size: 12px;
+  color: #333;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  padding: 3px 6px;
+  background: #fff;
+}
+.ss-fx {
+  font-size: 12px;
+  font-style: italic;
+  color: #999;
+  padding: 0 10px;
+  border-right: 1px solid #e0e0e0;
+  margin-right: 8px;
+}
+.ss-formula-input {
+  flex: 1;
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-grid-wrap {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+}
+.ss-grid {
+  border-collapse: collapse;
+  font-size: 12px;
+  width: max-content;
+  min-width: 100%;
+}
+.ss-grid th {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  padding: 4px 8px;
+  font-weight: 500;
+  color: #555;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: center;
+  min-width: 80px;
+}
+.ss-grid th.ss-row-header {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  min-width: 36px;
+  width: 36px;
+  text-align: center;
+  color: #888;
+}
+.ss-grid td {
+  border: 1px solid #e8e8e8;
+  padding: 4px 8px;
+  color: #333;
+  white-space: nowrap;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: cell;
+}
+.ss-grid td.ss-row-num {
+  background: #f8f9fa;
+  text-align: center;
+  color: #888;
+  font-size: 11px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 36px;
+  width: 36px;
+}
+.ss-grid td.ss-selected {
+  outline: 2px solid #00c4a1;
+  outline-offset: -1px;
+  background: #f0fdf9;
+}
+.ss-grid tr:first-child th {
+  border-top: none;
+}
+.ss-bottom-bar {
+  height: 28px;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+.ss-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.ss-tab {
+  padding: 4px 16px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: transparent;
+  position: relative;
+  top: 1px;
+}
+.ss-tab:hover { color: #333; }
+.ss-tab.active {
+  color: #00c4a1;
+  font-weight: 600;
+  border-color: #e0e0e0;
+  border-bottom: 2px solid #fff;
+  background: #fff;
+  border-radius: 4px 4px 0 0;
+}
+.ss-tab-add {
+  padding: 4px 10px;
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+}
+.ss-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #888;
+}
+.ss-zoom span { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -429,6 +576,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans
   </div>
 </div>
 
+  <!-- 电子表格模式 -->
+  <div id="spreadsheetMode" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+    <div class="ss-formula-bar">
+      <div class="ss-cell-ref" id="ssCellRef">A1</div>
+      <div class="ss-fx">fx</div>
+      <div class="ss-formula-input" id="ssFormulaInput"></div>
+    </div>
+    <div class="ss-grid-wrap" id="ssGridWrap">
+      <table class="ss-grid" id="ssGrid"></table>
+    </div>
+    <div class="ss-bottom-bar">
+      <div class="ss-tabs" id="ssTabs"></div>
+      <div class="ss-zoom">
+        <span>−</span>
+        <span>100%</span>
+        <span>+</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 底部分页（仅阅读模式） -->
 <div class="cs-reader-footer" id="readerFooter">
   <div class="cs-reader-footer-btn">|◁</div>
@@ -482,6 +650,11 @@ var bankData = {
 function fmt(val) {
   if (val === null || val === undefined) return '';
   return Number(val).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function renderPaper() {
@@ -745,31 +918,200 @@ function renderReconReport(data) {
   return html;
 }
 
-// 保存结果后：切回 List 页布局，中间展示正式的余额调节表文档
+// 保存结果后：打开电子表格视图
 function showResultFullPage(data) {
   var recon = data.reconciliation;
   var scenario = data.scenario;
+  var matchResults = data.matchResults;
+  var periodStart = data.periodStart;
+  var periodEnd = data.periodEnd;
   if (!recon) return;
 
-  // 切回阅读模式
-  tabs.forEach(function(t) { t.classList.remove('active'); });
-  tabs[0].classList.add('active');
-  readMode.style.display = 'flex';
+  // 隐藏所有其他视图
+  readMode.style.display = 'none';
   reconMode.style.display = 'none';
-  viewbar.style.display = 'flex';
-  readerFooter.style.display = 'flex';
+  viewbar.style.display = 'none';
+  readerFooter.style.display = 'none';
+  document.querySelector('.cs-reader-main').style.display = 'none';
+  document.getElementById('spreadsheetMode').style.display = 'flex';
 
+  // 更新顶栏标题
   var reportTitle = (scenario && scenario.reportTitle) || '银行余额调节表';
-  document.querySelector('.cs-reader-logo span').textContent = reportTitle;
+  var period = (periodStart && periodEnd) ? (periodStart + ' ~ ' + periodEnd) : '';
+  document.querySelector('.cs-reader-logo span').textContent = reportTitle + (period ? '_' + period : '');
 
-  // 复用 renderReconReport 生成文档内容
-  document.getElementById('paper').innerHTML = renderReconReport(data);
+  // 切换顶栏为表格模式
+  document.querySelector('.cs-reader-tabs').style.display = 'none';
+  var actionsEl = document.querySelector('.cs-reader-actions');
+  actionsEl.innerHTML = '<button class="cs-reader-btn-share" style="gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载</button><button class="cs-reader-btn-share"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>分享</button><button class="cs-reader-btn-save" style="background:#00c4a1;color:#fff;border-color:#00c4a1;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>编辑</button>';
 
-  // 更新缩略图
-  document.getElementById('thumbs').innerHTML =
-    '<div class="cs-reader-thumb active"><div style="font-size:9px;color:#999;">调节表</div><div class="cs-reader-thumb-label">1</div></div>' +
-    '<div class="cs-reader-thumb"><div style="font-size:9px;color:#999;">明细</div><div class="cs-reader-thumb-label">2</div></div>';
-  document.getElementById('pageInfo').textContent = '1 / 2';
+  // 构建三个 sheet 的数据
+  var sideALabel = (scenario && scenario.sideA && scenario.sideA.shortLabel) || '银行';
+  var sideBLabel = (scenario && scenario.sideB && scenario.sideB.shortLabel) || '企业';
+
+  var sheets = buildSheets(recon, matchResults, sideALabel, sideBLabel, periodStart, periodEnd);
+  var currentSheet = 0;
+
+  // 渲染 tabs
+  var tabsEl = document.getElementById('ssTabs');
+  function renderTabs() {
+    var html = '';
+    sheets.forEach(function(s, i) {
+      html += '<div class="ss-tab' + (i === currentSheet ? ' active' : '') + '" data-idx="' + i + '">' + s.name + '</div>';
+    });
+    html += '<div class="ss-tab-add">+</div>';
+    tabsEl.innerHTML = html;
+    tabsEl.querySelectorAll('.ss-tab').forEach(function(t) {
+      t.addEventListener('click', function() {
+        currentSheet = parseInt(t.dataset.idx);
+        renderTabs();
+        renderGrid(sheets[currentSheet]);
+      });
+    });
+  }
+
+  function renderGrid(sheet) {
+    var grid = document.getElementById('ssGrid');
+    var cols = sheet.cols;
+    var rows = sheet.rows;
+    var totalRows = Math.max(rows.length + 1, 42);
+    var totalCols = cols.length;
+
+    var html = '<thead><tr><th class="ss-row-header"></th>';
+    for (var c = 0; c < totalCols; c++) {
+      html += '<th>' + String.fromCharCode(65 + c) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+
+    for (var r = 0; r < totalRows; r++) {
+      html += '<tr>';
+      html += '<td class="ss-row-num">' + (r + 1) + '</td>';
+      for (var ci = 0; ci < totalCols; ci++) {
+        var val = (rows[r] && rows[r][ci] != null) ? String(rows[r][ci]) : '';
+        var isBold = r === 0 || (rows[r] && rows[r]._bold);
+        var style = isBold ? ' style="font-weight:600;"' : '';
+        html += '<td data-r="' + r + '" data-c="' + ci + '"' + style + '>' + escapeHtml(val) + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody>';
+    grid.innerHTML = html;
+
+    // Click to select cell
+    grid.querySelectorAll('td:not(.ss-row-num)').forEach(function(td) {
+      td.addEventListener('click', function() {
+        grid.querySelectorAll('.ss-selected').forEach(function(el) { el.classList.remove('ss-selected'); });
+        td.classList.add('ss-selected');
+        var ri = parseInt(td.dataset.r);
+        var ci = parseInt(td.dataset.c);
+        document.getElementById('ssCellRef').textContent = String.fromCharCode(65 + ci) + (ri + 1);
+        document.getElementById('ssFormulaInput').textContent = td.textContent;
+      });
+    });
+  }
+
+  renderTabs();
+  renderGrid(sheets[0]);
+}
+
+function buildSheets(recon, matchResults, sideALabel, sideBLabel, periodStart, periodEnd) {
+  var sheets = [];
+  var period = (periodStart && periodEnd) ? (periodStart + ' ~ ' + periodEnd) : '';
+  var now = new Date().toLocaleString('zh-CN');
+  var ms = recon.matchSummary || {};
+
+  // Sheet 1: 调节表
+  var s1Rows = [];
+  s1Rows.push(['银行余额调节表']); s1Rows[0]._bold = true;
+  s1Rows.push(['对账期间：' + period]);
+  s1Rows.push(['生成时间：' + now]);
+  s1Rows.push([]);
+  s1Rows.push(['一、对账摘要']); s1Rows[4]._bold = true;
+  s1Rows.push(['项目', '', '笔数', '占比']);
+  s1Rows.push(['精确匹配', '', ms.exactCount || 0, ((ms.exactCount || 0) > 0 && recon.matchRate) ? ((ms.exactCount / ((ms.exactCount||0)+(ms.fuzzyCount||0)+(ms.semanticCount||0)+(ms.manyToOneItemCount||0)||1))*100).toFixed(1) + '%' : '']);
+  s1Rows.push(['模糊匹配', '', ms.fuzzyCount || 0, ms.fuzzyCount ? ((ms.fuzzyCount / ((ms.exactCount||0)+(ms.fuzzyCount||0)+(ms.semanticCount||0)+(ms.manyToOneItemCount||0)||1))*100).toFixed(1) + '%' : '']);
+  s1Rows.push(['语义匹配', '', ms.semanticCount || 0]);
+  s1Rows.push(['未匹配(' + sideALabel + ')', '', ms.unmatchedACount || 0]);
+  s1Rows.push(['未匹配(' + sideBLabel + ')', '', ms.unmatchedBCount || 0]);
+  if (ms.manyToOneCount) s1Rows.push(['合并匹配', '', ms.manyToOneCount + ' 组']);
+  s1Rows.push([sideALabel + '总笔数', '', recon.sideATotalCount || '']);
+  s1Rows.push([sideBLabel + '总笔数', '', recon.sideBTotalCount || '']);
+  s1Rows.push([]);
+
+  if (recon.useBalanceMode) {
+    // 银行调节
+    var rIdx = s1Rows.length;
+    s1Rows.push(['二、' + sideALabel + '调节']); s1Rows[rIdx]._bold = true;
+    s1Rows.push([sideALabel + '余额', '', recon.sideABalance || 0]);
+    if (recon.sideAAdj && recon.sideAAdj.adds) {
+      recon.sideAAdj.adds.forEach(function(item) {
+        s1Rows.push(['  加：' + (item.description || item.reason || ''), item.date || '', item.amount]);
+      });
+    }
+    if (recon.sideAAdj && recon.sideAAdj.subs) {
+      recon.sideAAdj.subs.forEach(function(item) {
+        s1Rows.push(['  减：' + (item.description || item.reason || ''), item.date || '', '-' + item.amount]);
+      });
+    }
+    var adjARow = s1Rows.length;
+    s1Rows.push(['调节后余额', '', recon.sideAAdjusted || 0]); s1Rows[adjARow]._bold = true;
+    s1Rows.push([]);
+
+    // 企业调节
+    var rIdx2 = s1Rows.length;
+    s1Rows.push(['三、' + sideBLabel + '调节']); s1Rows[rIdx2]._bold = true;
+    s1Rows.push([sideBLabel + '余额', '', recon.sideBBalance || 0]);
+    if (recon.sideBAdj && recon.sideBAdj.adds) {
+      recon.sideBAdj.adds.forEach(function(item) {
+        s1Rows.push(['  加：' + (item.description || item.reason || ''), item.date || '', item.amount]);
+      });
+    }
+    if (recon.sideBAdj && recon.sideBAdj.subs) {
+      recon.sideBAdj.subs.forEach(function(item) {
+        s1Rows.push(['  减：' + (item.description || item.reason || ''), item.date || '', '-' + item.amount]);
+      });
+    }
+    var adjBRow = s1Rows.length;
+    s1Rows.push(['调节后余额', '', recon.sideBAdjusted || 0]); s1Rows[adjBRow]._bold = true;
+  }
+
+  sheets.push({ name: '调节表', cols: ['A','B','C','D','E'], rows: s1Rows });
+
+  // Sheet 2: 匹配明细
+  var s2Rows = [];
+  var s2Header = ['日期(' + sideALabel + ')', '摘要(' + sideALabel + ')', '金额(' + sideALabel + ')', '流水号(' + sideALabel + ')', '日期(' + sideBLabel + ')', '摘要(' + sideBLabel + ')', '金额(' + sideBLabel + ')', '流水号(' + sideBLabel + ')', '匹配类型', '置信度'];
+  s2Rows.push(s2Header); s2Rows[0]._bold = true;
+  if (matchResults) {
+    var typeNames = { exact: '精确', fuzzy: '模糊', semantic: '语义', manyToOne: '多对一' };
+    ['exact', 'fuzzy', 'semantic', 'manyToOne'].forEach(function(type) {
+      (matchResults[type] || []).forEach(function(m) {
+        var a = m.sideA || {};
+        var b = m.sideB || {};
+        s2Rows.push([
+          a.date || '', a.description || a.counterparty || '', a.amount || '', a.refNumber || '',
+          b.date || '', b.description || b.counterparty || '', b.amount || '', b.refNumber || '',
+          typeNames[type], m.confidence ? (m.confidence) : ''
+        ]);
+      });
+    });
+  }
+  sheets.push({ name: '匹配明细', cols: ['A','B','C','D','E','F','G','H','I','J'], rows: s2Rows });
+
+  // Sheet 3: 未匹配项
+  var s3Rows = [];
+  var s3Header = ['来源', '日期', '摘要', '金额', '方向', '对方', '流水号'];
+  s3Rows.push(s3Header); s3Rows[0]._bold = true;
+  if (matchResults) {
+    (matchResults.unmatchedA || []).forEach(function(item) {
+      s3Rows.push([sideALabel, item.date || '', item.description || item.counterparty || '', item.amount || '', item.direction === 'credit' ? '贷' : '借', item.counterparty || '', item.refNumber || '']);
+    });
+    (matchResults.unmatchedB || []).forEach(function(item) {
+      s3Rows.push([sideBLabel, item.date || '', item.description || item.counterparty || '', item.amount || '', item.direction === 'credit' ? '贷' : '借', item.counterparty || '', item.refNumber || '']);
+    });
+  }
+  sheets.push({ name: '未匹配项', cols: ['A','B','C','D','E','F','G'], rows: s3Rows });
+
+  return sheets;
 }
 
 // 把点击的文件渲染到左侧面板（显示真实文档）
