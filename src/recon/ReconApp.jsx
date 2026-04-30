@@ -104,11 +104,23 @@ export default function ReconApp() {
   const [docs, setDocs] = useState([]);
   const [flowMode, setFlowMode] = useState('recon');
   const [reconData, setReconData] = useState(null);
+  const [prevStep, setPrevStep] = useState(null);
+  const [selectedDocIds, setSelectedDocIds] = useState(new Set());
+  const [previewDocId, setPreviewDocId] = useState(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const docsInputRef = useRef(null);
   const docsCameraRef = useRef(null);
   const scanCameraRef = useRef(null);
+
+  const CS_LIBRARY = [
+    { id: 'cs-1', name: 'bank_锦鲤餐饮.png', date: '2026/4/20 15:28', pages: 1, type: 'bank', thumb: null, previewUrl: null },
+    { id: 'cs-2', name: 'ledger_锦鲤餐饮_202604.xlsx', date: '2026/4/20 14:05', pages: 3, type: 'ledger', thumb: null, previewUrl: null },
+    { id: 'cs-3', name: 'CamScanner 2026-4-23 10.55', date: '2026/4/23 10:55', pages: 1, type: 'unknown', thumb: null, previewUrl: null },
+    { id: 'cs-4', name: '鸿蒙', date: '2026/4/23 10:54', pages: 13, type: 'unknown', thumb: null, previewUrl: null },
+    { id: 'cs-5', name: 'Convert to Word 2026-4-20', date: '2026/4/28 17:22', pages: 3, type: 'unknown', thumb: null, previewUrl: null },
+    { id: 'cs-6', name: '供应商对账单_永辉_202604.pdf', date: '2026/4/18 09:30', pages: 2, type: 'bank', thumb: null, previewUrl: null },
+  ];
 
   const stepIdx = PIPELINE.findIndex(s => s.key === step);
 
@@ -575,7 +587,7 @@ export default function ReconApp() {
               <span className="rc-tb-card-name">二维码</span>
               <div className="rc-tb-card-icon">📱</div>
             </div>
-            <div className="rc-tb-card rc-tb-card-highlight" onClick={() => { setFlowMode('recon'); setStep('home'); }}>
+            <div className="rc-tb-card rc-tb-card-highlight" onClick={() => { setFlowMode('recon'); setStep('select'); }}>
               <span className="rc-tb-card-name">财务对账</span>
               <div className="rc-tb-card-icon">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5">
@@ -635,7 +647,7 @@ export default function ReconApp() {
       )}
 
       {/* Pipeline Progress */}
-      {step !== 'home' && step !== 'toolbox' && step !== 'landing' && step !== 'list' && flowMode === 'recon' && (
+      {step !== 'home' && step !== 'toolbox' && step !== 'landing' && step !== 'select' && step !== 'list' && flowMode === 'recon' && (
         <div className="rc-pipeline">
           {PIPELINE.map((s, i) => (
             <div key={s.key} className={`rc-pip-step ${i < stepIdx ? 'done' : ''} ${i === stepIdx ? 'active' : ''}`}>
@@ -728,6 +740,111 @@ export default function ReconApp() {
 
         </div>
       )}
+
+      {/* SELECT — CS-style file picker for reconciliation */}
+      {step === 'select' && (() => {
+        const allDocs = [...CS_LIBRARY, ...docs.filter(d => !CS_LIBRARY.find(c => c.id === d.id))];
+        const selectedDocs = allDocs.filter(d => selectedDocIds.has(d.id));
+        const hasBank = selectedDocs.some(d => d.type === 'bank');
+        const hasLedger = selectedDocs.some(d => d.type === 'ledger');
+        const canStart = hasBank && hasLedger;
+        const bankDoc = selectedDocs.find(d => d.type === 'bank');
+        const ledgerDoc = selectedDocs.find(d => d.type === 'ledger');
+        const missing = [];
+        if (!hasBank) missing.push('银行流水');
+        if (!hasLedger) missing.push('企业账簿');
+
+        const toggleSelect = (id) => {
+          setSelectedDocIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+          });
+        };
+
+        const handlePreviewDoc = (doc) => {
+          setPrevStep('select');
+          const newDoc = { id: doc.id, name: doc.name, type: doc.type, previewUrl: doc.previewUrl || null, processedUrl: null, file: null };
+          setDocs([newDoc]);
+          setFlowMode('scan');
+          setStep('list');
+        };
+
+        const handleStartRecon = () => {
+          if (!canStart) return;
+          const reconDocs = selectedDocs.map(d => ({
+            id: d.id, name: d.name, type: d.type,
+            previewUrl: d.previewUrl || null, processedUrl: null, file: null,
+          }));
+          setDocs(reconDocs);
+          startAnalyze(true);
+        };
+
+        return (
+          <div className="rc-select">
+            <div className="rc-select-topbar">
+              <button className="rc-select-back" onClick={() => setStep('toolbox')}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <div className="rc-select-title">选择文档</div>
+              <button className="rc-select-cancel" onClick={() => setStep('toolbox')}>取消</button>
+            </div>
+
+            <div className="rc-select-status">
+              <div className={`rc-select-status-item ${hasBank ? 'done' : 'missing'}`}>
+                <div className={`rc-select-status-dot ${hasBank ? 'done' : ''}`}>{hasBank ? '✓' : ''}</div>
+                <div className="rc-select-status-info">
+                  <span className="rc-select-status-label">银行流水</span>
+                  <span className="rc-select-status-file">{bankDoc ? bankDoc.name : '未选择'}</span>
+                </div>
+              </div>
+              <div className={`rc-select-status-item ${hasLedger ? 'done' : 'missing'}`}>
+                <div className={`rc-select-status-dot ${hasLedger ? 'done' : ''}`}>{hasLedger ? '✓' : ''}</div>
+                <div className="rc-select-status-info">
+                  <span className="rc-select-status-label">企业账簿</span>
+                  <span className="rc-select-status-file">{ledgerDoc ? ledgerDoc.name : '未选择'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rc-select-list">
+              {allDocs.map(doc => {
+                const isSelected = selectedDocIds.has(doc.id);
+                const docTypeLabel = doc.type === 'bank' ? '银行流水' : doc.type === 'ledger' ? '企业账簿' : null;
+                return (
+                  <div key={doc.id} className={`rc-select-item ${isSelected ? 'selected' : ''}`}>
+                    <div className="rc-select-item-left" onClick={() => handlePreviewDoc(doc)}>
+                      <div className="rc-select-item-thumb">
+                        {doc.thumb ? <img src={doc.thumb} alt="" /> : (
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        )}
+                      </div>
+                      <div className="rc-select-item-info">
+                        <div className="rc-select-item-name">{doc.name}</div>
+                        <div className="rc-select-item-meta">
+                          {doc.date} | {doc.pages}页
+                          {isSelected && docTypeLabel && <span className="rc-select-item-type-tag">{docTypeLabel}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <button className={`rc-select-checkbox ${isSelected ? 'checked' : ''}`} onClick={() => toggleSelect(doc.id)}>
+                      {isSelected && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="rc-select-bottom">
+              {!canStart && <p className="rc-select-hint">还需选择 <strong>{missing.join('、')}</strong> 才能开始对账</p>}
+              <button className={`rc-select-btn ${canStart ? '' : 'disabled'}`} disabled={!canStart} onClick={handleStartRecon}>
+                {canStart ? '开始对账' : '补充文档并开始对账'}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* EDIT — CamScanner doc edit page (crop + filter combined) */}
       {step === 'edit' && (
@@ -1119,7 +1236,7 @@ export default function ReconApp() {
       {step === 'list' && flowMode === 'scan' && (
         <div className="rc-list rc-list-img">
           <div className="rc-list-topbar">
-            <button className="rc-list-back" onClick={() => { setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); }}>
+            <button className="rc-list-back" onClick={() => { if (prevStep === 'select') { setStep('select'); setPrevStep(null); } else { setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); } }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div className="rc-list-title">{docs[0]?.name || '扫描文档'}</div>
@@ -1172,7 +1289,7 @@ export default function ReconApp() {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               <span>转 Word</span>
             </button>
-            <button className="rc-list-action rc-list-action-recon" onClick={() => { setFlowMode('recon'); setStep('docs'); }}>
+            <button className="rc-list-action rc-list-action-recon" onClick={() => { setFlowMode('recon'); setStep('select'); }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
               <span>财务对账</span>
             </button>

@@ -1554,6 +1554,230 @@ tr.rc-lt-total-row td {
   color: var(--rc-accent-dark) !important;
 }
 
+/* ==================== SELECT PAGE (CS File Picker) ==================== */
+.rc-select {
+  min-height: 100vh;
+  background: #fff;
+  padding-bottom: 100px;
+}
+.rc-select-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rc-border);
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 50;
+}
+.rc-select-back {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.rc-select-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--rc-text);
+}
+.rc-select-cancel {
+  border: none;
+  background: none;
+  color: var(--rc-text2);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.rc-select-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: #f8faf9;
+  border-bottom: 1px solid var(--rc-border);
+}
+.rc-select-status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid var(--rc-border);
+}
+.rc-select-status-item.done {
+  border-color: rgba(61,213,152,0.3);
+  background: rgba(61,213,152,0.04);
+}
+.rc-select-status-item.missing {
+  border-color: rgba(229,57,53,0.15);
+  background: rgba(229,57,53,0.02);
+}
+.rc-select-status-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #d0d5dd;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.rc-select-status-dot.done {
+  background: var(--rc-accent);
+  border-color: var(--rc-accent);
+}
+.rc-select-status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.rc-select-status-label {
+  font-size: 11px;
+  color: var(--rc-text3);
+  font-weight: 500;
+}
+.rc-select-status-file {
+  font-size: 13px;
+  color: var(--rc-text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rc-select-status-item.missing .rc-select-status-file {
+  color: var(--rc-danger);
+  font-weight: 400;
+}
+
+.rc-select-list {
+  padding: 8px 0;
+}
+.rc-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rc-border);
+  transition: background 0.15s;
+}
+.rc-select-item.selected {
+  background: rgba(61,213,152,0.04);
+}
+.rc-select-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.rc-select-item-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background: #f0f1f3;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.rc-select-item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rc-select-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.rc-select-item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--rc-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rc-select-item-meta {
+  font-size: 11px;
+  color: var(--rc-text3);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rc-select-item-type-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(61,213,152,0.12);
+  color: var(--rc-accent-dark);
+  font-size: 10px;
+  font-weight: 600;
+}
+.rc-select-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid #d0d5dd;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.rc-select-checkbox.checked {
+  background: var(--rc-accent);
+  border-color: var(--rc-accent);
+}
+
+.rc-select-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 12px 16px calc(12px + var(--rc-safe-bottom));
+  background: #fff;
+  border-top: 1px solid var(--rc-border);
+  z-index: 50;
+}
+.rc-select-hint {
+  font-size: 12px;
+  color: var(--rc-text3);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.rc-select-hint strong {
+  color: var(--rc-danger);
+}
+.rc-select-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--rc-accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.rc-select-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.rc-select-btn:not(.disabled):active {
+  opacity: 0.85;
+}
+
 /* ==================== SHOW MORE BUTTON ==================== */
 .rc-show-more {
   display: flex;
