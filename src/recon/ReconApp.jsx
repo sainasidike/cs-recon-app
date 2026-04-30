@@ -1812,17 +1812,16 @@ export default function ReconApp() {
 
           {flowMode === 'recon' && (() => {
             const { sc, hasA, hasB, scenario } = getScenarioReadiness(docs);
-            const hasAiScenario = docs.some(d => d.aiScenario);
             const missing = [];
             if (!hasA) missing.push(sc.labelA);
             if (!hasB) missing.push(sc.labelB);
             if (missing.length > 0) return (
               <div className="rc-list-doc-hint">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f5a623" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <span>{hasAiScenario ? `检测到「${sc.name}」场景，还需添加` : '还需添加'} <strong>{missing.join('、')}</strong> 才能开始对账</span>
+                <span>检测到「{sc.name}」场景，还需添加 <strong>{missing.join('、')}</strong> 才能开始对账</span>
               </div>
             );
-            if (hasA && hasB && hasAiScenario) return (
+            if (hasA && hasB) return (
               <div className="rc-list-doc-hint" style={{ background: 'rgba(0,180,80,0.08)', borderColor: '#00b450' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b450" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 <span>已识别「<strong>{sc.name}</strong>」场景，文档齐全，可以开始对账</span>
