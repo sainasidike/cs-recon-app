@@ -505,60 +505,12 @@ export default function ReconApp() {
   }, []);
 
   const handleFinish = useCallback(() => {
-    if (matchResults && reconData) {
-      const { scenario, sc } = getScenarioReadiness(docs);
-      const record = {
-        id: Date.now(),
-        status: 'completed',
-        company: reconData.companyInfo.name,
-        period: reconData.companyInfo.period,
-        scenario: scenario,
-        scenarioName: sc.name,
-        matchRate: matchResults.matchRate,
-        matchedCount: matchResults.matchedCount,
-        unmatchedCount: matchResults.unmatchedBank.length + matchResults.unmatchedLedger.length,
-        totalCount: reconData.bankEntries.length + reconData.ledgerEntries.length,
-        time: new Date().toLocaleString('zh-CN'),
-        docs: docs.map(d => ({
-          id: d.id, name: d.name, type: d.type,
-          typeLabel: DOC_TYPE_LABEL[d.type] || d.type,
-          thumbnail: makeThumbnail(d.processedUrl || d.previewUrl),
-        })),
-        resultDocs: [
-          { name: '余额调节表', type: 'result_sheet' },
-          { name: 'AI分析报告', type: 'result_report' },
-        ],
-        savedMatchResults: {
-          matchRate: matchResults.matchRate,
-          matchedCount: matchResults.matchedCount,
-          matchedAmt: matchResults.matchedAmt,
-          exact: matchResults.exact.slice(0, 30),
-          fuzzy: matchResults.fuzzy.slice(0, 20),
-          semantic: matchResults.semantic.slice(0, 10),
-          unmatchedBank: matchResults.unmatchedBank.slice(0, 20),
-          unmatchedLedger: matchResults.unmatchedLedger.slice(0, 20),
-        },
-        savedReconData: {
-          companyInfo: reconData.companyInfo,
-          bankEntries: reconData.bankEntries,
-          ledgerEntries: reconData.ledgerEntries,
-          bankTotalOut: reconData.bankTotalOut,
-          bankTotalIn: reconData.bankTotalIn,
-          ledgerTotalDebit: reconData.ledgerTotalDebit,
-          ledgerTotalCredit: reconData.ledgerTotalCredit,
-        },
-      };
-      const filtered = history.filter(h => !(h.status === 'pending' && h.scenario === scenario));
-      const next = [record, ...filtered].slice(0, 30);
-      setHistory(next);
-      try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
-    }
     setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
     setProcessedUrls([]); setParseSteps([]); setParseResult(null); setReconData(null);
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
     setAllDocsProject(null); setAllDocsFolder(null);
-  }, [matchResults, reconData, history, docs]);
+  }, []);
 
   const handleReset = useCallback(() => {
     setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]);
