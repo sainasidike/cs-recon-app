@@ -166,7 +166,67 @@ function EntryModal({ entry, onSave, onDelete, onClose, mode }) {
   );
 }
 
+function FilePreview({ pf, onClose }) {
+  const file = pf.file;
+  const ext = (file?.name || '').split('.').pop().toLowerCase();
+  const isImage = ['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'webp'].includes(ext);
+  const isPdf = ext === 'pdf';
+  const entries = pf.parsed?.entries || [];
+
+  return (
+    <div className="source-file-preview">
+      <div className="source-file-preview-header">
+        <span className="source-file-preview-name">{file?.name || '文件'}</span>
+        <span className="source-file-preview-close" onClick={onClose}>×</span>
+      </div>
+      <div className="source-file-preview-body">
+        {isImage && file && (
+          <img src={URL.createObjectURL(file)} alt={file.name} style={{ maxWidth: '100%', borderRadius: 6 }} />
+        )}
+        {isPdf && file && (
+          <iframe src={URL.createObjectURL(file)} style={{ width: '100%', height: 360, border: 'none', borderRadius: 6 }} title={file.name} />
+        )}
+        {!isImage && !isPdf && entries.length > 0 && (
+          <div className="source-file-preview-table">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>日期</th>
+                  <th>摘要</th>
+                  <th style={{ textAlign: 'right' }}>金额</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.slice(0, 30).map((e, i) => (
+                  <tr key={i}>
+                    <td style={{ color: 'var(--text-tertiary)' }}>{i + 1}</td>
+                    <td>{e.date || '-'}</td>
+                    <td style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description || e.counterparty || '-'}</td>
+                    <td style={{ textAlign: 'right' }}>{(e.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {entries.length > 30 && (
+              <div style={{ padding: '6px 0', fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                显示前 30 条 / 共 {entries.length} 条
+              </div>
+            )}
+          </div>
+        )}
+        {!isImage && !isPdf && entries.length === 0 && (
+          <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
+            暂无可预览的数据
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SourceFileList({ sideAData, sideBData, sideCData, scenario }) {
+  const [previewIdx, setPreviewIdx] = useState(null);
   const allFiles = [
     ...(sideAData?.files || []).map(f => ({ ...f, roleLabel: scenario?.sideA?.shortLabel || 'A方' })),
     ...(sideBData?.files || []).map(f => ({ ...f, roleLabel: scenario?.sideB?.shortLabel || 'B方' })),
@@ -194,8 +254,9 @@ function SourceFileList({ sideAData, sideBData, sideCData, scenario }) {
       <div className="source-files-list">
         {allFiles.map((pf, i) => {
           const icon = getIcon(pf.file?.name || pf.name);
+          const isActive = previewIdx === i;
           return (
-            <div key={i} className="source-file-item">
+            <div key={i} className={`source-file-item ${isActive ? 'source-file-item-active' : ''}`} onClick={() => setPreviewIdx(isActive ? null : i)} style={{ cursor: 'pointer' }}>
               <div className="source-file-badge" style={{ background: icon.bg }}>{icon.label}</div>
               <div className="source-file-info">
                 <div className="source-file-name">{pf.file?.name || pf.name || '文件'}</div>
@@ -205,10 +266,14 @@ function SourceFileList({ sideAData, sideBData, sideCData, scenario }) {
                   {pf.parsed?.entries?.length ? ` · ${pf.parsed.entries.length}条` : ''}
                 </div>
               </div>
+              <span className="source-file-arrow">{isActive ? '▲' : '▼'}</span>
             </div>
           );
         })}
       </div>
+      {previewIdx !== null && allFiles[previewIdx] && (
+        <FilePreview pf={allFiles[previewIdx]} onClose={() => setPreviewIdx(null)} />
+      )}
     </div>
   );
 }
