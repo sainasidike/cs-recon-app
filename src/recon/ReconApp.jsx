@@ -107,6 +107,7 @@ export default function ReconApp() {
   const [prevStep, setPrevStep] = useState(null);
   const [selectedDocIds, setSelectedDocIds] = useState(new Set());
   const [previewDocId, setPreviewDocId] = useState(null);
+  const savedDocsRef = useRef([]);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const docsInputRef = useRef(null);
@@ -200,7 +201,8 @@ export default function ReconApp() {
     setDocs(prev => prev.map(d => d.id === id ? { ...d, type: cycle[d.type] } : d));
   }, []);
 
-  const startAnalyze = useCallback(async (demoMode = false) => {
+  const startAnalyze = useCallback(async (demoMode = false, passedDocs = null) => {
+    const activeDocs = passedDocs || docs;
     setStep('analyze');
     setParseSteps([]);
     setParseResult(null);
@@ -236,12 +238,12 @@ export default function ReconApp() {
     }
 
     try {
-      const bankDocs = docs.filter(d => d.type === 'bank');
-      const ledgerDocs = docs.filter(d => d.type === 'ledger');
+      const bankDocs = activeDocs.filter(d => d.type === 'bank');
+      const ledgerDocs = activeDocs.filter(d => d.type === 'ledger');
       const allBankEntries = [];
       const allLedgerEntries = [];
 
-      setParseSteps(prev => [...prev, `开始解析 ${docs.length} 份文档...`]);
+      setParseSteps(prev => [...prev, `开始解析 ${activeDocs.length} 份文档...`]);
 
       for (const doc of bankDocs) {
         setParseSteps(prev => [...prev, `解析银行文档: ${doc.name}...`]);
@@ -285,7 +287,7 @@ export default function ReconApp() {
       setParseSteps(prev => [...prev, `共解析银行 ${allBankEntries.length} 笔、企业 ${allLedgerEntries.length} 笔`]);
       setParseSteps(prev => [...prev, '执行智能匹配...']);
 
-      const rd = buildReconData(allBankEntries, allLedgerEntries, docs.map(d => d.name));
+      const rd = buildReconData(allBankEntries, allLedgerEntries, activeDocs.map(d => d.name));
       setReconData(rd);
       const results = runMatching(allBankEntries, allLedgerEntries);
       setMatchResults(results);
@@ -301,7 +303,7 @@ export default function ReconApp() {
     setFiles(docs.map(d => ({ name: d.name, type: 'processed' })));
     setPreviewUrls(docs.map(d => d.previewUrl));
     setProcessedUrls(docs.map(d => d.processedUrl));
-    startAnalyze(false);
+    startAnalyze(false, docs);
   }, [docs, startAnalyze]);
 
   const handleConfirm = useCallback((key) => {
@@ -743,7 +745,8 @@ export default function ReconApp() {
 
       {/* SELECT — CS-style file picker for reconciliation */}
       {step === 'select' && (() => {
-        const allDocs = [...CS_LIBRARY, ...docs.filter(d => !CS_LIBRARY.find(c => c.id === d.id))];
+        const userDocs = docs.filter(d => !CS_LIBRARY.find(c => c.id === d.id));
+        const allDocs = [...userDocs, ...CS_LIBRARY];
         const selectedDocs = allDocs.filter(d => selectedDocIds.has(d.id));
         const hasBank = selectedDocs.some(d => d.type === 'bank');
         const hasLedger = selectedDocs.some(d => d.type === 'ledger');
@@ -765,8 +768,10 @@ export default function ReconApp() {
 
         const handlePreviewDoc = (doc) => {
           setPrevStep('select');
-          const newDoc = { id: doc.id, name: doc.name, type: doc.type, previewUrl: doc.previewUrl || null, processedUrl: null, file: null };
-          setDocs([newDoc]);
+          setPreviewDocId(doc.id);
+          savedDocsRef.current = docs;
+          const previewDoc = { id: doc.id, name: doc.name, type: doc.type, previewUrl: doc.previewUrl || null, processedUrl: doc.processedUrl || null, file: doc.file || null };
+          setDocs([previewDoc]);
           setFlowMode('scan');
           setStep('list');
         };
@@ -775,10 +780,13 @@ export default function ReconApp() {
           if (!canStart) return;
           const reconDocs = selectedDocs.map(d => ({
             id: d.id, name: d.name, type: d.type,
-            previewUrl: d.previewUrl || null, processedUrl: null, file: null,
+            previewUrl: d.previewUrl || null,
+            processedUrl: d.processedUrl || null,
+            file: d.file || null,
           }));
           setDocs(reconDocs);
-          startAnalyze(true);
+          const hasRealFiles = reconDocs.some(d => d.file || d.processedUrl);
+          startAnalyze(!hasRealFiles, reconDocs);
         };
 
         return (
@@ -816,14 +824,16 @@ export default function ReconApp() {
                   <div key={doc.id} className={`rc-select-item ${isSelected ? 'selected' : ''}`}>
                     <div className="rc-select-item-left" onClick={() => handlePreviewDoc(doc)}>
                       <div className="rc-select-item-thumb">
-                        {doc.thumb ? <img src={doc.thumb} alt="" /> : (
+                        {(doc.processedUrl || doc.previewUrl || doc.thumb) ? (
+                          <img src={doc.processedUrl || doc.previewUrl || doc.thumb} alt="" />
+                        ) : (
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         )}
                       </div>
                       <div className="rc-select-item-info">
                         <div className="rc-select-item-name">{doc.name}</div>
                         <div className="rc-select-item-meta">
-                          {doc.date} | {doc.pages}页
+                          {doc.date ? `${doc.date} | ` : ''}{doc.pages ? `${doc.pages}页` : '已上传'}
                           {isSelected && docTypeLabel && <span className="rc-select-item-type-tag">{docTypeLabel}</span>}
                         </div>
                       </div>
@@ -1236,7 +1246,7 @@ export default function ReconApp() {
       {step === 'list' && flowMode === 'scan' && (
         <div className="rc-list rc-list-img">
           <div className="rc-list-topbar">
-            <button className="rc-list-back" onClick={() => { if (prevStep === 'select') { setStep('select'); setPrevStep(null); } else { setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); } }}>
+            <button className="rc-list-back" onClick={() => { if (prevStep === 'select') { setDocs(savedDocsRef.current); setStep('select'); setPrevStep(null); } else { setStep('toolbox'); setFiles([]); setPreviewUrls([]); setCropBoxes([]); setDocs([]); setProcessedUrls([]); } }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div className="rc-list-title">{docs[0]?.name || '扫描文档'}</div>
@@ -1289,7 +1299,13 @@ export default function ReconApp() {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               <span>转 Word</span>
             </button>
-            <button className="rc-list-action rc-list-action-recon" onClick={() => { setFlowMode('recon'); setStep('select'); }}>
+            <button className="rc-list-action rc-list-action-recon" onClick={() => {
+              setFlowMode('recon');
+              const currentDocs = docs.map(d => ({ ...d, type: d.type || classifyDoc(d.name) }));
+              setDocs(currentDocs);
+              setSelectedDocIds(new Set(currentDocs.map(d => d.id)));
+              setStep('select');
+            }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
               <span>财务对账</span>
             </button>
