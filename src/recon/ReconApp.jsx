@@ -168,8 +168,8 @@ function classifyDoc(name) {
   if (/现金.*日记|cash.*journal|现金.*账/i.test(n)) return 'cash_journal';
   if (/收据|小票|cash.*receipt|petty/i.test(n)) return 'cash_receipt';
   // 税务对账
-  if (/纳税|税务申报|tax.*return|报税/i.test(n)) return 'tax_return';
-  if (/税.*汇总|税.*台账|tax.*ledger|税.*明细/i.test(n)) return 'tax_ledger';
+  if (/纳税|申报表|税务申报|tax.*return|报税/i.test(n)) return 'tax_return';
+  if (/税.*汇总|税.*台账|tax.*ledger|税.*明细|增值税.*明细/i.test(n)) return 'tax_ledger';
   // 工资对账
   if (/工资|薪资|payroll|salary|薪酬/i.test(n)) return 'payroll';
   if (/代发|bank.*payroll|工资.*明细|代付/i.test(n)) return 'bank_payroll';
