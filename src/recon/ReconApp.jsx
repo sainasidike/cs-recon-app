@@ -402,61 +402,37 @@ export default function ReconApp() {
     setParseResult(null);
 
     if (demoMode) {
-      const demoFiles = [
-        { name: '备用金报销明细_新程科技_202501.jpg', size: '1.2 MB' },
-        { name: '银行回单_工商银行_202501.png', size: '890 KB' },
+      const steps = [
+        { text: '正在进行 OCR 文字识别...', delay: 200 },
+        { text: '识别到表格结构，提取数据中...', delay: 500 },
+        { text: '检测到文档类型：备用金报销明细', delay: 800 },
+        { text: '解析 15 笔报销记录', delay: 1100 },
+        { text: '加载银行回单，解析 13 笔付款记录', delay: 1400 },
+        { text: '执行精确匹配（金额+收款人完全一致）...', delay: 1700 },
+        { text: '执行模糊匹配（金额容差+摘要相似）...', delay: 2000 },
+        { text: '执行语义匹配（描述相似度分析）...', delay: 2300 },
+        { text: '检测未达账项，生成对账报告...', delay: 2600 },
       ];
-      setDemoUploadFiles(demoFiles.map(f => ({ ...f, progress: 0 })));
-
-      // Animate upload progress
-      const uploadDuration = 1800;
-      const tick = 50;
-      let elapsed = 0;
-      const timer = setInterval(() => {
-        elapsed += tick;
-        const p1 = Math.min(100, Math.round((elapsed / (uploadDuration * 0.55)) * 100));
-        const p2 = Math.min(100, Math.round(((elapsed - uploadDuration * 0.3) / (uploadDuration * 0.55)) * 100));
-        setDemoUploadFiles([
-          { ...demoFiles[0], progress: p1 },
-          { ...demoFiles[1], progress: Math.max(0, p2) },
-        ]);
-        if (elapsed >= uploadDuration) clearInterval(timer);
-      }, tick);
-
+      steps.forEach(({ text, delay }) => {
+        setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
+      });
       setTimeout(() => {
-        setDemoUploadFiles(null);
-        const steps = [
-          { text: '正在进行 OCR 文字识别...', delay: 200 },
-          { text: '识别到表格结构，提取数据中...', delay: 500 },
-          { text: '检测到文档类型：备用金报销明细', delay: 800 },
-          { text: '解析 15 笔报销记录', delay: 1100 },
-          { text: '加载银行回单，解析 13 笔付款记录', delay: 1400 },
-          { text: '执行精确匹配（金额+收款人完全一致）...', delay: 1700 },
-          { text: '执行模糊匹配（金额容差+摘要相似）...', delay: 2000 },
-          { text: '执行语义匹配（描述相似度分析）...', delay: 2300 },
-          { text: '检测未达账项，生成对账报告...', delay: 2600 },
-        ];
-        steps.forEach(({ text, delay }) => {
-          setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
-        });
-        setTimeout(() => {
-          const rd = {
-            bankEntries: BANK_DATA, ledgerEntries: LEDGER_DATA,
-            companyInfo: COMPANY_INFO,
-            bankTotalOut: BANK_TOTAL_OUT, bankTotalIn: BANK_TOTAL_IN,
-            ledgerTotalDebit: LEDGER_TOTAL_DEBIT, ledgerTotalCredit: LEDGER_TOTAL_CREDIT,
-          };
-          setReconData(rd);
-          const results = runMatching(BANK_DATA, LEDGER_DATA);
-          setMatchResults(results);
-          setDocs([
-            { id: 'demo-bank', name: '备用金报销明细_新程科技_202501.jpg', type: 'expense_claim', typeLabel: '报销明细', previewUrl: '/recon-assets/demo/expense-claim.jpg' },
-            { id: 'demo-ledger', name: '银行回单_工商银行_202501.png', type: 'receipt', typeLabel: '银行回单', previewUrl: '/recon-assets/demo/bank-receipt.png' },
-          ]);
-          setFlowMode('recon');
-          setStep('results');
-        }, 3000);
-      }, uploadDuration);
+        const rd = {
+          bankEntries: BANK_DATA, ledgerEntries: LEDGER_DATA,
+          companyInfo: COMPANY_INFO,
+          bankTotalOut: BANK_TOTAL_OUT, bankTotalIn: BANK_TOTAL_IN,
+          ledgerTotalDebit: LEDGER_TOTAL_DEBIT, ledgerTotalCredit: LEDGER_TOTAL_CREDIT,
+        };
+        setReconData(rd);
+        const results = runMatching(BANK_DATA, LEDGER_DATA);
+        setMatchResults(results);
+        setDocs([
+          { id: 'demo-bank', name: '备用金报销明细_新程科技_202501.jpg', type: 'expense_claim', typeLabel: '报销明细', previewUrl: '/recon-assets/demo/expense-claim.jpg' },
+          { id: 'demo-ledger', name: '银行回单_工商银行_202501.png', type: 'receipt', typeLabel: '银行回单', previewUrl: '/recon-assets/demo/bank-receipt.png' },
+        ]);
+        setFlowMode('recon');
+        setStep('results');
+      }, 3000);
       return;
     }
 
