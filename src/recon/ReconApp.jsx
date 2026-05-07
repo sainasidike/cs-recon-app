@@ -640,196 +640,27 @@ export default function ReconApp() {
 
   return (
     <div className="rc">
-      {/* LANDING — Product Introduction Page */}
+      {/* LANDING — Minimal */}
       {step === 'landing' && (
         <div className="rc-landing">
-          <div className="rc-landing-hero">
-            <div className="rc-landing-hero-bg" />
-            <div className="rc-landing-hero-content">
-              <div className="rc-landing-logo">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.3">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M3 9h18M3 15h18M9 3v18" />
-                </svg>
-              </div>
+          <div className="rc-landing-fullscreen">
+            <div className="rc-landing-docs-bg">
+              <img src="/recon-assets/bank-flow.png" alt="" className="rc-landing-bg-img left" />
+              <img src="/recon-assets/ledger-book.png" alt="" className="rc-landing-bg-img right" />
+            </div>
+            <div className="rc-landing-overlay" />
+            <div className="rc-landing-center">
               <div className="rc-landing-badge">CamScanner AI</div>
-              <h1 className="rc-landing-title">智能财务对账</h1>
-              <p className="rc-landing-subtitle">对账只是过程，平账才是目的<br/>AI 查清每一分钱差异，告诉你怎么调</p>
+              <h1 className="rc-landing-headline">拍两张单据<br/>AI 帮你对完账</h1>
+              <p className="rc-landing-sub">银行流水 × 企业账簿，3 分钟出调节表</p>
               <button className="rc-landing-cta" onClick={() => setStep('toolbox')}>
-                <span>立即体验</span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                立即体验
+              </button>
+              <button className="rc-landing-cta-ghost" onClick={() => setStep('toolbox')}>
+                体验 Demo 对账
               </button>
             </div>
-          </div>
-
-          <div className="rc-landing-section">
-            <div className="rc-landing-section-tag">真实痛点</div>
-            <h2 className="rc-landing-h2">你是不是也被这些折磨</h2>
-            <div className="rc-landing-pain-list">
-              <div className="rc-landing-pain-item">
-                <div className="rc-landing-pain-img-wrap">
-                  <img src="/recon-assets/bank-cmb.png" alt="" className="rc-landing-pain-img" loading="lazy" />
-                  <img src="/recon-assets/ledger-star.png" alt="" className="rc-landing-pain-img stack" loading="lazy" />
-                </div>
-                <div className="rc-landing-pain-text">
-                  <div className="rc-landing-pain-title">格式永远对不上</div>
-                  <div className="rc-landing-pain-desc">银行流水30列Excel，企业账簿又是另一套格式，光对齐列头就花半小时</div>
-                </div>
-              </div>
-              <div className="rc-landing-pain-item">
-                <div className="rc-landing-pain-img-wrap">
-                  <img src="/recon-assets/bank-flow.png" alt="" className="rc-landing-pain-img" loading="lazy" />
-                </div>
-                <div className="rc-landing-pain-text">
-                  <div className="rc-landing-pain-title">一笔款拆成多笔</div>
-                  <div className="rc-landing-pain-desc">银行打了一笔 ¥10,000，账本里是3张采购单拼的——得手动凑数</div>
-                </div>
-              </div>
-              <div className="rc-landing-pain-item">
-                <div className="rc-landing-pain-img-wrap">
-                  <img src="/recon-assets/expense.png" alt="" className="rc-landing-pain-img" loading="lazy" />
-                </div>
-                <div className="rc-landing-pain-text">
-                  <div className="rc-landing-pain-title">摘要完全对不上</div>
-                  <div className="rc-landing-pain-desc">报销单写"办公用品"，银行流水写"京东商城"——逐笔核对眼睛都花了</div>
-                </div>
-              </div>
-              <div className="rc-landing-pain-item">
-                <div className="rc-landing-pain-img-wrap">
-                  <img src="/recon-assets/tax-return.png" alt="" className="rc-landing-pain-img" loading="lazy" />
-                </div>
-                <div className="rc-landing-pain-text">
-                  <div className="rc-landing-pain-title">跨月永远对不上</div>
-                  <div className="rc-landing-pain-desc">月末最后一天开的票，银行下月才到账——每月都要解释这笔"差异"</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rc-landing-section rc-landing-section-dark">
-            <div className="rc-landing-section-tag light">AI 能力</div>
-            <h2 className="rc-landing-h2 light">不只找差异，还告诉你为什么</h2>
-            <p className="rc-landing-section-sub">AI 自动识别 10 种典型对账错误，给出调账建议</p>
-            <div className="rc-landing-demo-card">
-              <div className="rc-landing-demo-title">异常检测结果</div>
-              <div className="rc-landing-demo-row"><span className="rc-landing-dot error" /><span>疑似借贷记反：设备款 ¥15,000，银行为支出但账本为收入</span></div>
-              <div className="rc-landing-demo-row"><span className="rc-landing-dot warning" /><span>疑似一付多配：银行 ¥10,000 = 账本 ¥4,000 + ¥6,000</span></div>
-              <div className="rc-landing-demo-row"><span className="rc-landing-dot warning" /><span>小额多笔异常：2026-04-20 共 5 笔小额交易，合计 ¥350</span></div>
-              <div className="rc-landing-demo-row"><span className="rc-landing-dot info" /><span>疑似未入账费用：账户管理费 ¥35</span></div>
-            </div>
-            <div className="rc-landing-demo-card voucher">
-              <div className="rc-landing-demo-title">AI 建议调账分录</div>
-              <div className="rc-landing-voucher-row"><span className="rc-landing-voucher-dir debit">借</span><span className="rc-landing-voucher-acct">财务费用-银行手续费</span><span className="rc-landing-voucher-amt">¥35.00</span></div>
-              <div className="rc-landing-voucher-row"><span className="rc-landing-voucher-dir credit">贷</span><span className="rc-landing-voucher-acct">银行存款-工商银行</span><span className="rc-landing-voucher-amt">¥35.00</span></div>
-              <div className="rc-landing-voucher-note">仅供参考 · 复制分录到财务系统即可平账</div>
-            </div>
-            <div className="rc-landing-capability-tags">
-              <span>数字颠倒</span><span>小数点位移</span><span>借贷记反</span><span>一付多配</span><span>跨月错位</span>
-              <span>重复录入</span><span>摘要不符</span><span>小额多笔</span><span>未达账项</span><span>费用遗漏</span>
-            </div>
-          </div>
-
-          <div className="rc-landing-section">
-            <div className="rc-landing-section-tag">覆盖场景</div>
-            <h2 className="rc-landing-h2">8 大对账场景，一个工具搞定</h2>
-            <div className="rc-landing-scenes">
-              {[
-                { name: '银行对账', desc: '银行流水 vs 企业账簿', imgs: ['bank-flow.png', 'ledger-book.png'] },
-                { name: '往来对账', desc: '供应商对账单 vs 应付台账', imgs: ['trade-a.png', 'trade-b.png'] },
-                { name: '发票核验', desc: '发票 vs 合同 vs 入库单', imgs: ['invoice.png', 'contract.png'] },
-                { name: '费用报销', desc: '报销单 vs 发票 vs 回单', imgs: ['expense.png', 'payment.png'] },
-                { name: '税务对账', desc: '申报表 vs 税务台账', imgs: ['tax-return.png', 'tax-ledger.png'] },
-                { name: '工资对账', desc: '工资表 vs 银行代发', imgs: ['payroll.png', 'bankpay.png'] },
-                { name: '现金对账', desc: '日记账 vs 盘点表', imgs: ['cashbook.png', 'cashcount.png'] },
-                { name: '固定资产', desc: '台账 vs 盘点表', imgs: ['asset.png', 'inventory.png'] },
-              ].map((sc, i) => (
-                <div key={i} className="rc-landing-scene-card">
-                  <div className="rc-landing-scene-imgs">
-                    <img src={`/recon-assets/${sc.imgs[0]}`} alt="" loading="lazy" />
-                    <img src={`/recon-assets/${sc.imgs[1]}`} alt="" loading="lazy" />
-                  </div>
-                  <div className="rc-landing-scene-name">{sc.name}</div>
-                  <div className="rc-landing-scene-desc">{sc.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rc-landing-section rc-landing-section-accent">
-            <div className="rc-landing-roi">
-              <h2 className="rc-landing-h2 light">丢进文件，3 分钟出结果</h2>
-              <div className="rc-landing-roi-grid">
-                <div className="rc-landing-roi-item">
-                  <div className="rc-landing-roi-value">10种</div>
-                  <div className="rc-landing-roi-label">异常自动识别</div>
-                </div>
-                <div className="rc-landing-roi-item">
-                  <div className="rc-landing-roi-value">90%+</div>
-                  <div className="rc-landing-roi-label">秒级匹配</div>
-                </div>
-                <div className="rc-landing-roi-item">
-                  <div className="rc-landing-roi-value">3min</div>
-                  <div className="rc-landing-roi-label">100笔对账</div>
-                </div>
-                <div className="rc-landing-roi-item">
-                  <div className="rc-landing-roi-value">1键</div>
-                  <div className="rc-landing-roi-label">生成调节表</div>
-                </div>
-              </div>
-              <div className="rc-landing-roi-compare">
-                <div className="rc-landing-roi-bar">
-                  <span className="rc-landing-roi-bar-label">传统手工</span>
-                  <div className="rc-landing-roi-bar-track">
-                    <div className="rc-landing-roi-bar-fill old" style={{ width: '100%' }} />
-                  </div>
-                  <span className="rc-landing-roi-bar-val">3-4h</span>
-                </div>
-                <div className="rc-landing-roi-bar">
-                  <span className="rc-landing-roi-bar-label">AI 对账</span>
-                  <div className="rc-landing-roi-bar-track">
-                    <div className="rc-landing-roi-bar-fill new" style={{ width: '5%' }} />
-                  </div>
-                  <span className="rc-landing-roi-bar-val">3min</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rc-landing-section">
-            <div className="rc-landing-section-tag">谁在用</div>
-            <h2 className="rc-landing-h2">每一类财务人都有自己的痛</h2>
-            <div className="rc-landing-users">
-              <div className="rc-landing-user-card">
-                <div className="rc-landing-user-quote">"老板问上月垫的5万还了没，我翻了3天Excel还是算不清"</div>
-                <div className="rc-landing-user-role">中小企业会计</div>
-                <div className="rc-landing-user-scene">月末银行对账、老板个人垫款核对、多账户资金归集</div>
-              </div>
-              <div className="rc-landing-user-card">
-                <div className="rc-landing-user-quote">"抖音打了12,850.52，里面是货款减佣金减退款加补差——拆到崩溃"</div>
-                <div className="rc-landing-user-role">电商/新零售财务</div>
-                <div className="rc-landing-user-scene">平台结算拆解、多渠道收款归集、退款冲销核对</div>
-              </div>
-              <div className="rc-landing-user-card">
-                <div className="rc-landing-user-quote">"手里40家公司，发来的流水格式没一个一样的"</div>
-                <div className="rc-landing-user-role">代理记账公司</div>
-                <div className="rc-landing-user-scene">批量客户对账、混合格式文档识别、跨公司统一处理</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rc-landing-footer">
-            <div className="rc-landing-footer-brand">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <path d="M3 9h18M3 15h18M9 3v18" />
-              </svg>
-              <span>CamScanner AI · 智能财务对账</span>
-            </div>
-            <button className="rc-landing-footer-cta" onClick={() => setStep('toolbox')}>
-              开始体验 Demo
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-            <p className="rc-landing-footer-note">TextIn OCR + 智谱 AI 大模型驱动</p>
+            <div className="rc-landing-bottom-note">TextIn OCR + 智谱 AI 大模型</div>
           </div>
         </div>
       )}
