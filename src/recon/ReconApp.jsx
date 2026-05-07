@@ -306,8 +306,12 @@ export default function ReconApp() {
   const scanCameraRef = useRef(null);
 
   const CS_LIBRARY = [
-    { id: 'cs-1', name: 'bank_锦鲤餐饮.png', date: '2026/4/20 15:28', pages: 1, type: 'bank', thumb: null, previewUrl: null },
-    { id: 'cs-2', name: 'ledger_锦鲤餐饮_202604.xlsx', date: '2026/4/20 14:05', pages: 3, type: 'ledger', thumb: null, previewUrl: null },
+    { id: 'lib-bank-jinli', name: 'bank_锦鲤餐饮_202604.png', date: '2026/4/30 15:38', pages: 1, type: 'bank', thumb: '/recon-assets/library/bank_锦鲤餐饮_202604.png', previewUrl: '/recon-assets/library/bank_锦鲤餐饮_202604.png' },
+    { id: 'lib-ledger-jinli', name: 'ledger_锦鲤餐饮_202604.png', date: '2026/4/30 14:05', pages: 1, type: 'ledger', thumb: '/recon-assets/library/ledger_锦鲤餐饮_202604.png', previewUrl: '/recon-assets/library/ledger_锦鲤餐饮_202604.png' },
+    { id: 'lib-bank-xingchen', name: 'bank_招商银行流水_星辰科技_202603.png', date: '2026/4/29 18:05', pages: 1, type: 'bank', thumb: '/recon-assets/library/bank_招商银行流水_星辰科技_202603.png', previewUrl: '/recon-assets/library/bank_招商银行流水_星辰科技_202603.png' },
+    { id: 'lib-ledger-xingchen', name: 'ledger_星辰科技_企业账簿_202603.png', date: '2026/4/29 16:30', pages: 1, type: 'ledger', thumb: '/recon-assets/library/ledger_星辰科技_企业账簿_202603.png', previewUrl: '/recon-assets/library/ledger_星辰科技_企业账簿_202603.png' },
+    { id: 'lib-tax', name: 'tax_增值税申报表_202603.png', date: '2026/4/29 14:33', pages: 1, type: 'tax_return', thumb: '/recon-assets/library/tax_增值税申报表_202603.png', previewUrl: '/recon-assets/library/tax_增值税申报表_202603.png' },
+    { id: 'lib-tax-book', name: 'book_企业账簿_增值税明细_202603.png', date: '2026/4/28 20:06', pages: 1, type: 'tax_ledger', thumb: '/recon-assets/library/book_企业账簿_增值税明细_202603.png', previewUrl: '/recon-assets/library/book_企业账簿_增值税明细_202603.png' },
     { id: 'cs-3', name: 'CamScanner 2026-4-23 10.55', date: '2026/4/23 10:55', pages: 1, type: 'unknown', thumb: null, previewUrl: null },
     { id: 'cs-4', name: '鸿蒙', date: '2026/4/23 10:54', pages: 13, type: 'unknown', thumb: null, previewUrl: null },
     { id: 'cs-5', name: 'Convert to Word 2026-4-20', date: '2026/4/28 17:22', pages: 3, type: 'unknown', thumb: null, previewUrl: null },
