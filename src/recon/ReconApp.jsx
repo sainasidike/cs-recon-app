@@ -455,6 +455,7 @@ export default function ReconApp() {
         try {
           const parsed = await parseFile(fileObj);
           setParseSteps(prev => [...prev, `${sc.labelA}识别 ${parsed.parsedRows} 笔记录`]);
+          parsed.entries.forEach((e, i) => { e._source = { fileName: doc.name, row: i + 1 }; });
           allBankEntries.push(...parsed.entries);
           if (!bankHeaders.length) { bankHeaders = parsed.headers || []; bankMapping = parsed.columnMapping; }
         } catch (err) {
@@ -473,6 +474,7 @@ export default function ReconApp() {
         try {
           const parsed = await parseFile(fileObj);
           setParseSteps(prev => [...prev, `${sc.labelB}识别 ${parsed.parsedRows} 笔记录`]);
+          parsed.entries.forEach((e, i) => { e._source = { fileName: doc.name, row: i + 1 }; });
           allLedgerEntries.push(...parsed.entries);
           if (!ledgerHeaders.length) { ledgerHeaders = parsed.headers || []; ledgerMapping = parsed.columnMapping; }
         } catch (err) {
@@ -1817,32 +1819,60 @@ export default function ReconApp() {
               {matchResults.unmatchedBank.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">银行未达 ({matchResults.unmatchedBank.length})</div>{matchResults.unmatchedBank.map(b => (
                 <div key={b.id} className="rc-unmatched-item">
                   <div className="rc-unmatched-row"><span className="rc-um-date">{b.date}</span><span className="rc-um-desc">{getDesc(b)}</span><span className={`rc-um-amt ${getDir(b) === 'debit' ? 'out' : 'in'}`}>{getDir(b) === 'debit' ? `-¥${fmt(getAmt(b))}` : `+¥${fmt(getAmt(b))}`}</span></div>
+                  {b._source && <div className="rc-um-source">来源: {b._source.fileName} 第{b._source.row}行</div>}
                   {aiDiagnosis[b.id] ? (
+                    aiDiagnosis[b.id].loading ? <div className="rc-ai-diagnosis"><div className="rc-ai-diagnosis-reason">⏳ 正在分析...</div></div> : (
                     <div className="rc-ai-diagnosis">
                       <div className="rc-ai-diagnosis-reason">🔍 {aiDiagnosis[b.id].explanation || aiDiagnosis[b.id].summary}</div>
-                      {aiDiagnosis[b.id].debitAccount && <div className="rc-ai-diagnosis-voucher">📝 建议: 借:{aiDiagnosis[b.id].debitAccount} / 贷:{aiDiagnosis[b.id].creditAccount} ¥{fmt(aiDiagnosis[b.id].amount)}</div>}
-                    </div>
+                      {aiDiagnosis[b.id].debitAccount && (
+                        <div className="rc-ai-voucher-card">
+                          <div className="rc-ai-voucher-title">建议补录凭证</div>
+                          <div className="rc-ai-voucher-entry"><span className="rc-ai-voucher-dir debit">借</span><span className="rc-ai-voucher-acct">{aiDiagnosis[b.id].debitAccount}</span><span className="rc-ai-voucher-amt">¥{fmt(aiDiagnosis[b.id].amount)}</span></div>
+                          <div className="rc-ai-voucher-entry"><span className="rc-ai-voucher-dir credit">贷</span><span className="rc-ai-voucher-acct">{aiDiagnosis[b.id].creditAccount}</span><span className="rc-ai-voucher-amt">¥{fmt(aiDiagnosis[b.id].amount)}</span></div>
+                          {aiDiagnosis[b.id].summary && <div className="rc-ai-voucher-summary">摘要: {aiDiagnosis[b.id].summary}</div>}
+                          <button className="rc-ai-voucher-copy" onClick={() => {
+                            const text = `借: ${aiDiagnosis[b.id].debitAccount}  ¥${fmt(aiDiagnosis[b.id].amount)}\n贷: ${aiDiagnosis[b.id].creditAccount}  ¥${fmt(aiDiagnosis[b.id].amount)}\n摘要: ${aiDiagnosis[b.id].summary || getDesc(b)}`;
+                            navigator.clipboard?.writeText(text);
+                          }}>复制分录</button>
+                          <div className="rc-ai-voucher-disclaimer">仅供参考，请结合企业科目表调整后入账</div>
+                        </div>
+                      )}
+                    </div>)
                   ) : (
                     <button className="rc-ai-btn" onClick={() => {
                       setAiDiagnosis(prev => ({ ...prev, [b.id]: { loading: true } }));
                       aiSuggestVoucher(b, 'bank_only').then(r => setAiDiagnosis(prev => ({ ...prev, [b.id]: r }))).catch(() => setAiDiagnosis(prev => ({ ...prev, [b.id]: { explanation: '分析失败，请重试' } })));
-                    }}>AI 诊断</button>
+                    }}>AI 诊断 · 建议调账</button>
                   )}
                 </div>
               ))}</div>)}
               {matchResults.unmatchedLedger.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">企业未达 ({matchResults.unmatchedLedger.length})</div>{matchResults.unmatchedLedger.map(l => (
                 <div key={l.id} className="rc-unmatched-item">
                   <div className="rc-unmatched-row"><span className="rc-um-date">{l.date}</span><span className="rc-um-desc">{getDesc(l)}</span><span className={`rc-um-amt ${getDir(l) === 'debit' ? 'out' : 'in'}`}>{getDir(l) === 'debit' ? `-¥${fmt(getAmt(l))}` : `+¥${fmt(getAmt(l))}`}</span></div>
+                  {l._source && <div className="rc-um-source">来源: {l._source.fileName} 第{l._source.row}行</div>}
                   {aiDiagnosis[l.id] ? (
+                    aiDiagnosis[l.id].loading ? <div className="rc-ai-diagnosis"><div className="rc-ai-diagnosis-reason">⏳ 正在分析...</div></div> : (
                     <div className="rc-ai-diagnosis">
                       <div className="rc-ai-diagnosis-reason">🔍 {aiDiagnosis[l.id].explanation || aiDiagnosis[l.id].summary}</div>
-                      {aiDiagnosis[l.id].debitAccount && <div className="rc-ai-diagnosis-voucher">📝 建议: 借:{aiDiagnosis[l.id].debitAccount} / 贷:{aiDiagnosis[l.id].creditAccount} ¥{fmt(aiDiagnosis[l.id].amount)}</div>}
-                    </div>
+                      {aiDiagnosis[l.id].debitAccount && (
+                        <div className="rc-ai-voucher-card">
+                          <div className="rc-ai-voucher-title">建议补录凭证</div>
+                          <div className="rc-ai-voucher-entry"><span className="rc-ai-voucher-dir debit">借</span><span className="rc-ai-voucher-acct">{aiDiagnosis[l.id].debitAccount}</span><span className="rc-ai-voucher-amt">¥{fmt(aiDiagnosis[l.id].amount)}</span></div>
+                          <div className="rc-ai-voucher-entry"><span className="rc-ai-voucher-dir credit">贷</span><span className="rc-ai-voucher-acct">{aiDiagnosis[l.id].creditAccount}</span><span className="rc-ai-voucher-amt">¥{fmt(aiDiagnosis[l.id].amount)}</span></div>
+                          {aiDiagnosis[l.id].summary && <div className="rc-ai-voucher-summary">摘要: {aiDiagnosis[l.id].summary}</div>}
+                          <button className="rc-ai-voucher-copy" onClick={() => {
+                            const text = `借: ${aiDiagnosis[l.id].debitAccount}  ¥${fmt(aiDiagnosis[l.id].amount)}\n贷: ${aiDiagnosis[l.id].creditAccount}  ¥${fmt(aiDiagnosis[l.id].amount)}\n摘要: ${aiDiagnosis[l.id].summary || getDesc(l)}`;
+                            navigator.clipboard?.writeText(text);
+                          }}>复制分录</button>
+                          <div className="rc-ai-voucher-disclaimer">仅供参考，请结合企业科目表调整后入账</div>
+                        </div>
+                      )}
+                    </div>)
                   ) : (
                     <button className="rc-ai-btn" onClick={() => {
                       setAiDiagnosis(prev => ({ ...prev, [l.id]: { loading: true } }));
                       aiSuggestVoucher(l, 'ledger_only').then(r => setAiDiagnosis(prev => ({ ...prev, [l.id]: r }))).catch(() => setAiDiagnosis(prev => ({ ...prev, [l.id]: { explanation: '分析失败，请重试' } })));
-                    }}>AI 诊断</button>
+                    }}>AI 诊断 · 建议调账</button>
                   )}
                 </div>
               ))}</div>)}

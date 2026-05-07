@@ -2929,3 +2929,84 @@ tr.rc-lt-total-row td {
   border-bottom: 1px solid var(--rc-border, #f0f0f0);
 }
 .rc-unmatched-item:last-child { border-bottom: none; }
+.rc-um-source {
+  font-size: 11px;
+  color: #999;
+  padding: 2px 0 0;
+}
+.rc-ai-voucher-card {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  background: rgba(61, 213, 152, 0.04);
+  border: 1px solid rgba(61, 213, 152, 0.2);
+  border-radius: 8px;
+}
+.rc-ai-voucher-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rc-text1);
+  margin-bottom: 8px;
+}
+.rc-ai-voucher-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.rc-ai-voucher-dir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.rc-ai-voucher-dir.debit {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+.rc-ai-voucher-dir.credit {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+.rc-ai-voucher-acct {
+  flex: 1;
+  color: var(--rc-text1);
+}
+.rc-ai-voucher-amt {
+  font-weight: 500;
+  color: var(--rc-text1);
+  font-variant-numeric: tabular-nums;
+}
+.rc-ai-voucher-summary {
+  font-size: 12px;
+  color: var(--rc-text3);
+  padding: 4px 0 0;
+}
+.rc-ai-voucher-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--rc-accent, #3DD598);
+  background: rgba(61, 213, 152, 0.08);
+  border: 1px solid rgba(61, 213, 152, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.rc-ai-voucher-copy:active {
+  background: rgba(61, 213, 152, 0.15);
+}
+.rc-ai-voucher-disclaimer {
+  font-size: 11px;
+  color: #999;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(0,0,0,0.06);
+}
