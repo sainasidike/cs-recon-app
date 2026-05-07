@@ -1214,39 +1214,25 @@ export default function ReconApp() {
 
           {history.filter(h => h.status === 'completed').length === 0 && (
             <div className="rc-home-scenes">
-              <div className="rc-home-scenes-title">选择你的对账场景</div>
-              <div className="rc-home-scene-card" onClick={() => fileInputRef.current?.click()}>
-                <div className="rc-home-scene-icon">🏦</div>
-                <div className="rc-home-scene-body">
-                  <div className="rc-home-scene-name">银行对账</div>
-                  <div className="rc-home-scene-upload">上传：银行流水 + 企业账簿</div>
-                  <div className="rc-home-scene-ai">AI 逐笔匹配，找出未达账项</div>
-                </div>
+              <div className="rc-home-scenes-title">支持的对账场景</div>
+              <div className="rc-home-scene-list">
+                <div className="rc-home-scene-item"><span className="rc-home-scene-name">银行对账</span><span className="rc-home-scene-desc">银行流水 vs 企业账簿，找出未达账项</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-name">往来核对</span><span className="rc-home-scene-desc">供应商对账单 vs 应付台账，定位差异笔</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-name">发票核验</span><span className="rc-home-scene-desc">发票 vs 合同/入库单，查多开漏开</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-name">费用报销</span><span className="rc-home-scene-desc">报销单 vs 银行回单，验证是否已付</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-name">税务对账</span><span className="rc-home-scene-desc">申报表 vs 税务台账，防漏报多报</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-name">工资核对</span><span className="rc-home-scene-desc">工资表 vs 银行代发明细，查分毫差异</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-name">现金盘点</span><span className="rc-home-scene-desc">现金日记账 vs 盘点表，核实余额</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-name">固定资产</span><span className="rc-home-scene-desc">资产台账 vs 盘点清单，查缺漏</span></div>
               </div>
-              <div className="rc-home-scene-card" onClick={() => fileInputRef.current?.click()}>
-                <div className="rc-home-scene-icon">🧾</div>
-                <div className="rc-home-scene-body">
-                  <div className="rc-home-scene-name">发票核验</div>
-                  <div className="rc-home-scene-upload">上传：发票 + 合同 / 入库单</div>
-                  <div className="rc-home-scene-ai">AI 交叉比对，查出多开漏开</div>
-                </div>
-              </div>
-              <div className="rc-home-scene-card" onClick={() => fileInputRef.current?.click()}>
-                <div className="rc-home-scene-icon">💰</div>
-                <div className="rc-home-scene-body">
-                  <div className="rc-home-scene-name">费用报销</div>
-                  <div className="rc-home-scene-upload">上传：报销单 + 银行回单</div>
-                  <div className="rc-home-scene-ai">AI 匹配付款记录，验证是否已付</div>
-                </div>
-              </div>
-              <div className="rc-home-scene-card" onClick={() => fileInputRef.current?.click()}>
-                <div className="rc-home-scene-icon">📊</div>
-                <div className="rc-home-scene-body">
-                  <div className="rc-home-scene-name">税务对账</div>
-                  <div className="rc-home-scene-upload">上传：申报表 + 税务台账</div>
-                  <div className="rc-home-scene-ai">AI 核对申报数据，防止漏报多报</div>
-                </div>
-              </div>
+              <button className="rc-home-demo-btn" onClick={() => {
+                setFiles([{ name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'demo' }]);
+                setPreviewUrls([null]);
+                startAnalyze(true);
+              }}>
+                <span>体验 Demo 对账</span>
+                <span className="rc-home-demo-btn-sub">锦鲤餐饮 · 20笔银行流水 vs 20笔账簿 · 完整流程</span>
+              </button>
             </div>
           )}
 
