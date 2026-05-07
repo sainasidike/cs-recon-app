@@ -450,8 +450,8 @@ export default function ReconApp() {
           const results = runMatching(BANK_DATA, LEDGER_DATA);
           setMatchResults(results);
           setDocs([
-            { id: 'demo-bank', name: '备用金报销明细_新程科技_202501.jpg', type: 'bank', typeLabel: '报销明细' },
-            { id: 'demo-ledger', name: '银行回单_工商银行_202501.png', type: 'ledger', typeLabel: '银行回单' },
+            { id: 'demo-bank', name: '备用金报销明细_新程科技_202501.jpg', type: 'expense_claim', typeLabel: '报销明细', previewUrl: '/recon-assets/demo/expense-claim.jpg' },
+            { id: 'demo-ledger', name: '银行回单_工商银行_202501.png', type: 'receipt', typeLabel: '银行回单', previewUrl: '/recon-assets/demo/bank-receipt.png' },
           ]);
           setFlowMode('recon');
           setStep('results');
@@ -1268,9 +1268,12 @@ export default function ReconApp() {
                 <div className="rc-home-scene-item"><span className="rc-home-scene-icon">🏢</span><span className="rc-home-scene-name">固定资产</span><span className="rc-home-scene-desc">资产台账 vs 盘点清单</span></div>
               </div>
               <button className="rc-home-demo-btn" onClick={() => {
-                setFiles([{ name: '备用金报销明细_新程科技_202501.jpg', type: 'demo' }]);
-                setPreviewUrls([null]);
-                startAnalyze(true);
+                setDocs([
+                  { id: 'demo-bank', name: '备用金报销明细_新程科技_202501.jpg', type: 'expense_claim', typeLabel: '报销明细', previewUrl: '/recon-assets/demo/expense-claim.jpg' },
+                  { id: 'demo-ledger', name: '银行回单_工商银行_202501.png', type: 'receipt', typeLabel: '银行回单', previewUrl: '/recon-assets/demo/bank-receipt.png' },
+                ]);
+                setFlowMode('recon');
+                setStep('list');
               }}>
                 <span>体验 Demo 对账</span>
                 <span className="rc-home-demo-btn-sub">新程科技 · 15笔报销明细 vs 13笔银行回单 · 完整流程</span>
@@ -2027,7 +2030,10 @@ export default function ReconApp() {
               <div className="rc-list-doc-hint" style={{ background: 'rgba(0,180,80,0.08)', borderColor: '#00b450' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b450" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 <span>已识别「<strong>{sc.name}</strong>」场景，文档齐全，可以开始对账</span>
-                <button className="rc-list-hint-btn" onClick={() => startAnalyze()}>去对账</button>
+                <button className="rc-list-hint-btn" onClick={() => {
+                  const hasRealFiles = docs.some(d => d.file || d.processedUrl);
+                  startAnalyze(!hasRealFiles, docs);
+                }}>去对账</button>
               </div>
             );
             return null;
