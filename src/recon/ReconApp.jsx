@@ -1212,18 +1212,20 @@ export default function ReconApp() {
           </div>
           <p style={{ fontSize: 11, color: 'var(--rc-text3)', textAlign: 'center', marginTop: 8 }}>支持 JPG、PNG、PDF、Excel、CSV</p>
 
-          <div className="rc-home-guide">
-            <div className="rc-home-guide-title">支持的文档类型</div>
-            <div className="rc-home-guide-tags">
-              <span>银行流水</span><span>台账</span><span>财务记录</span><span>银行凭证</span><span>结算单</span>
-              <span>账单</span><span>发票</span><span>结账单</span><span>完税证明</span><span>收据</span>
+          {history.length === 0 && (
+            <div className="rc-home-guide">
+              <div className="rc-home-guide-title">支持的文档类型</div>
+              <div className="rc-home-guide-tags">
+                <span>银行流水</span><span>台账</span><span>财务记录</span><span>银行凭证</span><span>结算单</span>
+                <span>账单</span><span>发票</span><span>结账单</span><span>完税证明</span><span>收据</span>
+              </div>
+              <div className="rc-home-guide-title" style={{ marginTop: 14 }}>常见对账场景</div>
+              <div className="rc-home-guide-list">
+                <span>银行对账</span><span>往来核对</span><span>发票核验</span><span>费用报销</span>
+                <span>税务对账</span><span>工资核对</span><span>现金盘点</span><span>固定资产</span>
+              </div>
             </div>
-            <div className="rc-home-guide-title" style={{ marginTop: 14 }}>常见对账场景</div>
-            <div className="rc-home-guide-list">
-              <span>银行对账</span><span>往来核对</span><span>发票核验</span><span>费用报销</span>
-              <span>税务对账</span><span>工资核对</span><span>现金盘点</span><span>固定资产</span>
-            </div>
-          </div>
+          )}
 
           {history.length > 0 && (
             <div className="rc-history" style={{ marginTop: 24 }}>
