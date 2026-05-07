@@ -185,6 +185,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans
   padding: 48px 56px;
   max-width: 900px;
   width: 100%;
+  min-height: 1100px;
   font-size: 13px;
   line-height: 1.8;
 }
@@ -759,6 +760,15 @@ window.addEventListener('message', function(e) {
     var file = e.data.file;
     if (!file) return;
     renderFileInLeftPanel(file);
+  }
+
+  if (e.data.type === 'recon-step') {
+    var leftPanel = document.querySelector('.cs-recon-split-left');
+    if (e.data.step === 'home') {
+      leftPanel.style.display = 'flex';
+    } else {
+      leftPanel.style.display = 'none';
+    }
   }
 
   if (e.data.type === 'recon-save-result') {
