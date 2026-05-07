@@ -292,6 +292,7 @@ export default function ReconApp() {
   const [parsedPreview, setParsedPreview] = useState(null);
   const [dataWarnings, setDataWarnings] = useState(null);
   const [anomalies, setAnomalies] = useState([]);
+  const [demoUploadFiles, setDemoUploadFiles] = useState(null);
   const [aiDiagnosis, setAiDiagnosis] = useState({});
   const [aiDiffAnalysis, setAiDiffAnalysis] = useState({});
   const [aiSummary, setAiSummary] = useState(null);
@@ -400,37 +401,61 @@ export default function ReconApp() {
     setParseResult(null);
 
     if (demoMode) {
-      const steps = [
-        { text: '正在进行 OCR 文字识别...', delay: 200 },
-        { text: '识别到表格结构，提取数据中...', delay: 500 },
-        { text: '检测到文档类型：银行对账单', delay: 800 },
-        { text: '解析 20 笔交易记录', delay: 1100 },
-        { text: '加载企业账簿，解析 20 笔记账凭证', delay: 1400 },
-        { text: '执行精确匹配（金额+日期完全一致）...', delay: 1700 },
-        { text: '执行模糊匹配（日期容差±3天）...', delay: 2000 },
-        { text: '执行语义匹配（描述相似度分析）...', delay: 2300 },
-        { text: '检测未达账项，生成匹配报告...', delay: 2600 },
+      const demoFiles = [
+        { name: '银行对账单_锦鲤餐饮_202604.xlsx', size: '126 KB' },
+        { name: '企业账簿_锦鲤餐饮_202604.xlsx', size: '98 KB' },
       ];
-      steps.forEach(({ text, delay }) => {
-        setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
-      });
-      setTimeout(() => {
-        const rd = {
-          bankEntries: BANK_DATA, ledgerEntries: LEDGER_DATA,
-          companyInfo: COMPANY_INFO,
-          bankTotalOut: BANK_TOTAL_OUT, bankTotalIn: BANK_TOTAL_IN,
-          ledgerTotalDebit: LEDGER_TOTAL_DEBIT, ledgerTotalCredit: LEDGER_TOTAL_CREDIT,
-        };
-        setReconData(rd);
-        const results = runMatching(BANK_DATA, LEDGER_DATA);
-        setMatchResults(results);
-        setDocs([
-          { id: 'demo-bank', name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'bank', typeLabel: '银行流水' },
-          { id: 'demo-ledger', name: '企业账簿_锦鲤餐饮_202604.xlsx', type: 'ledger', typeLabel: '企业账簿' },
+      setDemoUploadFiles(demoFiles.map(f => ({ ...f, progress: 0 })));
+
+      // Animate upload progress
+      const uploadDuration = 1800;
+      const tick = 50;
+      let elapsed = 0;
+      const timer = setInterval(() => {
+        elapsed += tick;
+        const p1 = Math.min(100, Math.round((elapsed / (uploadDuration * 0.55)) * 100));
+        const p2 = Math.min(100, Math.round(((elapsed - uploadDuration * 0.3) / (uploadDuration * 0.55)) * 100));
+        setDemoUploadFiles([
+          { ...demoFiles[0], progress: p1 },
+          { ...demoFiles[1], progress: Math.max(0, p2) },
         ]);
-        setFlowMode('recon');
-        setStep('results');
-      }, 3000);
+        if (elapsed >= uploadDuration) clearInterval(timer);
+      }, tick);
+
+      setTimeout(() => {
+        setDemoUploadFiles(null);
+        const steps = [
+          { text: '正在进行 OCR 文字识别...', delay: 200 },
+          { text: '识别到表格结构，提取数据中...', delay: 500 },
+          { text: '检测到文档类型：银行对账单', delay: 800 },
+          { text: '解析 20 笔交易记录', delay: 1100 },
+          { text: '加载企业账簿，解析 20 笔记账凭证', delay: 1400 },
+          { text: '执行精确匹配（金额+日期完全一致）...', delay: 1700 },
+          { text: '执行模糊匹配（日期容差±3天）...', delay: 2000 },
+          { text: '执行语义匹配（描述相似度分析）...', delay: 2300 },
+          { text: '检测未达账项，生成匹配报告...', delay: 2600 },
+        ];
+        steps.forEach(({ text, delay }) => {
+          setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
+        });
+        setTimeout(() => {
+          const rd = {
+            bankEntries: BANK_DATA, ledgerEntries: LEDGER_DATA,
+            companyInfo: COMPANY_INFO,
+            bankTotalOut: BANK_TOTAL_OUT, bankTotalIn: BANK_TOTAL_IN,
+            ledgerTotalDebit: LEDGER_TOTAL_DEBIT, ledgerTotalCredit: LEDGER_TOTAL_CREDIT,
+          };
+          setReconData(rd);
+          const results = runMatching(BANK_DATA, LEDGER_DATA);
+          setMatchResults(results);
+          setDocs([
+            { id: 'demo-bank', name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'bank', typeLabel: '银行流水' },
+            { id: 'demo-ledger', name: '企业账簿_锦鲤餐饮_202604.xlsx', type: 'ledger', typeLabel: '企业账簿' },
+          ]);
+          setFlowMode('recon');
+          setStep('results');
+        }, 3000);
+      }, uploadDuration);
       return;
     }
 
@@ -1563,22 +1588,50 @@ export default function ReconApp() {
       {/* ANALYZE - OCR + AI Matching combined */}
       {step === 'analyze' && (
         <div className="rc-section rc-center">
-          <div className="rc-analysis">
-            <div className="rc-analysis-brain">
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.3">
-                <path d="M12 2a7 7 0 00-7 7c0 2.5 1.5 4.5 3 6l1 3h6l1-3c1.5-1.5 3-3.5 3-6a7 7 0 00-7-7z" />
-                <path d="M9 18h6M10 21h4" />
-              </svg>
-              <div className="rc-analysis-pulse" />
+          {demoUploadFiles ? (
+            <div className="rc-analysis">
+              <div className="rc-upload-anim-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="12" y1="18" x2="12" y2="12" />
+                  <polyline points="9 15 12 12 15 15" />
+                </svg>
+              </div>
+              <h3>上传文档中</h3>
+              <div className="rc-upload-anim-list">
+                {demoUploadFiles.map((f, i) => (
+                  <div key={i} className="rc-upload-anim-file">
+                    <div className="rc-upload-anim-file-info">
+                      <span className="rc-upload-anim-file-name">{f.name}</span>
+                      <span className="rc-upload-anim-file-size">{f.size}</span>
+                    </div>
+                    <div className="rc-upload-anim-bar">
+                      <div className="rc-upload-anim-bar-fill" style={{ width: `${f.progress}%` }} />
+                    </div>
+                    <span className="rc-upload-anim-pct">{f.progress}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <h3>AI 识别与对账中</h3>
-            <div className="rc-analysis-steps">
-              {parseSteps.map((s, i) => (
-                <div key={i} className="rc-analysis-step"><span className="rc-analysis-check">✓</span><span>{s}</span></div>
-              ))}
-              <div className="rc-analysis-step loading"><div className="rc-mini-spinner" /><span>处理中...</span></div>
+          ) : (
+            <div className="rc-analysis">
+              <div className="rc-analysis-brain">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.3">
+                  <path d="M12 2a7 7 0 00-7 7c0 2.5 1.5 4.5 3 6l1 3h6l1-3c1.5-1.5 3-3.5 3-6a7 7 0 00-7-7z" />
+                  <path d="M9 18h6M10 21h4" />
+                </svg>
+                <div className="rc-analysis-pulse" />
+              </div>
+              <h3>AI 识别与对账中</h3>
+              <div className="rc-analysis-steps">
+                {parseSteps.map((s, i) => (
+                  <div key={i} className="rc-analysis-step"><span className="rc-analysis-check">✓</span><span>{s}</span></div>
+                ))}
+                <div className="rc-analysis-step loading"><div className="rc-mini-spinner" /><span>处理中...</span></div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
