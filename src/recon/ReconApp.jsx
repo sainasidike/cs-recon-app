@@ -1965,6 +1965,7 @@ export default function ReconApp() {
               <div className="rc-list-doc-hint" style={{ background: 'rgba(0,180,80,0.08)', borderColor: '#00b450' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b450" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 <span>已识别「<strong>{sc.name}</strong>」场景，文档齐全，可以开始对账</span>
+                <button className="rc-list-hint-btn" onClick={() => startAnalyze()}>去对账</button>
               </div>
             );
             return null;
