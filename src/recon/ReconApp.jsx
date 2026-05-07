@@ -1796,11 +1796,27 @@ export default function ReconApp() {
                   input.accept = '.jpg,.jpeg,.png,.pdf,.xlsx,.xls,.csv';
                   input.multiple = true;
                   input.onchange = (e) => {
-                    const newFiles = Array.from(e.target.files);
-                    if (newFiles.length > 0) {
-                      setFiles(prev => [...prev, ...newFiles.map(f => ({ name: f.name, file: f }))]);
-                      setPreviewUrls(prev => [...prev, ...newFiles.map(() => null)]);
-                    }
+                    const newFiles = Array.from(e.target.files).filter(f =>
+                      f.type.startsWith('image/') || f.type === 'application/pdf' ||
+                      f.type.includes('spreadsheet') || f.type.includes('excel') || f.type === 'text/csv' ||
+                      /\.(xlsx|xls|csv|pdf|jpg|jpeg|png)$/i.test(f.name)
+                    );
+                    if (newFiles.length === 0) return;
+                    setFiles(newFiles);
+                    setCurrentFileIdx(0);
+                    setCropBoxes(newFiles.map(() => ({ x: 0.03, y: 0.03, w: 0.94, h: 0.94 })));
+                    newFiles.forEach((file, i) => {
+                      if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          setPreviewUrls(prev => { const n = [...prev]; n[i] = ev.target.result; return n; });
+                        };
+                        reader.readAsDataURL(file);
+                      } else {
+                        setPreviewUrls(prev => { const n = [...prev]; n[i] = null; return n; });
+                      }
+                    });
+                    setStep('edit');
                   };
                   input.click();
                 }}>补充上传文档</button>
