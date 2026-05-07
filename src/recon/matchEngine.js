@@ -296,7 +296,7 @@ export function runMatching(sideA, sideB) {
       else if (amtMatch && dd <= 7) score = 70 + ts * 15;
       else if (amtMatch && dd <= 14) score = 65 + ts * 15;
       else if (amtMatch && dd <= 21) score = 60 + ts * 15;
-      else if (Math.abs(aAmt - bAmt) / Math.max(aAmt, 1) < 0.05 && dd <= 14) score = 60 + ts * 20;
+      else if (Math.abs(aAmt - bAmt) / Math.max(aAmt, 1) < 0.01 && dd <= 14) score = 60 + ts * 20;
 
       if (score > bestScore) {
         bestScore = score;
