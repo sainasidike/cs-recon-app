@@ -1802,6 +1802,8 @@ export default function ReconApp() {
                       /\.(xlsx|xls|csv|pdf|jpg|jpeg|png)$/i.test(f.name)
                     );
                     if (newFiles.length === 0) return;
+                    setMatchResults(null);
+                    setReconData(null);
                     setFiles(newFiles);
                     setCurrentFileIdx(0);
                     setCropBoxes(newFiles.map(() => ({ x: 0.03, y: 0.03, w: 0.94, h: 0.94 })));
