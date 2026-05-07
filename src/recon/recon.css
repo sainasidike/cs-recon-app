@@ -2122,6 +2122,7 @@ tr.rc-lt-total-row td {
   font-size: 13px;
   font-weight: 600;
   color: var(--rc-text2);
+  margin-top: 24px;
   margin-bottom: 12px;
 }
 .rc-home-scene-table {
