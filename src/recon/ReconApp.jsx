@@ -152,12 +152,17 @@ const RECON_SCENARIOS = {
 
 function classifyDoc(name) {
   const n = (name || '').toLowerCase();
-  // 税务对账（优先级高，避免被通用"增值税→invoice"或"账簿→ledger"抢走）
+  // 具体复合词优先（避免被通用单字规则抢走）
   if (/纳税|申报表|税务申报|tax.*return|报税/i.test(n)) return 'tax_return';
   if (/税.*汇总|税.*台账|tax.*ledger|税.*明细|增值税.*明细/i.test(n)) return 'tax_ledger';
+  if (/银行回单|回单|付款凭证/i.test(n)) return 'receipt';
+  if (/银行代发|代发明细|代付/i.test(n)) return 'bank_payroll';
+  if (/现金.*日记|cash.*journal|现金.*账/i.test(n)) return 'cash_journal';
+  if (/资产.*台账|asset.*ledger|固定资产.*表/i.test(n)) return 'asset_ledger';
+  if (/资产.*发票|asset.*invoice|资产.*入库/i.test(n)) return 'asset_invoice';
   // 银行对账
   if (/银行|bank|流水|account.?statement/i.test(n)) return 'bank';
-  if (/账簿|ledger|凭证|记账|总账|voucher/i.test(n)) return 'ledger';
+  if (/账簿|ledger|凭证|总账|voucher/i.test(n)) return 'ledger';
   // 往来对账
   if (/供应商|客户.*对账|往来|vendor.*statement|customer.*statement/i.test(n)) return 'supplier_stmt';
   if (/应收|应付|ar|ap|receivable|payable/i.test(n)) return 'ar_ap';
@@ -166,17 +171,14 @@ function classifyDoc(name) {
   if (/合同|contract|入库|验收|采购订单|purchase.*order/i.test(n)) return 'contract';
   // 费用报销
   if (/报销|expense.*claim|reimburse/i.test(n)) return 'expense_claim';
-  if (/银行回单|回单|receipt|付款凭证/i.test(n)) return 'receipt';
+  if (/receipt/i.test(n)) return 'receipt';
   // 现金对账
-  if (/现金.*日记|cash.*journal|现金.*账/i.test(n)) return 'cash_journal';
   if (/收据|小票|cash.*receipt|petty/i.test(n)) return 'cash_receipt';
   // 工资对账
   if (/工资|薪资|payroll|salary|薪酬/i.test(n)) return 'payroll';
-  if (/代发|bank.*payroll|工资.*明细|代付/i.test(n)) return 'bank_payroll';
-  // 固定资产对账
-  if (/资产.*台账|asset.*ledger|固定资产.*表/i.test(n)) return 'asset_ledger';
-  if (/资产.*发票|asset.*invoice|资产.*入库/i.test(n)) return 'asset_invoice';
+  if (/代发|bank.*payroll|工资.*明细/i.test(n)) return 'bank_payroll';
   // 通用 — 按对账单关键字
+  if (/记账/i.test(n)) return 'ledger';
   if (/对账单|对账/i.test(n)) return 'supplier_stmt';
   return 'unknown';
 }
