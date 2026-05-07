@@ -997,11 +997,11 @@ body {
   background: var(--rc-accent-light);
 }
 .rc-home-hero-right {
-  width: 120px;
+  width: 150px;
   flex-shrink: 0;
 }
 .rc-home-hero-img {
-  width: 120px;
+  width: 150px;
   height: auto;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
