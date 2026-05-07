@@ -1287,7 +1287,17 @@ export default function ReconApp() {
               ) : (
                 <div className="rc-home-history-list">
                   {history.map(h => (
-                    <div key={h.id} className="rc-home-history-item" onClick={() => { setAllDocsProject(h); setStep('alldocs'); }}>
+                    <div key={h.id} className="rc-home-history-item" onClick={() => {
+                      if (h.status === 'completed' && h.savedMatchResults && h.savedReconData) {
+                        setMatchResults(h.savedMatchResults);
+                        setReconData(h.savedReconData);
+                        setDocs(h.docs || []);
+                        setStep('report');
+                      } else {
+                        setAllDocsProject(h);
+                        setStep('alldocs');
+                      }
+                    }}>
                       <div className="rc-home-history-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={h.status === 'completed' ? '#3DD598' : '#f5a623'} strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
                       </div>
