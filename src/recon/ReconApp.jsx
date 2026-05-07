@@ -1036,7 +1036,7 @@ export default function ReconApp() {
                 {(() => {
                   const allFiles = [
                     ...(allDocsProject.docs || []).map(d => ({ ...d, category: 'source' })),
-                    ...(allDocsProject.status === 'completed' ? (allDocsProject.resultDocs || []).map(d => ({ ...d, category: 'result' })) : [])
+                    ...(allDocsProject.status === 'completed' ? (allDocsProject.resultDocs || []).filter(d => d.type !== 'result_report').map(d => ({ ...d, category: 'result' })) : [])
                   ];
                   if (allFiles.length === 0) {
                     return (
