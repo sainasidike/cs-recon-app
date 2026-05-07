@@ -1213,16 +1213,39 @@ export default function ReconApp() {
           <p style={{ fontSize: 11, color: 'var(--rc-text3)', textAlign: 'center', marginTop: 8 }}>支持 JPG、PNG、PDF、Excel、CSV</p>
 
           {history.filter(h => h.status === 'completed').length === 0 && (
-            <div className="rc-home-guide">
-              <div className="rc-home-guide-title">支持的文档类型</div>
-              <div className="rc-home-guide-tags">
-                <span>银行流水</span><span>台账</span><span>财务记录</span><span>银行凭证</span><span>结算单</span>
-                <span>账单</span><span>发票</span><span>结账单</span><span>完税证明</span><span>收据</span>
+            <div className="rc-home-scenes">
+              <div className="rc-home-scenes-title">选择你的对账场景</div>
+              <div className="rc-home-scene-card" onClick={() => fileInputRef.current?.click()}>
+                <div className="rc-home-scene-icon">🏦</div>
+                <div className="rc-home-scene-body">
+                  <div className="rc-home-scene-name">银行对账</div>
+                  <div className="rc-home-scene-upload">上传：银行流水 + 企业账簿</div>
+                  <div className="rc-home-scene-ai">AI 逐笔匹配，找出未达账项</div>
+                </div>
               </div>
-              <div className="rc-home-guide-title" style={{ marginTop: 14 }}>常见对账场景</div>
-              <div className="rc-home-guide-list">
-                <span>银行对账</span><span>往来核对</span><span>发票核验</span><span>费用报销</span>
-                <span>税务对账</span><span>工资核对</span><span>现金盘点</span><span>固定资产</span>
+              <div className="rc-home-scene-card" onClick={() => fileInputRef.current?.click()}>
+                <div className="rc-home-scene-icon">🧾</div>
+                <div className="rc-home-scene-body">
+                  <div className="rc-home-scene-name">发票核验</div>
+                  <div className="rc-home-scene-upload">上传：发票 + 合同 / 入库单</div>
+                  <div className="rc-home-scene-ai">AI 交叉比对，查出多开漏开</div>
+                </div>
+              </div>
+              <div className="rc-home-scene-card" onClick={() => fileInputRef.current?.click()}>
+                <div className="rc-home-scene-icon">💰</div>
+                <div className="rc-home-scene-body">
+                  <div className="rc-home-scene-name">费用报销</div>
+                  <div className="rc-home-scene-upload">上传：报销单 + 银行回单</div>
+                  <div className="rc-home-scene-ai">AI 匹配付款记录，验证是否已付</div>
+                </div>
+              </div>
+              <div className="rc-home-scene-card" onClick={() => fileInputRef.current?.click()}>
+                <div className="rc-home-scene-icon">📊</div>
+                <div className="rc-home-scene-body">
+                  <div className="rc-home-scene-name">税务对账</div>
+                  <div className="rc-home-scene-upload">上传：申报表 + 税务台账</div>
+                  <div className="rc-home-scene-ai">AI 核对申报数据，防止漏报多报</div>
+                </div>
               </div>
             </div>
           )}

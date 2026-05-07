@@ -1917,37 +1917,56 @@ tr.rc-lt-total-row td {
   color: var(--rc-text3);
   white-space: nowrap;
 }
-.rc-home-guide {
-  margin-top: 20px;
-  padding: 16px;
-  background: #f8f9fb;
-  border-radius: 12px;
+.rc-home-scenes {
+  margin-top: 24px;
 }
-.rc-home-guide-title {
-  font-size: 12px;
+.rc-home-scenes-title {
+  font-size: 13px;
   font-weight: 600;
   color: var(--rc-text2);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
-.rc-home-guide-tags,
-.rc-home-guide-list {
+.rc-home-scene-card {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.rc-home-guide-tags span,
-.rc-home-guide-list span {
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: #fff;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
   border: 1px solid var(--rc-border);
-  font-size: 11px;
-  color: var(--rc-text);
+  background: #fff;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s;
 }
-.rc-home-guide-list span {
-  background: rgba(61,213,152,0.06);
-  border-color: rgba(61,213,152,0.2);
+.rc-home-scene-card:active {
+  border-color: var(--rc-accent);
+  background: rgba(61,213,152,0.02);
+}
+.rc-home-scene-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.rc-home-scene-body {
+  flex: 1;
+  min-width: 0;
+}
+.rc-home-scene-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--rc-text);
+  margin-bottom: 4px;
+}
+.rc-home-scene-upload {
+  font-size: 12px;
+  color: var(--rc-text2);
+  margin-bottom: 2px;
+}
+.rc-home-scene-ai {
+  font-size: 12px;
   color: var(--rc-accent-dark);
+  font-weight: 500;
 }
 
 .rc-home-upload-row {
