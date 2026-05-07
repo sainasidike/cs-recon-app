@@ -1245,14 +1245,18 @@ export default function ReconApp() {
                   pair: { id: 'lib-ledger-jinli', name: 'ledger_锦鲤餐饮_202604', thumb: '/recon-assets/library/ledger_锦鲤餐饮_202604.png', type: 'ledger' } },
                 { id: 'lib-bank-xingchen', name: 'bank_招商银行流水_星辰科技_202603', date: '2026/4/29 18:05', pages: 1, thumb: '/recon-assets/library/bank_招商银行流水_星辰科技_202603.png', type: 'bank',
                   pair: { id: 'lib-ledger-xingchen', name: 'ledger_星辰科技_企业账簿_202603', thumb: '/recon-assets/library/ledger_星辰科技_企业账簿_202603.png', type: 'ledger' } },
-                { id: 'lib-tax', name: 'tax_增值税申报表_202603', date: '2026/4/29 14:33', pages: 1, thumb: '/recon-assets/library/tax_增值税申报表_202603.png', type: 'tax_return',
-                  pair: { id: 'lib-tax-book', name: 'book_企业账簿_增值税明细_202603', thumb: '/recon-assets/library/book_企业账簿_增值税明细_202603.png', type: 'tax_ledger' } },
+                { id: 'lib-tax', name: 'tax_增值税申报表_202603', date: '2026/4/29 14:33', pages: 1, thumb: '/recon-assets/library/tax_增值税申报表_202603.png', type: 'tax_return', single: true },
+                { id: 'lib-tax-book', name: 'book_企业账簿_增值税明细_202603', date: '2026/4/28 20:06', pages: 1, thumb: '/recon-assets/library/book_企业账簿_增值税明细_202603.png', type: 'tax_ledger', single: true },
               ].map(item => (
                 <div key={item.id} className="rc-home-doc-item" onClick={() => {
-                  setDocs([
-                    { id: item.id, name: item.name + '.png', type: item.type, previewUrl: item.thumb },
-                    { id: item.pair.id, name: item.pair.name + '.png', type: item.pair.type, previewUrl: item.pair.thumb },
-                  ]);
+                  if (item.single) {
+                    setDocs([{ id: item.id, name: item.name + '.png', type: item.type, previewUrl: item.thumb }]);
+                  } else {
+                    setDocs([
+                      { id: item.id, name: item.name + '.png', type: item.type, previewUrl: item.thumb },
+                      { id: item.pair.id, name: item.pair.name + '.png', type: item.pair.type, previewUrl: item.pair.thumb },
+                    ]);
+                  }
                   setFlowMode('recon');
                   setStep('list');
                 }}>
