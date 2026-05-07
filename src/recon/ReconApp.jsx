@@ -286,6 +286,7 @@ export default function ReconApp() {
   const [prevStep, setPrevStep] = useState(null);
   const [selectedDocIds, setSelectedDocIds] = useState(new Set());
   const [previewDocId, setPreviewDocId] = useState(null);
+  const [homeTab, setHomeTab] = useState('docs');
   const [allDocsFolder, setAllDocsFolder] = useState(null);
   const [allDocsProject, setAllDocsProject] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
@@ -1221,7 +1222,12 @@ export default function ReconApp() {
           </div>
 
           <div className="rc-home-section">
-            <div className="rc-home-section-label">选择文档</div>
+            <div className="rc-home-tabs">
+              <button className={`rc-home-tab ${homeTab === 'docs' ? 'active' : ''}`} onClick={() => setHomeTab('docs')}>选择文档</button>
+              <button className={`rc-home-tab ${homeTab === 'history' ? 'active' : ''}`} onClick={() => setHomeTab('history')}>历史记录</button>
+            </div>
+
+            {homeTab === 'docs' && <>
             <p className="rc-home-section-sub">新增或导入</p>
             <div className="rc-home-import-row">
               <button className="rc-home-import-btn" onClick={() => cameraInputRef.current?.click()}>
@@ -1239,9 +1245,7 @@ export default function ReconApp() {
                 <span>选择文档</span>
               </button>
             </div>
-          </div>
 
-          <div className="rc-home-section">
             <p className="rc-home-section-sub">选择应用内文档</p>
             <div className="rc-home-doc-list">
               {[
@@ -1272,6 +1276,34 @@ export default function ReconApp() {
                 </div>
               ))}
             </div>
+            </>}
+
+            {homeTab === 'history' && <>
+              {history.length === 0 ? (
+                <div className="rc-home-history-empty">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <p>暂无对账记录</p>
+                </div>
+              ) : (
+                <div className="rc-home-history-list">
+                  {history.map(h => (
+                    <div key={h.id} className="rc-home-history-item" onClick={() => { setAllDocsProject(h); setStep('alldocs'); }}>
+                      <div className="rc-home-history-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={h.status === 'completed' ? '#3DD598' : '#f5a623'} strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                      </div>
+                      <div className="rc-home-history-info">
+                        <div className="rc-home-history-name">{h.company} · {h.period}</div>
+                        <div className="rc-home-history-meta">
+                          {h.time}
+                          {h.status === 'completed' && <span className="rc-home-history-tag done">已完成</span>}
+                          {h.status === 'pending' && <span className="rc-home-history-tag pending">进行中</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>}
           </div>
 
 
