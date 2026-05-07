@@ -1234,14 +1234,62 @@ export default function ReconApp() {
             <div className="rc-home-scenes">
               <div className="rc-home-scenes-title">支持的对账场景</div>
               <div className="rc-home-scene-list">
-                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">🏦</span><span className="rc-home-scene-name">银行对账</span><span className="rc-home-scene-desc">银行流水 vs 企业账簿</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">🤝</span><span className="rc-home-scene-name">往来核对</span><span className="rc-home-scene-desc">供应商对账单 vs 应付台账</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">📄</span><span className="rc-home-scene-name">发票核验</span><span className="rc-home-scene-desc">发票 vs 合同/入库单</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">💰</span><span className="rc-home-scene-name">费用报销</span><span className="rc-home-scene-desc">报销单 vs 银行回单</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">📊</span><span className="rc-home-scene-name">税务对账</span><span className="rc-home-scene-desc">申报表 vs 税务台账</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">💼</span><span className="rc-home-scene-name">工资核对</span><span className="rc-home-scene-desc">工资表 vs 银行代发明细</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">💵</span><span className="rc-home-scene-name">现金盘点</span><span className="rc-home-scene-desc">现金日记账 vs 盘点表</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">🏢</span><span className="rc-home-scene-name">固定资产</span><span className="rc-home-scene-desc">资产台账 vs 盘点清单</span></div>
+                <div className="rc-home-scene-item">
+                  <span className="rc-home-scene-icon" style={{ background: '#eef4ff', color: '#4a90d9' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+                  </span>
+                  <span className="rc-home-scene-name">银行对账</span>
+                  <span className="rc-home-scene-desc">银行流水 vs 企业账簿</span>
+                </div>
+                <div className="rc-home-scene-item">
+                  <span className="rc-home-scene-icon" style={{ background: '#f3eeff', color: '#7c3aed' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+                  </span>
+                  <span className="rc-home-scene-name">往来核对</span>
+                  <span className="rc-home-scene-desc">供应商对账单 vs 应付台账</span>
+                </div>
+                <div className="rc-home-scene-item">
+                  <span className="rc-home-scene-icon" style={{ background: '#fef2f2', color: '#ef4444' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                  </span>
+                  <span className="rc-home-scene-name">发票核验</span>
+                  <span className="rc-home-scene-desc">发票 vs 合同/入库单</span>
+                </div>
+                <div className="rc-home-scene-item">
+                  <span className="rc-home-scene-icon" style={{ background: '#fdf2f8', color: '#ec4899' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="7" y1="15" x2="13" y2="15"/></svg>
+                  </span>
+                  <span className="rc-home-scene-name">费用报销</span>
+                  <span className="rc-home-scene-desc">报销单 vs 银行回单</span>
+                </div>
+                <div className="rc-home-scene-item">
+                  <span className="rc-home-scene-icon" style={{ background: '#fffbeb', color: '#d97706' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                  </span>
+                  <span className="rc-home-scene-name">税务对账</span>
+                  <span className="rc-home-scene-desc">申报表 vs 税务台账</span>
+                </div>
+                <div className="rc-home-scene-item">
+                  <span className="rc-home-scene-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/><line x1="6" y1="17" x2="14" y2="17"/></svg>
+                  </span>
+                  <span className="rc-home-scene-name">工资核对</span>
+                  <span className="rc-home-scene-desc">工资表 vs 银行代发明细</span>
+                </div>
+                <div className="rc-home-scene-item">
+                  <span className="rc-home-scene-icon" style={{ background: '#ecfdf5', color: '#059669' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                  </span>
+                  <span className="rc-home-scene-name">现金盘点</span>
+                  <span className="rc-home-scene-desc">现金日记账 vs 盘点表</span>
+                </div>
+                <div className="rc-home-scene-item">
+                  <span className="rc-home-scene-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="8" y1="12" x2="8" y2="12.01"/><line x1="16" y1="12" x2="16" y2="12.01"/></svg>
+                  </span>
+                  <span className="rc-home-scene-name">固定资产</span>
+                  <span className="rc-home-scene-desc">资产台账 vs 盘点清单</span>
+                </div>
               </div>
               <button className="rc-home-demo-btn" onClick={() => {
                 setDocs([

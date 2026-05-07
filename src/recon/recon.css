@@ -2133,14 +2133,24 @@ tr.rc-lt-total-row td {
 .rc-home-scene-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px;
-  border-radius: 10px;
-  background: #f8f9fb;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  transition: border-color 0.2s;
+}
+.rc-home-scene-item:active {
+  border-color: var(--rc-accent);
 }
 .rc-home-scene-icon {
-  font-size: 18px;
-  line-height: 1;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
 }
 .rc-home-scene-name {
   font-size: 13px;
