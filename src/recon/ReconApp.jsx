@@ -1663,54 +1663,71 @@ export default function ReconApp() {
             <div className="rc-stat"><div className="rc-stat-value">¥{fmt(matchResults.matchedAmt)}</div><div className="rc-stat-label">匹配额</div></div>
           </div>
 
-          {/* Documents — collapsible, one card per doc */}
-          {(docs.length > 0 ? docs : [
-            { id: 'demo-bank', name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'bank' },
-            { id: 'demo-ledger', name: '企业账簿_锦鲤餐饮_202604.xlsx', type: 'ledger' },
-          ]).map(doc => {
-            const expanded = !!docExpanded[doc.id];
-            const badgeColor = DOC_TYPE_COLOR[doc.type] || '#999';
-            const data = doc.type === 'bank' ? reconData.bankEntries : doc.type === 'ledger' ? reconData.ledgerEntries : null;
-            const imgSrc = doc.processedUrl || doc.previewUrl || null;
+          {/* Documents — horizontal swipe carousel */}
+          {(() => {
+            const allDocs = docs.length > 0 ? docs : [
+              { id: 'demo-bank', name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'bank' },
+              { id: 'demo-ledger', name: '企业账簿_锦鲤餐饮_202604.xlsx', type: 'ledger' },
+            ];
+            const currentDocIdx = docExpanded._idx || 0;
+            const doc = allDocs[currentDocIdx];
+            const badgeColor = DOC_TYPE_COLOR[doc?.type] || '#999';
+            const data = doc?.type === 'bank' ? reconData.bankEntries : doc?.type === 'ledger' ? reconData.ledgerEntries : null;
+            const imgSrc = doc?.processedUrl || doc?.previewUrl || null;
             return (
-              <div key={doc.id} className="rc-doc-full">
-                <div className="rc-doc-full-header" onClick={() => setDocExpanded(prev => ({ ...prev, [doc.id]: !prev[doc.id] }))}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={badgeColor} strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <span className={`rc-doc-full-badge ${doc.type}`}>{DOC_TYPE_LABEL[doc.type] || '文档'}</span>
-                  <span>{doc.name}</span>
-                  <svg className={`rc-doc-full-arrow${expanded ? ' open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--rc-text3)" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+              <div className="rc-doc-carousel">
+                <div className="rc-doc-carousel-header">
+                  <button className="rc-doc-carousel-nav" disabled={currentDocIdx === 0} onClick={() => setDocExpanded(prev => ({ ...prev, _idx: currentDocIdx - 1 }))}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <div className="rc-doc-carousel-info">
+                    <span className={`rc-doc-full-badge ${doc?.type}`}>{DOC_TYPE_LABEL[doc?.type] || '文档'}</span>
+                    <span className="rc-doc-carousel-name">{doc?.name}</span>
+                  </div>
+                  <button className="rc-doc-carousel-nav" disabled={currentDocIdx >= allDocs.length - 1} onClick={() => setDocExpanded(prev => ({ ...prev, _idx: currentDocIdx + 1 }))}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
                 </div>
-                {expanded && (
-                  <>
-                    {imgSrc ? (
-                      <img src={imgSrc} alt="" className="rc-doc-full-img" />
-                    ) : data && doc.type === 'bank' ? (
-                      <div className="rc-doc-full-table-wrap">
-                        <table className="rc-doc-full-table">
-                          <thead><tr><th>#</th><th>日期</th><th>摘要</th><th>对方</th><th style={{ textAlign: 'right' }}>支出</th><th style={{ textAlign: 'right' }}>收入</th><th style={{ textAlign: 'right' }}>余额</th></tr></thead>
-                          <tbody>{data.map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{getDesc(r)}</td><td className="rc-dft-desc">{getPayee(r)}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{getDir(r) === 'debit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{getDir(r) === 'credit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-bal" style={{ textAlign: 'right' }}>{getBalance(r) != null ? fmt(getBalance(r)) : ''}</td></tr>))}</tbody>
-                          <tfoot><tr><td colSpan={3}>合计 {data.length} 笔</td><td></td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(reconData.bankTotalOut)}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(reconData.bankTotalIn)}</td><td className="rc-dft-bal" style={{ textAlign: 'right' }}>{fmt(reconData.companyInfo.closingBalance)}</td></tr></tfoot>
-                        </table>
+                <div className="rc-doc-carousel-dots">
+                  {allDocs.map((_, i) => <span key={i} className={`rc-doc-carousel-dot${i === currentDocIdx ? ' active' : ''}`} />)}
+                </div>
+                <div className="rc-doc-carousel-body" onClick={() => setDocExpanded(prev => ({ ...prev, _zoom: true }))}>
+                  {imgSrc ? (
+                    <img src={imgSrc} alt="" className="rc-doc-carousel-img" />
+                  ) : data ? (
+                    <div className="rc-doc-full-table-wrap">
+                      <table className="rc-doc-full-table">
+                        <thead><tr><th>#</th><th>日期</th><th>摘要</th><th style={{ textAlign: 'right' }}>{doc.type === 'bank' ? '支出' : '借方'}</th><th style={{ textAlign: 'right' }}>{doc.type === 'bank' ? '收入' : '贷方'}</th></tr></thead>
+                        <tbody>{data.slice(0, 5).map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{getDesc(r)}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{getDir(r) === 'debit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{getDir(r) === 'credit' ? fmt(getAmt(r)) : ''}</td></tr>))}</tbody>
+                      </table>
+                      {data.length > 5 && <div className="rc-doc-carousel-more">点击查看全部 {data.length} 笔</div>}
+                    </div>
+                  ) : (
+                    <div className="rc-doc-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>{doc?.name}</span></div>
+                  )}
+                </div>
+                {docExpanded._zoom && (
+                  <div className="rc-doc-zoom-overlay" onClick={() => setDocExpanded(prev => ({ ...prev, _zoom: false }))}>
+                    <div className="rc-doc-zoom-content" onClick={e => e.stopPropagation()}>
+                      <button className="rc-doc-zoom-close" onClick={() => setDocExpanded(prev => ({ ...prev, _zoom: false }))}>✕</button>
+                      <div className="rc-doc-zoom-scroll">
+                        {imgSrc ? (
+                          <img src={imgSrc} alt="" className="rc-doc-zoom-img" />
+                        ) : data ? (
+                          <div className="rc-doc-full-table-wrap">
+                            <table className="rc-doc-full-table">
+                              <thead><tr><th>#</th><th>日期</th><th>摘要</th><th>对方</th><th style={{ textAlign: 'right' }}>{doc.type === 'bank' ? '支出' : '借方'}</th><th style={{ textAlign: 'right' }}>{doc.type === 'bank' ? '收入' : '贷方'}</th><th style={{ textAlign: 'right' }}>{doc.type === 'bank' ? '余额' : '凭证号'}</th></tr></thead>
+                              <tbody>{data.map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{getDesc(r)}</td><td className="rc-dft-desc">{getPayee(r)}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{getDir(r) === 'debit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{getDir(r) === 'credit' ? fmt(getAmt(r)) : ''}</td><td style={{ textAlign: 'right' }}>{doc.type === 'bank' ? (getBalance(r) != null ? fmt(getBalance(r)) : '') : getRef(r)}</td></tr>))}</tbody>
+                            </table>
+                          </div>
+                        ) : null}
                       </div>
-                    ) : data && doc.type === 'ledger' ? (
-                      <div className="rc-doc-full-table-wrap">
-                        <table className="rc-doc-full-table">
-                          <thead><tr><th>#</th><th>日期</th><th>摘要</th><th>对方</th><th style={{ textAlign: 'right' }}>借方</th><th style={{ textAlign: 'right' }}>贷方</th><th>凭证号</th></tr></thead>
-                          <tbody>{data.map((r, i) => (<tr key={r.id}><td className="rc-dft-idx">{i+1}</td><td className="rc-dft-date">{r.date}</td><td className="rc-dft-desc">{getDesc(r)}</td><td className="rc-dft-desc">{getPayee(r)}</td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{getDir(r) === 'debit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{getDir(r) === 'credit' ? fmt(getAmt(r)) : ''}</td><td className="rc-dft-date">{getRef(r)}</td></tr>))}</tbody>
-                          <tfoot><tr><td colSpan={3}>合计 {data.length} 笔</td><td></td><td className="rc-dft-amt out" style={{ textAlign: 'right' }}>{fmt(reconData.ledgerTotalDebit)}</td><td className="rc-dft-amt in" style={{ textAlign: 'right' }}>{fmt(reconData.ledgerTotalCredit)}</td><td></td></tr></tfoot>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="rc-doc-placeholder" style={{ padding: '20px' }}>
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>{doc.name}</span>
-                      </div>
-                    )}
-                  </>
+                    </div>
+                  </div>
                 )}
               </div>
             );
-          })}
+          })()}
 
           {anomalies.length > 0 && (
             <div className="rc-card rc-anomaly-card">
