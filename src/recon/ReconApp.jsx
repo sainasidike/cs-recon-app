@@ -520,18 +520,18 @@ export default function ReconApp() {
       const ledgerD = detectDuplicates(allLedgerEntries);
       setDataWarnings({ bank: [...bankW, ...bankD.map(d => ({ type: 'duplicate', severity: 'warning', message: `第${d.index1+1}行与第${d.index2+1}行疑似重复`, rowIndex: d.index1 }))], ledger: [...ledgerW, ...ledgerD.map(d => ({ type: 'duplicate', severity: 'warning', message: `第${d.index1+1}行与第${d.index2+1}行疑似重复`, rowIndex: d.index1 }))] });
 
-      setParsedPreview({
-        sc, scenario,
-        bankHeaders, bankMapping,
-        bankSample: allBankEntries.slice(0, 3),
-        bankCount: allBankEntries.length,
-        ledgerHeaders, ledgerMapping,
-        ledgerSample: allLedgerEntries.slice(0, 3),
-        ledgerCount: allLedgerEntries.length,
-        allBankEntries, allLedgerEntries,
-        docNames: activeDocs.map(d => d.name),
-      });
-      setStep('preview');
+      setParseSteps(prev => [...prev, '执行智能匹配...']);
+      const docNames = activeDocs.map(d => d.name);
+      const rd = buildReconData(allBankEntries, allLedgerEntries, docNames);
+      setReconData(rd);
+      const results = runMatching(allBankEntries, allLedgerEntries);
+      setMatchResults(results);
+      setAnomalies(results.anomalies || []);
+      setParseSteps(prev => [...prev, `匹配完成: ${results.matchedCount} 笔匹配, ${results.unmatchedBank.length + results.unmatchedLedger.length} 笔未达`]);
+      if (results.anomalies?.length) {
+        setParseSteps(prev => [...prev, `检测到 ${results.anomalies.length} 个潜在异常`]);
+      }
+      setTimeout(() => setStep('results'), 500);
     } catch (err) {
       setParseSteps(prev => [...prev, `解析出错: ${err.message}`]);
     }
@@ -1636,53 +1636,6 @@ export default function ReconApp() {
       )}
 
       {/* PREVIEW - Data confirmation step */}
-      {step === 'preview' && parsedPreview && (
-        <div className="rc-section">
-          <h3 style={{ margin: '0 0 12px', fontSize: 16 }}>数据解析预览</h3>
-          <p style={{ color: 'var(--rc-text3)', fontSize: 13, margin: '0 0 16px' }}>请确认识别结果，确认后开始智能匹配</p>
-
-          {[{ label: parsedPreview.sc.labelA, headers: parsedPreview.bankHeaders, sample: parsedPreview.bankSample, count: parsedPreview.bankCount, mapping: parsedPreview.bankMapping, warnings: dataWarnings?.bank || [] },
-            { label: parsedPreview.sc.labelB, headers: parsedPreview.ledgerHeaders, sample: parsedPreview.ledgerSample, count: parsedPreview.ledgerCount, mapping: parsedPreview.ledgerMapping, warnings: dataWarnings?.ledger || [] }
-          ].map((side, si) => (
-            <div key={si} className="rc-card" style={{ marginBottom: 12 }}>
-              <div className="rc-card-title">{side.label}（识别到 {side.count} 笔）</div>
-              {side.sample.length > 0 && (
-                <div className="rc-doc-full-table-wrap">
-                  <table className="rc-doc-full-table">
-                    <thead><tr><th>日期</th><th>摘要</th><th style={{ textAlign: 'right' }}>金额</th><th>方向</th></tr></thead>
-                    <tbody>{side.sample.map((e, i) => (
-                      <tr key={i}><td className="rc-dft-date">{e.date || '-'}</td><td className="rc-dft-desc">{e.description || e.counterparty || '-'}</td><td className="rc-dft-amt" style={{ textAlign: 'right' }}>{e.amount != null ? fmt(e.amount) : '-'}</td><td>{e.direction === 'debit' ? '支出' : e.direction === 'credit' ? '收入' : '-'}</td></tr>
-                    ))}</tbody>
-                  </table>
-                </div>
-              )}
-              {side.mapping && (
-                <div style={{ fontSize: 12, color: 'var(--rc-text3)', padding: '8px 12px', display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
-                  {side.mapping.date >= 0 && <span>✓ 日期列: {side.headers[side.mapping.date] || `第${side.mapping.date+1}列`}</span>}
-                  {(side.mapping.amount >= 0 || side.mapping.debit >= 0) && <span>✓ 金额列: {side.mapping.amount >= 0 ? (side.headers[side.mapping.amount] || `第${side.mapping.amount+1}列`) : `借方/贷方`}</span>}
-                  {side.mapping.description >= 0 && <span>✓ 摘要列: {side.headers[side.mapping.description] || `第${side.mapping.description+1}列`}</span>}
-                  {side.mapping.balance >= 0 && <span>✓ 余额列: {side.headers[side.mapping.balance] || `第${side.mapping.balance+1}列`}</span>}
-                </div>
-              )}
-              {side.warnings.filter(w => w.severity === 'error' || w.severity === 'warning').length > 0 && (
-                <div style={{ padding: '8px 12px', background: 'rgba(245,166,35,0.08)', borderRadius: 6, margin: '8px 12px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#d97706', marginBottom: 4 }}>⚠️ 数据质量提醒 ({side.warnings.filter(w => w.severity !== 'info').length})</div>
-                  {side.warnings.filter(w => w.severity !== 'info').slice(0, 5).map((w, wi) => (
-                    <div key={wi} style={{ fontSize: 12, color: w.severity === 'error' ? '#dc2626' : '#d97706', padding: '2px 0' }}>· {w.message}</div>
-                  ))}
-                  {side.warnings.filter(w => w.severity !== 'info').length > 5 && <div style={{ fontSize: 11, color: '#999' }}>...还有 {side.warnings.filter(w => w.severity !== 'info').length - 5} 条</div>}
-                </div>
-              )}
-            </div>
-          ))}
-
-          <div className="rc-bottom">
-            <button className="rc-btn-secondary" onClick={() => { setParsedPreview(null); setStep('list'); }}>返回调整</button>
-            <button className="rc-btn-primary" onClick={handleConfirmPreview}>确认，开始对账</button>
-          </div>
-        </div>
-      )}
-
       {/* RESULTS */}
       {step === 'results' && matchResults && reconData && (
         <div className="rc-section">
