@@ -1241,14 +1241,14 @@ export default function ReconApp() {
             <div className="rc-home-scenes">
               <div className="rc-home-scenes-title">支持的对账场景</div>
               <div className="rc-home-scene-list">
-                <div className="rc-home-scene-item"><span className="rc-home-scene-name">银行对账</span><span className="rc-home-scene-desc">银行流水 vs 企业账簿，找出未达账项</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-name">往来核对</span><span className="rc-home-scene-desc">供应商对账单 vs 应付台账，定位差异笔</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-name">发票核验</span><span className="rc-home-scene-desc">发票 vs 合同/入库单，查多开漏开</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-name">费用报销</span><span className="rc-home-scene-desc">报销单 vs 银行回单，验证是否已付</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-name">税务对账</span><span className="rc-home-scene-desc">申报表 vs 税务台账，防漏报多报</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-name">工资核对</span><span className="rc-home-scene-desc">工资表 vs 银行代发明细，查分毫差异</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-name">现金盘点</span><span className="rc-home-scene-desc">现金日记账 vs 盘点表，核实余额</span></div>
-                <div className="rc-home-scene-item"><span className="rc-home-scene-name">固定资产</span><span className="rc-home-scene-desc">资产台账 vs 盘点清单，查缺漏</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">🏦</span><span className="rc-home-scene-name">银行对账</span><span className="rc-home-scene-desc">银行流水 vs 企业账簿</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">🤝</span><span className="rc-home-scene-name">往来核对</span><span className="rc-home-scene-desc">供应商对账单 vs 应付台账</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">📄</span><span className="rc-home-scene-name">发票核验</span><span className="rc-home-scene-desc">发票 vs 合同/入库单</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">💰</span><span className="rc-home-scene-name">费用报销</span><span className="rc-home-scene-desc">报销单 vs 银行回单</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">📊</span><span className="rc-home-scene-name">税务对账</span><span className="rc-home-scene-desc">申报表 vs 税务台账</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">💼</span><span className="rc-home-scene-name">工资核对</span><span className="rc-home-scene-desc">工资表 vs 银行代发明细</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">💵</span><span className="rc-home-scene-name">现金盘点</span><span className="rc-home-scene-desc">现金日记账 vs 盘点表</span></div>
+                <div className="rc-home-scene-item"><span className="rc-home-scene-icon">🏢</span><span className="rc-home-scene-name">固定资产</span><span className="rc-home-scene-desc">资产台账 vs 盘点清单</span></div>
               </div>
               <button className="rc-home-demo-btn" onClick={() => {
                 setFiles([{ name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'demo' }]);
