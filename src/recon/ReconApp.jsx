@@ -403,8 +403,8 @@ export default function ReconApp() {
 
     if (demoMode) {
       const demoFiles = [
-        { name: '银行对账单_锦鲤餐饮_202604.xlsx', size: '126 KB' },
-        { name: '企业账簿_锦鲤餐饮_202604.xlsx', size: '98 KB' },
+        { name: '备用金报销明细_新程科技_202501.jpg', size: '1.2 MB' },
+        { name: '银行回单_工商银行_202501.png', size: '890 KB' },
       ];
       setDemoUploadFiles(demoFiles.map(f => ({ ...f, progress: 0 })));
 
@@ -428,13 +428,13 @@ export default function ReconApp() {
         const steps = [
           { text: '正在进行 OCR 文字识别...', delay: 200 },
           { text: '识别到表格结构，提取数据中...', delay: 500 },
-          { text: '检测到文档类型：银行对账单', delay: 800 },
-          { text: '解析 20 笔交易记录', delay: 1100 },
-          { text: '加载企业账簿，解析 20 笔记账凭证', delay: 1400 },
-          { text: '执行精确匹配（金额+日期完全一致）...', delay: 1700 },
-          { text: '执行模糊匹配（日期容差±3天）...', delay: 2000 },
+          { text: '检测到文档类型：备用金报销明细', delay: 800 },
+          { text: '解析 15 笔报销记录', delay: 1100 },
+          { text: '加载银行回单，解析 13 笔付款记录', delay: 1400 },
+          { text: '执行精确匹配（金额+收款人完全一致）...', delay: 1700 },
+          { text: '执行模糊匹配（金额容差+摘要相似）...', delay: 2000 },
           { text: '执行语义匹配（描述相似度分析）...', delay: 2300 },
-          { text: '检测未达账项，生成匹配报告...', delay: 2600 },
+          { text: '检测未达账项，生成对账报告...', delay: 2600 },
         ];
         steps.forEach(({ text, delay }) => {
           setTimeout(() => setParseSteps(prev => [...prev, text]), delay);
@@ -450,8 +450,8 @@ export default function ReconApp() {
           const results = runMatching(BANK_DATA, LEDGER_DATA);
           setMatchResults(results);
           setDocs([
-            { id: 'demo-bank', name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'bank', typeLabel: '银行流水' },
-            { id: 'demo-ledger', name: '企业账簿_锦鲤餐饮_202604.xlsx', type: 'ledger', typeLabel: '企业账簿' },
+            { id: 'demo-bank', name: '备用金报销明细_新程科技_202501.jpg', type: 'bank', typeLabel: '报销明细' },
+            { id: 'demo-ledger', name: '银行回单_工商银行_202501.png', type: 'ledger', typeLabel: '银行回单' },
           ]);
           setFlowMode('recon');
           setStep('results');
@@ -1268,12 +1268,12 @@ export default function ReconApp() {
                 <div className="rc-home-scene-item"><span className="rc-home-scene-icon">🏢</span><span className="rc-home-scene-name">固定资产</span><span className="rc-home-scene-desc">资产台账 vs 盘点清单</span></div>
               </div>
               <button className="rc-home-demo-btn" onClick={() => {
-                setFiles([{ name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'demo' }]);
+                setFiles([{ name: '备用金报销明细_新程科技_202501.jpg', type: 'demo' }]);
                 setPreviewUrls([null]);
                 startAnalyze(true);
               }}>
                 <span>体验 Demo 对账</span>
-                <span className="rc-home-demo-btn-sub">锦鲤餐饮 · 20笔银行流水 vs 20笔账簿 · 完整流程</span>
+                <span className="rc-home-demo-btn-sub">新程科技 · 15笔报销明细 vs 13笔银行回单 · 完整流程</span>
               </button>
             </div>
           )}
