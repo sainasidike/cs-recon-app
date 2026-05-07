@@ -237,6 +237,7 @@ function AppInner() {
           onUpdateEntries={updateEntries}
           onBack={() => goToStep('home')}
           onNext={startMatching}
+          isEmbed={isEmbed}
         />
       );
     }

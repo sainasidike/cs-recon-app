@@ -306,7 +306,7 @@ function SourceFileList({ sideAData, sideBData, sideCData, parsedFiles, scenario
   );
 }
 
-export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData, parsedFiles, sideABalance, sideBBalance, validation, onSetBalances, onBack, onNext, onUpdateEntries }) {
+export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData, parsedFiles, sideABalance, sideBBalance, validation, onSetBalances, onBack, onNext, onUpdateEntries, isEmbed }) {
   const [activeTab, setActiveTab] = useState('sideA');
   const [localABal, setLocalABal] = useState(sideABalance || 0);
   const [localBBal, setLocalBBal] = useState(sideBBalance || 0);
@@ -421,7 +421,7 @@ export default function ConfirmPage({ scenario, sideAData, sideBData, sideCData,
 
       <div className="confirm-layout">
         <div className="confirm-sidebar-col">
-          <SourceFileList sideAData={sideAData} sideBData={sideBData} sideCData={sideCData} parsedFiles={parsedFiles} scenario={scenario} previewIdx={previewFileIdx} onOpenPreview={setPreviewFileIdx} />
+          {!isEmbed && <SourceFileList sideAData={sideAData} sideBData={sideBData} sideCData={sideCData} parsedFiles={parsedFiles} scenario={scenario} previewIdx={previewFileIdx} onOpenPreview={setPreviewFileIdx} />}
           <div className="stats-col">
             <div className="stat-item">
               <span className="stat-item-label">{aLabel}记录</span>
