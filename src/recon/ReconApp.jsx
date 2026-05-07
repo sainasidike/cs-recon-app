@@ -1237,24 +1237,34 @@ export default function ReconApp() {
             </div>
           </div>
 
-          {history.filter(h => h.status === 'completed').length > 0 && (
-            <div className="rc-home-section">
-              <p className="rc-home-section-sub">选择应用内文档</p>
-              <div className="rc-home-doc-list">
-                {history.filter(h => h.status === 'completed').map(h => (
-                  <div key={h.id} className="rc-home-doc-item">
-                    <div className="rc-home-doc-thumb">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    </div>
-                    <div className="rc-home-doc-info">
-                      <div className="rc-home-doc-name">{h.company} · {h.period}</div>
-                      <div className="rc-home-doc-meta">{h.time}</div>
-                    </div>
+          <div className="rc-home-section">
+            <p className="rc-home-section-sub">选择应用内文档</p>
+            <div className="rc-home-doc-list">
+              {[
+                { id: 'lib-bank-jinli', name: 'bank_锦鲤餐饮_202604', date: '2026/4/30 15:38', pages: 1, thumb: '/recon-assets/library/bank_锦鲤餐饮_202604.png', type: 'bank',
+                  pair: { id: 'lib-ledger-jinli', name: 'ledger_锦鲤餐饮_202604', thumb: '/recon-assets/library/ledger_锦鲤餐饮_202604.png', type: 'ledger' } },
+                { id: 'lib-bank-xingchen', name: 'bank_招商银行流水_星辰科技_202603', date: '2026/4/29 18:05', pages: 1, thumb: '/recon-assets/library/bank_招商银行流水_星辰科技_202603.png', type: 'bank',
+                  pair: { id: 'lib-ledger-xingchen', name: 'ledger_星辰科技_企业账簿_202603', thumb: '/recon-assets/library/ledger_星辰科技_企业账簿_202603.png', type: 'ledger' } },
+                { id: 'lib-tax', name: 'tax_增值税申报表_202603', date: '2026/4/29 14:33', pages: 1, thumb: '/recon-assets/library/tax_增值税申报表_202603.png', type: 'tax_return',
+                  pair: { id: 'lib-tax-book', name: 'book_企业账簿_增值税明细_202603', thumb: '/recon-assets/library/book_企业账簿_增值税明细_202603.png', type: 'tax_ledger' } },
+              ].map(item => (
+                <div key={item.id} className="rc-home-doc-item" onClick={() => {
+                  setDocs([
+                    { id: item.id, name: item.name + '.png', type: item.type, previewUrl: item.thumb },
+                    { id: item.pair.id, name: item.pair.name + '.png', type: item.pair.type, previewUrl: item.pair.thumb },
+                  ]);
+                  setFlowMode('recon');
+                  setStep('list');
+                }}>
+                  <img src={item.thumb} alt="" className="rc-home-doc-thumb-img" />
+                  <div className="rc-home-doc-info">
+                    <div className="rc-home-doc-name">{item.name}</div>
+                    <div className="rc-home-doc-meta">{item.date} | {item.pages}页</div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
 
         </div>
