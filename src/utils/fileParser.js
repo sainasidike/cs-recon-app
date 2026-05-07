@@ -19,6 +19,8 @@ const COUNTERPARTY_KEYWORDS = ['对方', '交易对手', '对方户名', '对方
 const BALANCE_KEYWORDS = ['余额', 'balance', '账户余额'];
 const REF_KEYWORDS = ['流水号', '交易号', '编号', '凭证号', 'reference', 'ref'];
 
+const MONTH_MAP = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+
 function normalizeDate(val) {
   if (!val) return null;
   if (val instanceof Date) {
@@ -37,6 +39,33 @@ function normalizeDate(val) {
   if (m1) return `${m1[1]}-${m1[2].padStart(2,'0')}-${m1[3].padStart(2,'0')}`;
   const m2 = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
   if (m2) return `${m2[3]}-${m2[1].padStart(2,'0')}-${m2[2].padStart(2,'0')}`;
+  // YY-Mon-DD: e.g. 24-Jan-01, 24-Jan-1
+  const m3 = s.match(/^(\d{2})-([A-Za-z]+)-(\d{1,2})$/);
+  if (m3) {
+    const mon = MONTH_MAP[m3[2].slice(0,3).toLowerCase()];
+    if (mon) {
+      const yr = 2000 + Number(m3[1]);
+      return `${yr}-${String(mon).padStart(2,'0')}-${m3[3].padStart(2,'0')}`;
+    }
+  }
+  // DD-Mon-YYYY: e.g. 01-Jan-2024, 1-Jan-2024
+  const m4 = s.match(/^(\d{1,2})-([A-Za-z]+)-(\d{4})$/);
+  if (m4) {
+    const mon = MONTH_MAP[m4[2].slice(0,3).toLowerCase()];
+    if (mon) return `${m4[3]}-${String(mon).padStart(2,'0')}-${m4[1].padStart(2,'0')}`;
+  }
+  // Mon DD, YYYY: e.g. Jan 1, 2024 or January 1, 2024
+  const m5 = s.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})$/);
+  if (m5) {
+    const mon = MONTH_MAP[m5[1].slice(0,3).toLowerCase()];
+    if (mon) return `${m5[3]}-${String(mon).padStart(2,'0')}-${m5[2].padStart(2,'0')}`;
+  }
+  // YYYY-Mon-DD: e.g. 2024-Jan-01
+  const m6 = s.match(/^(\d{4})-([A-Za-z]+)-(\d{1,2})$/);
+  if (m6) {
+    const mon = MONTH_MAP[m6[2].slice(0,3).toLowerCase()];
+    if (mon) return `${m6[1]}-${String(mon).padStart(2,'0')}-${m6[3].padStart(2,'0')}`;
+  }
   return null;
 }
 

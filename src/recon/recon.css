@@ -2837,3 +2837,95 @@ tr.rc-lt-total-row td {
   border-radius: 3px;
   font-weight: 500;
 }
+
+/* P0/P3/P4: AI Analysis & Preview Styles */
+.rc-anomaly-card {
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  background: rgba(220, 38, 38, 0.03);
+  margin-bottom: 12px;
+}
+.rc-anomaly-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--rc-text2);
+  line-height: 1.4;
+}
+.rc-anomaly-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.rc-anomaly-dot.error { background: #dc2626; }
+.rc-anomaly-dot.warning { background: #f59e0b; }
+.rc-anomaly-dot.info { background: #3b82f6; }
+
+.rc-ai-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px dashed var(--rc-accent, #3DD598);
+  background: rgba(61, 213, 152, 0.05);
+  color: var(--rc-accent, #3DD598);
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+}
+.rc-ai-btn:active { opacity: 0.7; }
+
+.rc-ai-btn-sm {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px dashed var(--rc-accent, #3DD598);
+  background: rgba(61, 213, 152, 0.05);
+  color: var(--rc-accent, #3DD598);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin: 4px 0 0 0;
+}
+.rc-ai-btn-sm:active { opacity: 0.7; }
+
+.rc-ai-diagnosis {
+  padding: 8px 12px;
+  background: rgba(61, 213, 152, 0.06);
+  border-radius: 6px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.rc-ai-diagnosis-reason { color: var(--rc-text2); }
+.rc-ai-diagnosis-voucher {
+  color: var(--rc-accent, #3DD598);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.rc-ai-diff-analysis {
+  font-size: 12px;
+  color: #6366f1;
+  padding: 4px 0 0;
+  line-height: 1.4;
+}
+
+.rc-ai-summary-card {
+  border: 1px solid rgba(61, 213, 152, 0.3);
+  background: rgba(61, 213, 152, 0.04);
+}
+.rc-ai-summary-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--rc-text2);
+  white-space: pre-wrap;
+}
+
+.rc-unmatched-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rc-border, #f0f0f0);
+}
+.rc-unmatched-item:last-child { border-bottom: none; }

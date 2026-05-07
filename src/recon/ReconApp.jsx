@@ -2,7 +2,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { BANK_DATA, LEDGER_DATA, COMPANY_INFO, BANK_TOTAL_OUT, BANK_TOTAL_IN, LEDGER_TOTAL_DEBIT, LEDGER_TOTAL_CREDIT } from './demoData';
 import { runMatching } from './matchEngine';
 import CropEditor from './CropEditor';
-import { parseFile, classifyDocumentLocal } from '../utils/fileParser';
+import { parseFile, classifyDocumentLocal, detectDuplicates, validateEntries } from '../utils/fileParser';
+import { aiAnalyzeDiff, aiSuggestVoucher, aiReportSummary } from '../utils/api';
 
 function fmt(v) {
   return (v || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 });
@@ -288,6 +289,12 @@ export default function ReconApp() {
   const [allDocsFolder, setAllDocsFolder] = useState(null);
   const [allDocsProject, setAllDocsProject] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [parsedPreview, setParsedPreview] = useState(null);
+  const [dataWarnings, setDataWarnings] = useState(null);
+  const [anomalies, setAnomalies] = useState([]);
+  const [aiDiagnosis, setAiDiagnosis] = useState({});
+  const [aiDiffAnalysis, setAiDiffAnalysis] = useState({});
+  const [aiSummary, setAiSummary] = useState(null);
   const savedDocsRef = useRef([]);
   const longPressTimer = useRef(null);
   const fileInputRef = useRef(null);
@@ -433,6 +440,7 @@ export default function ReconApp() {
       const sideBDocs = activeDocs.filter(d => d.type === sc.sideB);
       const allBankEntries = [];
       const allLedgerEntries = [];
+      let bankHeaders = [], ledgerHeaders = [], bankMapping = null, ledgerMapping = null;
 
       setParseSteps(prev => [...prev, `检测到场景: ${sc.name}，开始解析 ${activeDocs.length} 份文档...`]);
 
@@ -448,6 +456,7 @@ export default function ReconApp() {
           const parsed = await parseFile(fileObj);
           setParseSteps(prev => [...prev, `${sc.labelA}识别 ${parsed.parsedRows} 笔记录`]);
           allBankEntries.push(...parsed.entries);
+          if (!bankHeaders.length) { bankHeaders = parsed.headers || []; bankMapping = parsed.columnMapping; }
         } catch (err) {
           setParseSteps(prev => [...prev, `${sc.labelA}解析失败: ${err.message}`]);
         }
@@ -465,6 +474,7 @@ export default function ReconApp() {
           const parsed = await parseFile(fileObj);
           setParseSteps(prev => [...prev, `${sc.labelB}识别 ${parsed.parsedRows} 笔记录`]);
           allLedgerEntries.push(...parsed.entries);
+          if (!ledgerHeaders.length) { ledgerHeaders = parsed.headers || []; ledgerMapping = parsed.columnMapping; }
         } catch (err) {
           setParseSteps(prev => [...prev, `${sc.labelB}解析失败: ${err.message}`]);
         }
@@ -476,19 +486,46 @@ export default function ReconApp() {
       }
 
       setParseSteps(prev => [...prev, `共解析${sc.labelA} ${allBankEntries.length} 笔、${sc.labelB} ${allLedgerEntries.length} 笔`]);
-      setParseSteps(prev => [...prev, '执行智能匹配...']);
 
-      const rd = buildReconData(allBankEntries, allLedgerEntries, activeDocs.map(d => d.name));
-      setReconData(rd);
-      const results = runMatching(allBankEntries, allLedgerEntries);
-      setMatchResults(results);
-      setParseSteps(prev => [...prev, `匹配完成: ${results.matchedCount} 笔匹配, ${results.unmatchedBank.length + results.unmatchedLedger.length} 笔未达`]);
+      const bankW = validateEntries(allBankEntries);
+      const bankD = detectDuplicates(allBankEntries);
+      const ledgerW = validateEntries(allLedgerEntries);
+      const ledgerD = detectDuplicates(allLedgerEntries);
+      setDataWarnings({ bank: [...bankW, ...bankD.map(d => ({ type: 'duplicate', severity: 'warning', message: `第${d.index1+1}行与第${d.index2+1}行疑似重复`, rowIndex: d.index1 }))], ledger: [...ledgerW, ...ledgerD.map(d => ({ type: 'duplicate', severity: 'warning', message: `第${d.index1+1}行与第${d.index2+1}行疑似重复`, rowIndex: d.index1 }))] });
 
-      setTimeout(() => setStep('results'), 500);
+      setParsedPreview({
+        sc, scenario,
+        bankHeaders, bankMapping,
+        bankSample: allBankEntries.slice(0, 3),
+        bankCount: allBankEntries.length,
+        ledgerHeaders, ledgerMapping,
+        ledgerSample: allLedgerEntries.slice(0, 3),
+        ledgerCount: allLedgerEntries.length,
+        allBankEntries, allLedgerEntries,
+        docNames: activeDocs.map(d => d.name),
+      });
+      setStep('preview');
     } catch (err) {
       setParseSteps(prev => [...prev, `解析出错: ${err.message}`]);
     }
   }, [docs]);
+
+  const handleConfirmPreview = useCallback(() => {
+    if (!parsedPreview) return;
+    const { allBankEntries, allLedgerEntries, docNames } = parsedPreview;
+    setStep('analyze');
+    setParseSteps(prev => [...prev, '执行智能匹配...']);
+    const rd = buildReconData(allBankEntries, allLedgerEntries, docNames);
+    setReconData(rd);
+    const results = runMatching(allBankEntries, allLedgerEntries);
+    setMatchResults(results);
+    setAnomalies(results.anomalies || []);
+    setParseSteps(prev => [...prev, `匹配完成: ${results.matchedCount} 笔匹配, ${results.unmatchedBank.length + results.unmatchedLedger.length} 笔未达`]);
+    if (results.anomalies?.length) {
+      setParseSteps(prev => [...prev, `检测到 ${results.anomalies.length} 个潜在异常`]);
+    }
+    setTimeout(() => setStep('results'), 500);
+  }, [parsedPreview]);
 
   const handleStartFromDocs = useCallback(() => {
     setFiles(docs.map(d => ({ name: d.name, type: 'processed' })));
@@ -512,6 +549,8 @@ export default function ReconApp() {
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
     setAllDocsProject(null); setAllDocsFolder(null);
+    setParsedPreview(null); setDataWarnings(null); setAnomalies([]);
+    setAiDiagnosis({}); setAiDiffAnalysis({}); setAiSummary(null);
   }, []);
 
   const handleReset = useCallback(() => {
@@ -520,6 +559,8 @@ export default function ReconApp() {
     setMatchResults(null); setConfirmed({}); setRejected({});
     setSelectedFilter('hd'); setCurrentFileIdx(0); setIsCropping(false);
     setAllDocsProject(null); setAllDocsFolder(null);
+    setParsedPreview(null); setDataWarnings(null); setAnomalies([]);
+    setAiDiagnosis({}); setAiDiffAnalysis({}); setAiSummary(null);
   }, []);
 
   const savePendingProject = useCallback((docsToSave) => {
@@ -1589,6 +1630,54 @@ export default function ReconApp() {
         </div>
       )}
 
+      {/* PREVIEW - Data confirmation step */}
+      {step === 'preview' && parsedPreview && (
+        <div className="rc-section">
+          <h3 style={{ margin: '0 0 12px', fontSize: 16 }}>数据解析预览</h3>
+          <p style={{ color: 'var(--rc-text3)', fontSize: 13, margin: '0 0 16px' }}>请确认识别结果，确认后开始智能匹配</p>
+
+          {[{ label: parsedPreview.sc.labelA, headers: parsedPreview.bankHeaders, sample: parsedPreview.bankSample, count: parsedPreview.bankCount, mapping: parsedPreview.bankMapping, warnings: dataWarnings?.bank || [] },
+            { label: parsedPreview.sc.labelB, headers: parsedPreview.ledgerHeaders, sample: parsedPreview.ledgerSample, count: parsedPreview.ledgerCount, mapping: parsedPreview.ledgerMapping, warnings: dataWarnings?.ledger || [] }
+          ].map((side, si) => (
+            <div key={si} className="rc-card" style={{ marginBottom: 12 }}>
+              <div className="rc-card-title">{side.label}（识别到 {side.count} 笔）</div>
+              {side.sample.length > 0 && (
+                <div className="rc-doc-full-table-wrap">
+                  <table className="rc-doc-full-table">
+                    <thead><tr><th>日期</th><th>摘要</th><th style={{ textAlign: 'right' }}>金额</th><th>方向</th></tr></thead>
+                    <tbody>{side.sample.map((e, i) => (
+                      <tr key={i}><td className="rc-dft-date">{e.date || '-'}</td><td className="rc-dft-desc">{e.description || e.counterparty || '-'}</td><td className="rc-dft-amt" style={{ textAlign: 'right' }}>{e.amount != null ? fmt(e.amount) : '-'}</td><td>{e.direction === 'debit' ? '支出' : e.direction === 'credit' ? '收入' : '-'}</td></tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+              {side.mapping && (
+                <div style={{ fontSize: 12, color: 'var(--rc-text3)', padding: '8px 12px', display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
+                  {side.mapping.date >= 0 && <span>✓ 日期列: {side.headers[side.mapping.date] || `第${side.mapping.date+1}列`}</span>}
+                  {(side.mapping.amount >= 0 || side.mapping.debit >= 0) && <span>✓ 金额列: {side.mapping.amount >= 0 ? (side.headers[side.mapping.amount] || `第${side.mapping.amount+1}列`) : `借方/贷方`}</span>}
+                  {side.mapping.description >= 0 && <span>✓ 摘要列: {side.headers[side.mapping.description] || `第${side.mapping.description+1}列`}</span>}
+                  {side.mapping.balance >= 0 && <span>✓ 余额列: {side.headers[side.mapping.balance] || `第${side.mapping.balance+1}列`}</span>}
+                </div>
+              )}
+              {side.warnings.filter(w => w.severity === 'error' || w.severity === 'warning').length > 0 && (
+                <div style={{ padding: '8px 12px', background: 'rgba(245,166,35,0.08)', borderRadius: 6, margin: '8px 12px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#d97706', marginBottom: 4 }}>⚠️ 数据质量提醒 ({side.warnings.filter(w => w.severity !== 'info').length})</div>
+                  {side.warnings.filter(w => w.severity !== 'info').slice(0, 5).map((w, wi) => (
+                    <div key={wi} style={{ fontSize: 12, color: w.severity === 'error' ? '#dc2626' : '#d97706', padding: '2px 0' }}>· {w.message}</div>
+                  ))}
+                  {side.warnings.filter(w => w.severity !== 'info').length > 5 && <div style={{ fontSize: 11, color: '#999' }}>...还有 {side.warnings.filter(w => w.severity !== 'info').length - 5} 条</div>}
+                </div>
+              )}
+            </div>
+          ))}
+
+          <div className="rc-bottom">
+            <button className="rc-btn-secondary" onClick={() => { setParsedPreview(null); setStep('list'); }}>返回调整</button>
+            <button className="rc-btn-primary" onClick={handleConfirmPreview}>确认，开始对账</button>
+          </div>
+        </div>
+      )}
+
       {/* RESULTS */}
       {step === 'results' && matchResults && reconData && (
         <div className="rc-section">
@@ -1648,6 +1737,19 @@ export default function ReconApp() {
             );
           })}
 
+          {anomalies.length > 0 && (
+            <div className="rc-card rc-anomaly-card">
+              <div className="rc-card-title" style={{ color: '#dc2626' }}>⚠️ 发现 {anomalies.length} 个潜在异常</div>
+              {anomalies.slice(0, 5).map((a, i) => (
+                <div key={i} className="rc-anomaly-row">
+                  <span className={`rc-anomaly-dot ${a.severity}`} />
+                  <span>{a.message}</span>
+                </div>
+              ))}
+              {anomalies.length > 5 && <div style={{ fontSize: 12, color: '#999', padding: '4px 0 0 18px' }}>...还有 {anomalies.length - 5} 个</div>}
+            </div>
+          )}
+
           <div className="rc-tabs">
             <button className={`rc-tab ${activeResultTab === 'exact' ? 'active' : ''}`} onClick={() => setActiveResultTab('exact')}>精确 ({matchResults.exact.length})</button>
             <button className={`rc-tab ${activeResultTab === 'fuzzy' ? 'active' : ''}`} onClick={() => setActiveResultTab('fuzzy')}>模糊 ({matchResults.fuzzy.length + matchResults.semantic.length})</button>
@@ -1686,6 +1788,7 @@ export default function ReconApp() {
           })()}
           {activeResultTab === 'fuzzy' && [...matchResults.fuzzy, ...matchResults.semantic].map((m, i) => {
             const key = `fuzzy-${i}`;
+            const diffType = m.amtDiff > 0 ? 'amount_diff' : m.daysDiff > 0 ? 'date_diff' : 'desc_diff';
             return (
               <div key={key} className="rc-match-card">
                 <div className="rc-match-head"><span className={`rc-badge ${m.score >= 75 ? 'fuzzy' : 'semantic'}`}>{m.score >= 75 ? '模糊' : '语义'}</span><span className="rc-match-score">{m.score}%</span><span className="rc-match-amt">¥{fmt(getAmt(m.bank))}</span></div>
@@ -1694,7 +1797,15 @@ export default function ReconApp() {
                   <div className="rc-match-arrow">↔</div>
                   <div className="rc-match-side"><span className="rc-match-tag ledger">企业</span><span>{m.ledger.date}</span><span className="rc-match-desc">{getDesc(m.ledger)}</span></div>
                 </div>
-                {m.daysDiff > 0 && <div className="rc-match-diff">日期差异 {m.daysDiff} 天</div>}
+                {m.daysDiff > 0 && <div className="rc-match-diff">日期差异 {Math.round(m.daysDiff)} 天{m.amtDiff > 0 ? ` · 金额差 ¥${m.amtDiff.toFixed(2)}` : ''}</div>}
+                {aiDiffAnalysis[key] ? (
+                  <div className="rc-ai-diff-analysis">💡 {aiDiffAnalysis[key].reason}</div>
+                ) : (
+                  <button className="rc-ai-btn-sm" onClick={() => {
+                    setAiDiffAnalysis(prev => ({ ...prev, [key]: { reason: '分析中...' } }));
+                    aiAnalyzeDiff(m.bank, m.ledger, diffType, Math.round(m.daysDiff), m.amtDiff).then(r => setAiDiffAnalysis(prev => ({ ...prev, [key]: r }))).catch(() => setAiDiffAnalysis(prev => ({ ...prev, [key]: { reason: '分析失败' } })));
+                  }}>AI 分析差异</button>
+                )}
                 {!confirmed[key] && !rejected[key] && (<div className="rc-match-actions"><button className="rc-action-btn confirm" onClick={() => handleConfirm(key)}>✓ 确认</button><button className="rc-action-btn reject" onClick={() => handleReject(key)}>✗ 驳回</button></div>)}
                 {confirmed[key] && <div className="rc-match-status confirmed">✓ 已确认</div>}
                 {rejected[key] && <div className="rc-match-status rejected">✗ 已驳回</div>}
@@ -1703,8 +1814,38 @@ export default function ReconApp() {
           })}
           {activeResultTab === 'unmatched' && (
             <>
-              {matchResults.unmatchedBank.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">银行未达 ({matchResults.unmatchedBank.length})</div>{matchResults.unmatchedBank.map(b => (<div key={b.id} className="rc-unmatched-row"><span className="rc-um-date">{b.date}</span><span className="rc-um-desc">{getDesc(b)}</span><span className={`rc-um-amt ${getDir(b) === 'debit' ? 'out' : 'in'}`}>{getDir(b) === 'debit' ? `-¥${fmt(getAmt(b))}` : `+¥${fmt(getAmt(b))}`}</span></div>))}</div>)}
-              {matchResults.unmatchedLedger.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">企业未达 ({matchResults.unmatchedLedger.length})</div>{matchResults.unmatchedLedger.map(l => (<div key={l.id} className="rc-unmatched-row"><span className="rc-um-date">{l.date}</span><span className="rc-um-desc">{getDesc(l)}</span><span className={`rc-um-amt ${getDir(l) === 'debit' ? 'out' : 'in'}`}>{getDir(l) === 'debit' ? `-¥${fmt(getAmt(l))}` : `+¥${fmt(getAmt(l))}`}</span></div>))}</div>)}
+              {matchResults.unmatchedBank.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">银行未达 ({matchResults.unmatchedBank.length})</div>{matchResults.unmatchedBank.map(b => (
+                <div key={b.id} className="rc-unmatched-item">
+                  <div className="rc-unmatched-row"><span className="rc-um-date">{b.date}</span><span className="rc-um-desc">{getDesc(b)}</span><span className={`rc-um-amt ${getDir(b) === 'debit' ? 'out' : 'in'}`}>{getDir(b) === 'debit' ? `-¥${fmt(getAmt(b))}` : `+¥${fmt(getAmt(b))}`}</span></div>
+                  {aiDiagnosis[b.id] ? (
+                    <div className="rc-ai-diagnosis">
+                      <div className="rc-ai-diagnosis-reason">🔍 {aiDiagnosis[b.id].explanation || aiDiagnosis[b.id].summary}</div>
+                      {aiDiagnosis[b.id].debitAccount && <div className="rc-ai-diagnosis-voucher">📝 建议: 借:{aiDiagnosis[b.id].debitAccount} / 贷:{aiDiagnosis[b.id].creditAccount} ¥{fmt(aiDiagnosis[b.id].amount)}</div>}
+                    </div>
+                  ) : (
+                    <button className="rc-ai-btn" onClick={() => {
+                      setAiDiagnosis(prev => ({ ...prev, [b.id]: { loading: true } }));
+                      aiSuggestVoucher(b, 'bank_only').then(r => setAiDiagnosis(prev => ({ ...prev, [b.id]: r }))).catch(() => setAiDiagnosis(prev => ({ ...prev, [b.id]: { explanation: '分析失败，请重试' } })));
+                    }}>AI 诊断</button>
+                  )}
+                </div>
+              ))}</div>)}
+              {matchResults.unmatchedLedger.length > 0 && (<div className="rc-card"><div className="rc-card-title danger">企业未达 ({matchResults.unmatchedLedger.length})</div>{matchResults.unmatchedLedger.map(l => (
+                <div key={l.id} className="rc-unmatched-item">
+                  <div className="rc-unmatched-row"><span className="rc-um-date">{l.date}</span><span className="rc-um-desc">{getDesc(l)}</span><span className={`rc-um-amt ${getDir(l) === 'debit' ? 'out' : 'in'}`}>{getDir(l) === 'debit' ? `-¥${fmt(getAmt(l))}` : `+¥${fmt(getAmt(l))}`}</span></div>
+                  {aiDiagnosis[l.id] ? (
+                    <div className="rc-ai-diagnosis">
+                      <div className="rc-ai-diagnosis-reason">🔍 {aiDiagnosis[l.id].explanation || aiDiagnosis[l.id].summary}</div>
+                      {aiDiagnosis[l.id].debitAccount && <div className="rc-ai-diagnosis-voucher">📝 建议: 借:{aiDiagnosis[l.id].debitAccount} / 贷:{aiDiagnosis[l.id].creditAccount} ¥{fmt(aiDiagnosis[l.id].amount)}</div>}
+                    </div>
+                  ) : (
+                    <button className="rc-ai-btn" onClick={() => {
+                      setAiDiagnosis(prev => ({ ...prev, [l.id]: { loading: true } }));
+                      aiSuggestVoucher(l, 'ledger_only').then(r => setAiDiagnosis(prev => ({ ...prev, [l.id]: r }))).catch(() => setAiDiagnosis(prev => ({ ...prev, [l.id]: { explanation: '分析失败，请重试' } })));
+                    }}>AI 诊断</button>
+                  )}
+                </div>
+              ))}</div>)}
             </>
           )}
           <div className="rc-bottom">
@@ -1748,6 +1889,29 @@ export default function ReconApp() {
             <div className="rc-summary-row"><span>企业未达</span><span className="danger">{matchResults.unmatchedLedger.length} 笔</span></div>
             <div className="rc-summary-row total"><span>匹配率</span><span>{matchResults.matchRate.toFixed(1)}%</span></div>
           </div>
+          {aiSummary ? (
+            <div className="rc-card rc-ai-summary-card">
+              <div className="rc-card-title">📋 AI 对账总结</div>
+              <div className="rc-ai-summary-text">{aiSummary}</div>
+            </div>
+          ) : (
+            <button className="rc-ai-btn" style={{ margin: '12px 0' }} onClick={() => {
+              setAiSummary('生成中...');
+              const bankBal = reconData.companyInfo.closingBalance;
+              const ledgerBal = reconData.companyInfo.openingBalance - reconData.ledgerTotalDebit + reconData.ledgerTotalCredit;
+              const adjBank = bankBal + matchResults.unmatchedLedger.filter(l => getDir(l) === 'credit').reduce((s, l) => s + getAmt(l), 0) - matchResults.unmatchedLedger.filter(l => getDir(l) === 'debit').reduce((s, l) => s + getAmt(l), 0);
+              const adjLedger = ledgerBal + matchResults.unmatchedBank.filter(b => getDir(b) === 'credit').reduce((s, b) => s + getAmt(b), 0) - matchResults.unmatchedBank.filter(b => getDir(b) === 'debit').reduce((s, b) => s + getAmt(b), 0);
+              const payload = {
+                sideABalance: bankBal, sideBBalance: ledgerBal,
+                sideAAdjusted: adjBank, sideBAdjusted: adjLedger,
+                isBalanced: Math.abs(adjBank - adjLedger) < 0.01,
+                matchSummary: { exactCount: matchResults.exact.length, fuzzyCount: matchResults.fuzzy.length, semanticCount: matchResults.semantic.length, unmatchedACount: matchResults.unmatchedBank.length, unmatchedBCount: matchResults.unmatchedLedger.length },
+                sideAAdj: { adds: matchResults.unmatchedLedger.filter(l => getDir(l) === 'credit').map(l => ({ description: getDesc(l), amount: getAmt(l) })), subs: matchResults.unmatchedLedger.filter(l => getDir(l) === 'debit').map(l => ({ description: getDesc(l), amount: getAmt(l) })) },
+                sideBAdj: { adds: matchResults.unmatchedBank.filter(b => getDir(b) === 'credit').map(b => ({ description: getDesc(b), amount: getAmt(b) })), subs: matchResults.unmatchedBank.filter(b => getDir(b) === 'debit').map(b => ({ description: getDesc(b), amount: getAmt(b) })) },
+              };
+              aiReportSummary(payload, matchResults, reconData.companyInfo.name).then(r => setAiSummary(r.report || '生成失败')).catch(() => setAiSummary('AI 总结生成失败，请重试'));
+            }}>生成 AI 对账总结</button>
+          )}
           <div className="rc-bottom">
             <button className="rc-btn-secondary" onClick={() => { if (allDocsProject) { setStep('alldocs'); } else { setStep('results'); } }}>返回</button>
             <button className="rc-btn-primary" onClick={() => {
