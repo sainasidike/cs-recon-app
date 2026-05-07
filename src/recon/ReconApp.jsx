@@ -1191,25 +1191,7 @@ export default function ReconApp() {
             AI 自动识别财务文档、智能匹配、生成调节表
           </p>
 
-          <button className="rc-home-demo-primary" onClick={() => {
-            setFiles([{ name: '银行对账单_锦鲤餐饮_202604.xlsx', type: 'demo' }]);
-            setPreviewUrls([null]);
-            startAnalyze(true);
-          }}>
-            <div className="rc-home-demo-left">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5">
-                <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
-                <polyline points="13 2 13 9 20 9"/>
-              </svg>
-            </div>
-            <div className="rc-home-demo-info">
-              <div className="rc-home-demo-title">体验 Demo 对账</div>
-              <div className="rc-home-demo-desc">锦鲤餐饮 · 20笔银行流水 vs 20笔账簿</div>
-            </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-
-          <div className="rc-home-divider"><span>或上传您的文档</span></div>
+          <div className="rc-home-divider"><span>上传您的文档</span></div>
 
           <div className="rc-home-upload-row">
             <button className="rc-home-upload-btn" onClick={() => fileInputRef.current?.click()}>
