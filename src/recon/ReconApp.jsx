@@ -1212,7 +1212,7 @@ export default function ReconApp() {
           </div>
           <p style={{ fontSize: 11, color: 'var(--rc-text3)', textAlign: 'center', marginTop: 8 }}>支持 JPG、PNG、PDF、Excel、CSV</p>
 
-          {history.length === 0 && (
+          {history.filter(h => h.status === 'completed').length === 0 && (
             <div className="rc-home-guide">
               <div className="rc-home-guide-title">支持的文档类型</div>
               <div className="rc-home-guide-tags">
@@ -1227,7 +1227,7 @@ export default function ReconApp() {
             </div>
           )}
 
-          {history.length > 0 && (
+          {history.filter(h => h.status === 'completed').length > 0 && (
             <div className="rc-history" style={{ marginTop: 24 }}>
               <div className="rc-history-title">历史记录</div>
               {history.filter(h => h.status === 'completed').map(h => (
