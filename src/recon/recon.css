@@ -945,9 +945,6 @@ body {
 
 /* Home */
 .rc-home-back {
-  position: absolute;
-  top: 16px;
-  left: 16px;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -956,10 +953,10 @@ body {
   font-size: 13px;
   color: #666;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 4px 0;
+  margin-bottom: 16px;
 }
-.rc-home-back:active { background: #f0f0f0; }
+.rc-home-back:active { color: #333; }
 .rc-home-logo {
   display: none;
 }
@@ -1036,10 +1033,10 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 18px 16px;
+  padding: 20px 16px;
   border-radius: 12px;
-  border: none;
-  background: #f3f5f8;
+  border: 1px solid #eaedf0;
+  background: #fff;
   cursor: pointer;
   font-size: 15px;
   font-weight: 500;
@@ -1047,7 +1044,7 @@ body {
   transition: background 0.2s;
 }
 .rc-home-import-btn:active {
-  background: #e8ecf0;
+  background: #f5f7fa;
 }
 .rc-home-doc-list {
   display: flex;
