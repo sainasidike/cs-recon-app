@@ -1917,6 +1917,39 @@ tr.rc-lt-total-row td {
   color: var(--rc-text3);
   white-space: nowrap;
 }
+.rc-home-guide {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8f9fb;
+  border-radius: 12px;
+}
+.rc-home-guide-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rc-text2);
+  margin-bottom: 8px;
+}
+.rc-home-guide-tags,
+.rc-home-guide-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rc-home-guide-tags span,
+.rc-home-guide-list span {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid var(--rc-border);
+  font-size: 11px;
+  color: var(--rc-text);
+}
+.rc-home-guide-list span {
+  background: rgba(61,213,152,0.06);
+  border-color: rgba(61,213,152,0.2);
+  color: var(--rc-accent-dark);
+}
+
 .rc-home-upload-row {
   display: flex;
   gap: 12px;
