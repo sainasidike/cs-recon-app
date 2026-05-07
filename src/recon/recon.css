@@ -1036,18 +1036,18 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px;
+  padding: 18px 16px;
   border-radius: 12px;
   border: none;
-  background: #f5f7fa;
+  background: #f3f5f8;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--rc-text);
   transition: background 0.2s;
 }
 .rc-home-import-btn:active {
-  background: #eef0f4;
+  background: #e8ecf0;
 }
 .rc-home-doc-list {
   display: flex;
