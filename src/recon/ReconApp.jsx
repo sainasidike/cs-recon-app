@@ -640,27 +640,141 @@ export default function ReconApp() {
 
   return (
     <div className="rc">
-      {/* LANDING — Minimal */}
+      {/* LANDING */}
       {step === 'landing' && (
         <div className="rc-landing">
-          <div className="rc-landing-fullscreen">
-            <div className="rc-landing-docs-bg">
-              <img src="/recon-assets/bank-flow.png" alt="" className="rc-landing-bg-img left" />
-              <img src="/recon-assets/ledger-book.png" alt="" className="rc-landing-bg-img right" />
+          {/* Screen 1: Hero */}
+          <div className="rc-land-hero">
+            <div className="rc-land-hero-bg">
+              <img src="/recon-assets/bank-flow.png" alt="" />
+              <img src="/recon-assets/ledger-book.png" alt="" />
             </div>
-            <div className="rc-landing-overlay" />
-            <div className="rc-landing-center">
-              <div className="rc-landing-badge">CamScanner AI</div>
-              <h1 className="rc-landing-headline">拍两张单据<br/>AI 帮你对完账</h1>
-              <p className="rc-landing-sub">银行流水 × 企业账簿，3 分钟出调节表</p>
-              <button className="rc-landing-cta" onClick={() => setStep('toolbox')}>
-                立即体验
-              </button>
-              <button className="rc-landing-cta-ghost" onClick={() => setStep('toolbox')}>
-                体验 Demo 对账
-              </button>
+            <div className="rc-land-hero-mask" />
+            <div className="rc-land-hero-body">
+              <div className="rc-land-badge">CamScanner AI</div>
+              <h1 className="rc-land-title">拍两张单据<br/>AI 帮你对完账</h1>
+              <p className="rc-land-desc">扫描 → 匹配 → 出调节表，全程 3 分钟</p>
+              <button className="rc-land-cta" onClick={() => setStep('toolbox')}>立即体验</button>
             </div>
-            <div className="rc-landing-bottom-note">TextIn OCR + 智谱 AI 大模型</div>
+            <div className="rc-land-scroll-hint">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+
+          {/* Screen 2: What is it */}
+          <div className="rc-land-section">
+            <h2 className="rc-land-h2">扫描两份文档<br/>AI 帮你找差异、出报告</h2>
+            <div className="rc-land-steps">
+              <div className="rc-land-step">
+                <div className="rc-land-step-img"><img src="/recon-assets/bank-flow.png" alt="" /></div>
+                <div className="rc-land-step-num">1</div>
+                <div className="rc-land-step-text">拍照或上传文档<span>JPG / Excel / PDF 都行</span></div>
+              </div>
+              <div className="rc-land-step">
+                <div className="rc-land-step-img match">
+                  <div className="rc-land-match-demo">
+                    <div className="rc-land-match-row"><span>04-01 ¥5,000</span><span className="rc-land-check">✓</span><span>04-01 ¥5,000</span></div>
+                    <div className="rc-land-match-row"><span>04-03 ¥2,300</span><span className="rc-land-check">✓</span><span>04-03 ¥2,300</span></div>
+                    <div className="rc-land-match-row warn"><span>04-05 ¥8,100</span><span className="rc-land-cross">✗</span><span>04-05 ¥1,800</span></div>
+                  </div>
+                </div>
+                <div className="rc-land-step-num">2</div>
+                <div className="rc-land-step-text">AI 逐笔核对<span>标出每一笔差异</span></div>
+              </div>
+              <div className="rc-land-step">
+                <div className="rc-land-step-img report">
+                  <div className="rc-land-report-demo">
+                    <div className="rc-land-report-header">银行余额调节表</div>
+                    <div className="rc-land-report-line"><span>银行对账单余额</span><span>¥125,680.00</span></div>
+                    <div className="rc-land-report-line"><span>减：未达账项</span><span>-¥2,300.00</span></div>
+                    <div className="rc-land-report-line total"><span>调节后余额</span><span>¥123,380.00</span></div>
+                  </div>
+                </div>
+                <div className="rc-land-step-num">3</div>
+                <div className="rc-land-step-text">生成调节表<span>一键导出 Excel</span></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Screen 3: Document types */}
+          <div className="rc-land-section gray">
+            <h2 className="rc-land-h2">你手里的单据，都能识别</h2>
+            <div className="rc-land-docs">
+              <div className="rc-land-doc"><img src="/recon-assets/bank-flow.png" alt="" /><span>银行流水</span></div>
+              <div className="rc-land-doc"><img src="/recon-assets/ledger-book.png" alt="" /><span>企业账簿</span></div>
+              <div className="rc-land-doc"><img src="/recon-assets/invoice.png" alt="" /><span>增值税发票</span></div>
+              <div className="rc-land-doc"><img src="/recon-assets/tax-return.png" alt="" /><span>纳税申报表</span></div>
+              <div className="rc-land-doc"><img src="/recon-assets/expense.png" alt="" /><span>费用报销单</span></div>
+              <div className="rc-land-doc"><img src="/recon-assets/payment.png" alt="" /><span>银行回单</span></div>
+              <div className="rc-land-doc"><img src="/recon-assets/payroll.png" alt="" /><span>工资表</span></div>
+              <div className="rc-land-doc"><img src="/recon-assets/trade-a.png" alt="" /><span>对账单</span></div>
+            </div>
+            <p className="rc-land-note">支持 JPG / PNG 扫描件、Excel、CSV、PDF</p>
+          </div>
+
+          {/* Screen 4: Scenarios */}
+          <div className="rc-land-section">
+            <h2 className="rc-land-h2">每个月都在重复的痛</h2>
+            <div className="rc-land-cases">
+              <div className="rc-land-case">
+                <div className="rc-land-case-imgs">
+                  <img src="/recon-assets/bank-cmb.png" alt="" className="rc-land-case-img" />
+                  <img src="/recon-assets/ledger-star.png" alt="" className="rc-land-case-img overlap" />
+                </div>
+                <div className="rc-land-case-body">
+                  <div className="rc-land-case-title">月末银行对账</div>
+                  <div className="rc-land-case-desc">银行流水 30 列，账簿又是另一套格式。AI 自动对齐，不用手动找列</div>
+                </div>
+              </div>
+              <div className="rc-land-case">
+                <div className="rc-land-case-imgs">
+                  <img src="/recon-assets/trade-a.png" alt="" className="rc-land-case-img" />
+                </div>
+                <div className="rc-land-case-body">
+                  <div className="rc-land-case-title">供应商往来核对</div>
+                  <div className="rc-land-case-desc">对方发来的对账单金额对不上，AI 帮你定位是哪几笔有差</div>
+                </div>
+              </div>
+              <div className="rc-land-case">
+                <div className="rc-land-case-imgs">
+                  <img src="/recon-assets/tax-return.png" alt="" className="rc-land-case-img" />
+                  <img src="/recon-assets/tax-ledger.png" alt="" className="rc-land-case-img overlap" />
+                </div>
+                <div className="rc-land-case-body">
+                  <div className="rc-land-case-title">税务申报核对</div>
+                  <div className="rc-land-case-desc">申报表和台账交叉比对，漏报多报一眼看清</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Screen 5: Core value */}
+          <div className="rc-land-section dark">
+            <h2 className="rc-land-h2 light">不只找差异<br/>还告诉你怎么调</h2>
+            <div className="rc-land-values">
+              <div className="rc-land-value">
+                <div className="rc-land-value-num">10 种</div>
+                <div className="rc-land-value-label">异常自动识别</div>
+                <div className="rc-land-value-detail">借贷记反、数字颠倒、一付多配、跨月错位…</div>
+              </div>
+              <div className="rc-land-value">
+                <div className="rc-land-value-num">AI 分录</div>
+                <div className="rc-land-value-label">生成调账建议</div>
+                <div className="rc-land-value-detail">告诉你借什么贷什么，复制即可平账</div>
+              </div>
+              <div className="rc-land-value">
+                <div className="rc-land-value-num">3 分钟</div>
+                <div className="rc-land-value-label">vs 手工 3 小时</div>
+                <div className="rc-land-value-detail">100 笔交易从半天缩到一杯咖啡的时间</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Screen 6: Footer CTA */}
+          <div className="rc-land-footer">
+            <p className="rc-land-footer-slogan">别再逐笔核对了</p>
+            <button className="rc-land-cta" onClick={() => setStep('toolbox')}>开始体验 Demo</button>
+            <p className="rc-land-footer-note">TextIn OCR + 智谱 AI 大模型驱动</p>
           </div>
         </div>
       )}
