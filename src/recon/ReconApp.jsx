@@ -696,54 +696,36 @@ export default function ReconApp() {
             </div>
           </div>
 
-          {/* Screen 3: Document types */}
+          {/* Screen 3: Document types — text only */}
           <div className="rc-land-section gray">
             <h2 className="rc-land-h2">你手里的单据，都能识别</h2>
-            <div className="rc-land-docs">
-              <div className="rc-land-doc"><img src="/recon-assets/bank-flow.png" alt="" /><span>银行流水</span></div>
-              <div className="rc-land-doc"><img src="/recon-assets/ledger-book.png" alt="" /><span>企业账簿</span></div>
-              <div className="rc-land-doc"><img src="/recon-assets/invoice.png" alt="" /><span>增值税发票</span></div>
-              <div className="rc-land-doc"><img src="/recon-assets/tax-return.png" alt="" /><span>纳税申报表</span></div>
-              <div className="rc-land-doc"><img src="/recon-assets/expense.png" alt="" /><span>费用报销单</span></div>
-              <div className="rc-land-doc"><img src="/recon-assets/payment.png" alt="" /><span>银行回单</span></div>
-              <div className="rc-land-doc"><img src="/recon-assets/payroll.png" alt="" /><span>工资表</span></div>
-              <div className="rc-land-doc"><img src="/recon-assets/trade-a.png" alt="" /><span>对账单</span></div>
+            <div className="rc-land-tags">
+              <span>银行流水</span><span>企业账簿</span><span>增值税发票</span><span>纳税申报表</span>
+              <span>费用报销单</span><span>银行回单</span><span>工资表</span><span>供应商对账单</span>
+              <span>采购合同</span><span>现金日记账</span><span>固定资产台账</span><span>收据</span>
             </div>
             <p className="rc-land-note">支持 JPG / PNG 扫描件、Excel、CSV、PDF</p>
           </div>
 
-          {/* Screen 4: Scenarios */}
+          {/* Screen 4: Scenarios — text only */}
           <div className="rc-land-section">
             <h2 className="rc-land-h2">每个月都在重复的痛</h2>
-            <div className="rc-land-cases">
-              <div className="rc-land-case">
-                <div className="rc-land-case-imgs">
-                  <img src="/recon-assets/bank-cmb.png" alt="" className="rc-land-case-img" />
-                  <img src="/recon-assets/ledger-star.png" alt="" className="rc-land-case-img overlap" />
-                </div>
-                <div className="rc-land-case-body">
-                  <div className="rc-land-case-title">月末银行对账</div>
-                  <div className="rc-land-case-desc">银行流水 30 列，账簿又是另一套格式。AI 自动对齐，不用手动找列</div>
-                </div>
+            <div className="rc-land-scenes">
+              <div className="rc-land-scene">
+                <div className="rc-land-scene-title">月末银行对账</div>
+                <div className="rc-land-scene-desc">银行流水 30 列，账簿又是另一套格式。光对齐列头就花半小时，AI 自动匹配不用手动找列</div>
               </div>
-              <div className="rc-land-case">
-                <div className="rc-land-case-imgs">
-                  <img src="/recon-assets/trade-a.png" alt="" className="rc-land-case-img" />
-                </div>
-                <div className="rc-land-case-body">
-                  <div className="rc-land-case-title">供应商往来核对</div>
-                  <div className="rc-land-case-desc">对方发来的对账单金额对不上，AI 帮你定位是哪几笔有差</div>
-                </div>
+              <div className="rc-land-scene">
+                <div className="rc-land-scene-title">供应商往来核对</div>
+                <div className="rc-land-scene-desc">对方发来的对账单金额对不上，到底哪几笔有差？AI 逐笔比对秒出结果</div>
               </div>
-              <div className="rc-land-case">
-                <div className="rc-land-case-imgs">
-                  <img src="/recon-assets/tax-return.png" alt="" className="rc-land-case-img" />
-                  <img src="/recon-assets/tax-ledger.png" alt="" className="rc-land-case-img overlap" />
-                </div>
-                <div className="rc-land-case-body">
-                  <div className="rc-land-case-title">税务申报核对</div>
-                  <div className="rc-land-case-desc">申报表和台账交叉比对，漏报多报一眼看清</div>
-                </div>
+              <div className="rc-land-scene">
+                <div className="rc-land-scene-title">税务申报核对</div>
+                <div className="rc-land-scene-desc">申报表和税务台账交叉比对，漏报多报一眼看清，不用逐行人肉翻</div>
+              </div>
+              <div className="rc-land-scene">
+                <div className="rc-land-scene-title">工资代发核对</div>
+                <div className="rc-land-scene-desc">工资表和银行代发明细笔数对得上但金额差几毛——到底差在哪，AI 帮你定位</div>
               </div>
             </div>
           </div>

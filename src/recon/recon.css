@@ -2153,87 +2153,49 @@ tr.rc-lt-total-row td {
   margin-top: 2px;
 }
 
-/* Document types */
-.rc-land-docs {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
+/* Document type tags */
+.rc-land-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
 }
-.rc-land-doc {
-  border-radius: 10px;
-  overflow: hidden;
+.rc-land-tags span {
+  padding: 8px 14px;
+  border-radius: 8px;
   background: #fff;
   border: 1px solid var(--rc-border);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-.rc-land-doc img {
-  width: 100%;
-  height: 80px;
-  object-fit: cover;
-  display: block;
-}
-.rc-land-doc span {
-  display: block;
-  padding: 8px 10px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--rc-text);
-  text-align: center;
 }
 .rc-land-note {
   font-size: 12px;
   color: var(--rc-text3);
-  text-align: center;
 }
 
-/* Scenario cases */
-.rc-land-cases {
+/* Scenario scenes — text only */
+.rc-land-scenes {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
-.rc-land-case {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
+.rc-land-scene {
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--rc-border);
 }
-.rc-land-case-imgs {
-  position: relative;
-  width: 100px;
-  height: 80px;
-  flex-shrink: 0;
-}
-.rc-land-case-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-.rc-land-case-img.overlap {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  opacity: 0.6;
-}
-.rc-land-case-body {
-  flex: 1;
-  padding-top: 4px;
-}
-.rc-land-case-title {
+.rc-land-scene-title {
   font-size: 15px;
   font-weight: 700;
   color: var(--rc-text);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
-.rc-land-case-desc {
+.rc-land-scene-desc {
   font-size: 13px;
   color: var(--rc-text2);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* Core values */
