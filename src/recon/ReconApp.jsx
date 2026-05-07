@@ -1198,37 +1198,25 @@ export default function ReconApp() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             <span>返回工具箱</span>
           </button>
-          <div className="rc-home-logo">
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.3">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <path d="M3 9h18M3 15h18M9 3v18" />
+          <h2 className="rc-home-title">智能对账</h2>
+
+          <button className="rc-home-main-btn" onClick={() => cameraInputRef.current?.click()}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+              <circle cx="12" cy="13" r="4" />
             </svg>
-          </div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, margin: '12px 0 6px' }}>CS 智能对账</h2>
-          <p style={{ fontSize: 13, color: 'var(--rc-text2)', marginBottom: 24, textAlign: 'center', lineHeight: 1.5 }}>
-            AI 自动识别财务文档、智能匹配、生成调节表
-          </p>
+            <span>拍照 / 扫描文档</span>
+          </button>
 
-          <div className="rc-home-divider"><span>上传您的文档</span></div>
-
-          <div className="rc-home-upload-row">
-            <button className="rc-home-upload-btn" onClick={() => fileInputRef.current?.click()}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
-              </svg>
-              <span>选择文件</span>
-            </button>
-            <button className="rc-home-upload-btn" onClick={() => cameraInputRef.current?.click()}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-              <span>拍照扫描</span>
-            </button>
-          </div>
-          <p style={{ fontSize: 11, color: 'var(--rc-text3)', textAlign: 'center', marginTop: 8 }}>支持 JPG、PNG、PDF、Excel、CSV</p>
+          <button className="rc-home-secondary-btn" onClick={() => fileInputRef.current?.click()}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
+            </svg>
+            <span>从相册/文件选取</span>
+            <span className="rc-home-secondary-hint">支持拍照、扫描件、表格文件</span>
+          </button>
 
           {history.filter(h => h.status === 'completed').length === 0 && (
             <div className="rc-home-scenes">

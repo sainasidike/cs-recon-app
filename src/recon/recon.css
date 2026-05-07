@@ -963,6 +963,58 @@ body {
 .rc-home-logo {
   width: 80px; height: 80px; border-radius: 20px;
   background: var(--rc-accent-light); display: grid; place-items: center;
+  display: none;
+}
+.rc-home-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 20px;
+  text-align: center;
+}
+.rc-home-main-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--rc-accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.rc-home-main-btn:active {
+  opacity: 0.85;
+}
+.rc-home-secondary-btn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 16px;
+  margin-top: 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--rc-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.rc-home-secondary-btn:active {
+  border-color: var(--rc-accent);
+}
+.rc-home-secondary-hint {
+  width: 100%;
+  font-size: 11px;
+  color: var(--rc-text3);
+  font-weight: 400;
 }
 .rc-upload-area { margin-bottom: 20px; }
 .rc-upload-actions {
@@ -2097,33 +2149,17 @@ tr.rc-lt-total-row td {
   font-size: 11px;
   color: rgba(255,255,255,0.8);
 }
-.rc-home-divider {
-  display: flex;
-  align-items: center;
-  margin: 24px 0 16px;
-  gap: 12px;
-}
-.rc-home-divider::before,
-.rc-home-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--rc-border);
-}
-.rc-home-divider span {
-  font-size: 12px;
-  color: var(--rc-text3);
-  white-space: nowrap;
-}
 .rc-home-scenes {
-  margin-top: 24px;
+  margin-top: 28px;
 }
 .rc-home-scenes-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--rc-text2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--rc-text3);
   margin-top: 24px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 .rc-home-scene-table {
   width: 100%;
@@ -2131,72 +2167,50 @@ tr.rc-lt-total-row td {
   font-size: 13px;
 }
 .rc-home-scene-table tr {
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f5f5f5;
 }
 .rc-home-scene-table tr:last-child {
   border-bottom: none;
 }
 .rc-scene-td-name {
-  padding: 10px 0;
-  font-weight: 600;
-  color: var(--rc-text);
+  padding: 9px 0;
+  font-weight: 500;
+  color: var(--rc-text2);
   white-space: nowrap;
-  width: 80px;
+  width: 72px;
 }
 .rc-scene-td-desc {
-  padding: 10px 0;
+  padding: 9px 0;
   color: var(--rc-text3);
   font-size: 12px;
 }
 .rc-home-demo-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
-  padding: 14px 16px;
-  border: none;
-  border-radius: 12px;
-  background: var(--rc-accent);
-  color: #fff;
-  font-size: 15px;
+  padding: 12px 16px;
+  border: 1.5px dashed var(--rc-accent);
+  border-radius: 10px;
+  background: var(--rc-accent-light);
+  color: var(--rc-accent-dark);
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
+  flex-wrap: wrap;
 }
 .rc-home-demo-btn:active {
-  opacity: 0.85;
+  opacity: 0.75;
 }
 .rc-home-demo-btn-sub {
+  width: 100%;
+  text-align: center;
   font-size: 11px;
   font-weight: 400;
-  opacity: 0.85;
-  margin-top: 4px;
-}
-
-.rc-home-upload-row {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-}
-.rc-home-upload-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 12px;
-  border-radius: 12px;
-  border: 1.5px dashed #d0d5dd;
-  background: #fff;
-  cursor: pointer;
-  color: var(--rc-text2);
-  font-size: 13px;
-  font-weight: 500;
-  transition: border-color 0.2s, background 0.2s;
-}
-.rc-home-upload-btn:active {
-  border-color: var(--rc-accent);
-  background: var(--rc-accent-light);
+  color: var(--rc-text3);
+  margin-top: 2px;
 }
 
 /* ==================== LANDING PAGE ==================== */
