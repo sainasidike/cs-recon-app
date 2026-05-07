@@ -1986,39 +1986,32 @@ tr.rc-lt-total-row td {
   margin-bottom: 12px;
 }
 .rc-home-scene-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   margin-bottom: 16px;
 }
 .rc-home-scene-item {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
-}
-.rc-home-scene-item:last-child {
-  border-bottom: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8f9fb;
 }
 .rc-home-scene-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-  width: 22px;
-  text-align: center;
+  font-size: 18px;
+  line-height: 1;
 }
 .rc-home-scene-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--rc-text);
-  white-space: nowrap;
 }
 .rc-home-scene-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--rc-text3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 .rc-home-demo-btn {
   display: flex;
