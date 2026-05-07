@@ -1198,80 +1198,64 @@ export default function ReconApp() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             <span>返回工具箱</span>
           </button>
-          <h2 className="rc-home-title">智能对账</h2>
-
-          <button className="rc-home-main-btn" onClick={() => cameraInputRef.current?.click()}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
-            <span>拍照 / 扫描文档</span>
-          </button>
-
-          <button className="rc-home-secondary-btn" onClick={() => fileInputRef.current?.click()}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
-            </svg>
-            <span>从相册/文件选取</span>
-            <span className="rc-home-secondary-hint">支持拍照、扫描件、表格文件</span>
-          </button>
-
-          {history.filter(h => h.status === 'completed').length === 0 && (
-            <div className="rc-home-scenes">
-              <button className="rc-home-demo-btn" onClick={() => {
+          <div className="rc-home-hero">
+            <div className="rc-home-hero-left">
+              <h2 className="rc-home-title">AI财务对账</h2>
+              <p className="rc-home-subtitle">智能数据提取、AI匹配、分析差异、生成对账报告</p>
+              <button className="rc-home-demo-link" onClick={() => {
                 setDocs([
                   { id: 'demo-bank', name: '备用金报销明细_新程科技_202501.jpg', type: 'expense_claim', typeLabel: '报销明细', previewUrl: '/recon-assets/demo/expense-claim.jpg' },
                   { id: 'demo-ledger', name: '银行回单_工商银行_202501.png', type: 'receipt', typeLabel: '银行回单', previewUrl: '/recon-assets/demo/bank-receipt.png' },
                 ]);
                 setFlowMode('recon');
                 setStep('list');
-              }}>
-                <span>体验 Demo 对账</span>
-                <span className="rc-home-demo-btn-sub">新程科技 · 15笔报销明细 vs 13笔银行回单 · 完整流程</span>
+              }}>体验财务对账示例 &gt;</button>
+            </div>
+            <div className="rc-home-hero-right">
+              <img src="/recon-assets/demo/expense-claim.jpg" alt="" className="rc-home-hero-img" />
+            </div>
+          </div>
+
+          <div className="rc-home-section">
+            <div className="rc-home-section-label">选择文档</div>
+            <p className="rc-home-section-sub">新增或导入</p>
+            <div className="rc-home-import-row">
+              <button className="rc-home-import-btn" onClick={() => cameraInputRef.current?.click()}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--rc-accent-dark)" strokeWidth="1.8">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+                <span>扫描</span>
               </button>
-              <div className="rc-home-scenes-title">支持的对账场景</div>
-              <table className="rc-home-scene-table">
-                <tbody>
-                  <tr><td className="rc-scene-td-name">银行对账</td><td className="rc-scene-td-desc">银行流水 vs 企业账簿</td></tr>
-                  <tr><td className="rc-scene-td-name">往来核对</td><td className="rc-scene-td-desc">供应商对账单 vs 应付台账</td></tr>
-                  <tr><td className="rc-scene-td-name">发票核验</td><td className="rc-scene-td-desc">发票 vs 合同/入库单</td></tr>
-                  <tr><td className="rc-scene-td-name">费用报销</td><td className="rc-scene-td-desc">报销单 vs 银行回单</td></tr>
-                  <tr><td className="rc-scene-td-name">税务对账</td><td className="rc-scene-td-desc">申报表 vs 税务台账</td></tr>
-                  <tr><td className="rc-scene-td-name">工资核对</td><td className="rc-scene-td-desc">工资表 vs 银行代发明细</td></tr>
-                  <tr><td className="rc-scene-td-name">现金盘点</td><td className="rc-scene-td-desc">现金日记账 vs 盘点表</td></tr>
-                  <tr><td className="rc-scene-td-name">固定资产</td><td className="rc-scene-td-desc">资产台账 vs 盘点清单</td></tr>
-                </tbody>
-              </table>
+              <button className="rc-home-import-btn" onClick={() => fileInputRef.current?.click()}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--rc-accent-dark)" strokeWidth="1.8">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+                <span>选择文档</span>
+              </button>
+            </div>
+          </div>
+
+          {history.filter(h => h.status === 'completed').length > 0 && (
+            <div className="rc-home-section">
+              <p className="rc-home-section-sub">选择应用内文档</p>
+              <div className="rc-home-doc-list">
+                {history.filter(h => h.status === 'completed').map(h => (
+                  <div key={h.id} className="rc-home-doc-item">
+                    <div className="rc-home-doc-thumb">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div className="rc-home-doc-info">
+                      <div className="rc-home-doc-name">{h.company} · {h.period}</div>
+                      <div className="rc-home-doc-meta">{h.time}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {history.filter(h => h.status === 'completed').length > 0 && (
-            <div className="rc-history" style={{ marginTop: 24 }}>
-              <div className="rc-history-title">历史记录</div>
-              {history.filter(h => h.status === 'completed').map(h => (
-                <div key={h.id} className="rc-history-item">
-                  <div className="rc-history-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                  </div>
-                  <div className="rc-history-info">
-                    <div className="rc-history-name">{h.company} · {h.period}</div>
-                    <div className="rc-history-meta">匹配率 {(h.matchRate || 0).toFixed(0)}% · {h.matchedCount || 0}笔匹配 · {h.unmatchedCount || 0}笔未达 · {h.time}</div>
-                  </div>
-                  <span className="rc-history-rate" style={{ color: (h.matchRate || 0) >= 80 ? 'var(--rc-accent-dark)' : 'var(--rc-danger)' }}>{(h.matchRate || 0).toFixed(0)}%</span>
-                  <button className="rc-history-del" onClick={(e) => {
-                    e.stopPropagation();
-                    const next = history.filter(item => item.id !== h.id);
-                    setHistory(next);
-                    try { localStorage.setItem('rc-history', JSON.stringify(next)); } catch {}
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
 
         </div>
       )}
