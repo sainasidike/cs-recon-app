@@ -2814,6 +2814,147 @@ tr.rc-lt-total-row td {
   font-weight: 500;
 }
 
+/* Chapter dividers */
+.rc-land-chapter {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rc-accent-dark);
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--rc-accent);
+  display: inline-block;
+}
+
+/* Flow 4-step overview */
+.rc-land-flow4 {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 16px;
+}
+.rc-land-flow4-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 0;
+  border-left: 2px solid #e0e0e0;
+  margin-left: 14px;
+  padding-left: 20px;
+  position: relative;
+}
+.rc-land-flow4-step:last-child { border-left-color: transparent; }
+.rc-land-flow4-step strong { font-size: 15px; color: var(--rc-text); display: block; margin-bottom: 4px; }
+.rc-land-flow4-step p { font-size: 12px; color: var(--rc-text2); line-height: 1.6; margin: 0; }
+.rc-land-flow4-num {
+  position: absolute;
+  left: -14px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--rc-accent);
+  color: #fff;
+  display: flex;
+  align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Needs per step */
+.rc-land-needs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+.rc-land-need-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.rc-land-need-step {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rc-accent-dark);
+  margin-bottom: 8px;
+}
+.rc-land-need-voice {
+  font-size: 13px;
+  color: var(--rc-text2);
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  line-height: 1.6;
+  font-style: italic;
+}
+.rc-land-need-ai {
+  font-size: 13px;
+  color: #0d7358;
+  line-height: 1.5;
+}
+
+/* Values (why CamScanner) */
+.rc-land-values {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+.rc-land-value {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.rc-land-value strong {
+  font-size: 14px;
+  color: var(--rc-text);
+  display: block;
+  margin-bottom: 6px;
+}
+.rc-land-value p {
+  font-size: 12px;
+  color: var(--rc-text2);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Product entries */
+.rc-land-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.rc-land-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--rc-text2);
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.rc-land-entry strong {
+  font-size: 11px;
+  color: #fff;
+  background: var(--rc-accent);
+  border-radius: 4px;
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+/* Footer sub text */
+.rc-land-footer-sub {
+  font-size: 14px;
+  color: var(--rc-text2);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
 /* ALL DOCS page */
 .rc-alldocs {
   display: flex;
