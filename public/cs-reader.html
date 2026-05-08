@@ -762,15 +762,6 @@ window.addEventListener('message', function(e) {
     renderFileInLeftPanel(file);
   }
 
-  if (e.data.type === 'recon-step') {
-    var leftPanel = document.querySelector('.cs-recon-split-left');
-    if (e.data.step === 'home') {
-      leftPanel.style.display = 'flex';
-    } else {
-      leftPanel.style.display = 'none';
-    }
-  }
-
   if (e.data.type === 'recon-save-result') {
     showResultFullPage(e.data);
   }
