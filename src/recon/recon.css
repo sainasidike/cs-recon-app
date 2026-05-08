@@ -27,10 +27,17 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
+body:has(.rc-landing) {
+  max-width: none;
+  background: #fff;
+}
 
 .rc {
   min-height: 100vh;
   padding-bottom: 80px;
+}
+.rc:has(.rc-landing) {
+  padding-bottom: 0;
 }
 
 /* Progress */
@@ -2421,6 +2428,11 @@ tr.rc-lt-total-row td {
 .rc-land-section {
   padding: 48px 20px;
 }
+.rc-land-section > * {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
 .rc-land-section.gray {
   background: #f5f6f8;
 }
@@ -2757,9 +2769,12 @@ tr.rc-lt-total-row td {
 /* Features grid */
 .rc-land-features-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-top: 16px;
+}
+@media (max-width: 500px) {
+  .rc-land-features-grid { grid-template-columns: 1fr; }
 }
 .rc-land-feat-card {
   background: #fff;
