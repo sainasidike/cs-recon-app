@@ -684,103 +684,107 @@ export default function ReconApp() {
             </div>
           </div>
 
-          {/* S2: 功能定义 + 为什么需要对账 */}
+          {/* S2: 传统方式 vs AI 对账 */}
           <div className="rc-land-section">
-            <h2 className="rc-land-h2">CamScanner 智能财务对账</h2>
-            <p className="rc-land-intro">扫描或导入财务单据，AI 自动完成数据提取、智能匹配、差异分析、生成对账报告——全流程无需手动操作。</p>
-            <div className="rc-land-divider" />
-            <h3 className="rc-land-h3">为什么需要对账？</h3>
-            <div className="rc-land-reasons">
-              <div className="rc-land-reason"><span className="rc-land-reason-bar" />银行可能扣错手续费</div>
-              <div className="rc-land-reason"><span className="rc-land-reason-bar" />录入报销单时多打了一个零</div>
-              <div className="rc-land-reason"><span className="rc-land-reason-bar" />货已到但款还在路上，账目暂时对不上</div>
+            <h2 className="rc-land-h2">传统方式 vs AI 对账</h2>
+            <p className="rc-land-intro">同样的工作，完全不同的体验</p>
+            <div className="rc-land-compare">
+              <div className="rc-land-compare-header">
+                <span>环节</span><span className="old">传统手工</span><span className="ai">AI 智能对账</span>
+              </div>
+              <div className="rc-land-compare-row"><span>数据录入</span><span className="old">手动录入/逐行复制</span><span className="ai">拍照上传，OCR 自动识别</span></div>
+              <div className="rc-land-compare-row"><span>文档分类</span><span className="old">人工辨认文件类型</span><span className="ai">AI 自动分类银行/账簿</span></div>
+              <div className="rc-land-compare-row"><span>逐笔匹配</span><span className="old">肉眼比对，逐行标记</span><span className="ai">三轮引擎自动匹配</span></div>
+              <div className="rc-land-compare-row"><span>差异处理</span><span className="old">手动查找、反复核对</span><span className="ai">自动归类未达账项</span></div>
+              <div className="rc-land-compare-row"><span>生成报告</span><span className="old">手动制作 Excel 调节表</span><span className="ai">一键生成正式调节表</span></div>
+              <div className="rc-land-compare-row"><span>耗时</span><span className="old">3-4 小时 / 账户</span><span className="ai">30 秒 - 5 分钟</span></div>
             </div>
-            <p className="rc-land-reason-end">错误随时发生，对账就是把它们找出来。</p>
           </div>
 
-          {/* S3: 四步流程 */}
+          {/* S3: 真实场景 */}
           <div className="rc-land-section gray">
-            <h2 className="rc-land-h2">4 步完成，每步都有 AI</h2>
-            <div className="rc-land-flow">
-              <div className="rc-land-flow-card">
-                <div className="rc-land-flow-head"><span className="rc-land-flow-num">1</span>数据采集</div>
-                <div className="rc-land-flow-pain">"别让我手动调格式"——银行流水和 ERP 导出的日期、列名永远对不上</div>
-                <div className="rc-land-flow-ai">AI 自动识别表头、统一日期格式、清洗脏数据。丢进去就行，不用管哪列是什么。</div>
+            <h2 className="rc-land-h2">真实场景：从痛点到解决</h2>
+            <p className="rc-land-intro">每个场景都来自真实财务工作经历</p>
+            <div className="rc-land-scenes">
+              <div className="rc-land-scene-card">
+                <div className="rc-land-scene-num">1</div>
+                <h3>月末银行余额调节</h3>
+                <div className="rc-land-scene-quote">小张每月底从网银导出流水，打开企业账簿，开始逐行比对。312笔交易，手续费差异、日期跨月、摘要不一致的笔笔都要单独标记。</div>
+                <div className="rc-land-scene-pain">痛点：逐条匹配耗时巨大，遇到金额拆分、合并付款、摘要表述不一致就卡住。整个过程4小时起步。</div>
+                <div className="rc-land-scene-solve">AI 解决：上传银行流水+企业账簿 → AI 自动识别分类 → 三轮匹配（精确→模糊→语义）→ 未匹配项自动归类为"银行已收企业未收""企业已付银行未付" → 一键生成正式余额调节表。</div>
               </div>
-              <div className="rc-land-flow-card">
-                <div className="rc-land-flow-head"><span className="rc-land-flow-num">2</span>自动勾对</div>
-                <div className="rc-land-flow-pain">"1对1、1对多、多对多都要能配"——备注写着'张三1月货款'，要能匹配到张三的多个订单</div>
-                <div className="rc-land-flow-ai">模糊算法 + 语义理解，消化 90% 标准项，把精力留给那 10% 对不上的。</div>
+              <div className="rc-land-scene-card">
+                <div className="rc-land-scene-num">2</div>
+                <h3>纸质单据的数字化对账</h3>
+                <div className="rc-land-scene-quote">老会计习惯打印银行回单存档，柜子里攒了一摞。月底对账时需要把纸质单据的数据手工录入Excel，然后再和系统里的账簿逐条比对。</div>
+                <div className="rc-land-scene-pain">痛点：手工录入耗时且易错，一个小数点打错后面全对不上。而且纸质单据格式各异，日期写法、金额位置都不统一。</div>
+                <div className="rc-land-scene-solve">AI 解决：手机拍照或扫描仪扫描上传 → TextIn OCR 自动识别表格结构 → 智能提取日期、金额、摘要、对方账户 → 结构化数据直接进入匹配流程，彻底告别手工录入。</div>
               </div>
-              <div className="rc-land-flow-card">
-                <div className="rc-land-flow-head"><span className="rc-land-flow-num">3</span>异常识别</div>
-                <div className="rc-land-flow-pain">"告诉我为什么对不上"——不只标红，要说原因</div>
-                <div className="rc-land-flow-ai">识别重复入账、跨月错位、数字颠倒（123→132）等 10 种典型错误，并给出解释。</div>
-              </div>
-              <div className="rc-land-flow-card">
-                <div className="rc-land-flow-head"><span className="rc-land-flow-num">4</span>输出报告</div>
-                <div className="rc-land-flow-pain">"我要一份能直接发给审计的东西"</div>
-                <div className="rc-land-flow-ai">生成余额调节表 / 差异汇总报告，可下载 Excel 直接作为审计附件。</div>
+              <div className="rc-land-scene-card">
+                <div className="rc-land-scene-num">3</div>
+                <h3>费用报销核销</h3>
+                <div className="rc-land-scene-quote">行政部报销了一堆零散费用——话费、快递费、办公用品、水电费，每笔几十到几百不等。银行那边有的合并付了，有的隔了好几天才到。</div>
+                <div className="rc-land-scene-pain">痛点：小额多笔+合并付款+日期延迟，传统逐条比对根本对不上。一笔1355元的付款其实是两笔物业费之和。</div>
+                <div className="rc-land-scene-solve">AI 解决：自动识别合并付款关系，理解"¥1355 = ¥699.17 + ¥656.33"。日期容差智能匹配，3天内的延迟自动关联。未达账项自动标注原因。</div>
               </div>
             </div>
           </div>
 
-          {/* S4: 支持的文档 */}
+          {/* S4: AI 工作机制 */}
           <div className="rc-land-section">
-            <h2 className="rc-land-h2">你手里的单据，都能识别</h2>
-            <div className="rc-land-tags">
-              <span>银行流水</span><span>台账</span><span>财务记录</span><span>银行凭证</span>
-              <span>结算单</span><span>账单</span><span>发票</span><span>结账单</span>
-              <span>完税证明</span><span>收据</span>
-            </div>
-            <p className="rc-land-note">支持 JPG / PNG 扫描件、Excel、CSV、PDF</p>
-          </div>
-
-          {/* S5: 爽点功能 */}
-          <div className="rc-land-section dark">
-            <h2 className="rc-land-h2 light">对账只是过程，平账才是目的</h2>
-            <div className="rc-land-features">
-              <div className="rc-land-feat">
-                <div className="rc-land-feat-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                </div>
-                <div className="rc-land-feat-body">
-                  <div className="rc-land-feat-title">OCR 增强理解</div>
-                  <div className="rc-land-feat-desc">拍一张模糊的纸质收据，AI 自动提取金额并匹配系统里的报销单</div>
-                </div>
-              </div>
-              <div className="rc-land-feat">
-                <div className="rc-land-feat-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                </div>
-                <div className="rc-land-feat-body">
-                  <div className="rc-land-feat-title">追溯链路</div>
-                  <div className="rc-land-feat-desc">点击差异项，立刻看到关联的合同、发票、原始凭证，不用再翻文件夹</div>
-                </div>
-              </div>
-              <div className="rc-land-feat">
-                <div className="rc-land-feat-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                </div>
-                <div className="rc-land-feat-body">
-                  <div className="rc-land-feat-title">自动建议调账</div>
-                  <div className="rc-land-feat-desc">AI 写好会计分录——"借：财务费用-手续费，贷：银行存款"，复制到财务系统即可平账</div>
-                </div>
-              </div>
-              <div className="rc-land-feat">
-                <div className="rc-land-feat-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD598" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                </div>
-                <div className="rc-land-feat-body">
-                  <div className="rc-land-feat-title">智能异常诊断</div>
-                  <div className="rc-land-feat-desc">不只标红差异，还告诉你"这 500 元差异疑似银行手续费未入账"</div>
-                </div>
-              </div>
+            <h2 className="rc-land-h2">AI 工作机制</h2>
+            <p className="rc-land-intro">从上传到报告，每一步清晰可控</p>
+            <div className="rc-land-pipeline">
+              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">1</span><strong>上传文件</strong><p>支持 JPG/PNG/PDF/Excel/CSV，拖拽或点击上传</p></div>
+              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">2</span><strong>OCR 识别</strong><p>TextIn 表格识别引擎，自动提取日期、金额、摘要、对方账户</p></div>
+              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">3</span><strong>智能分类</strong><p>基于文件名+内容关键词，自动区分银行流水/企业账簿/辅助数据</p></div>
+              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">4</span><strong>数据确认</strong><p>预览解析结果、设置对账期间、输入期末余额，异常数据标黄提醒</p></div>
+              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">5</span><strong>三轮匹配</strong><p>精确匹配（日期+金额完全一致）→ 模糊匹配（容差±3天/手续费）→ 语义匹配（描述相似度+多对一合并）</p></div>
+              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">6</span><strong>生成报告</strong><p>余额调节表（银行调节+企业调节明细）、匹配统计、审批流、导出分享</p></div>
             </div>
           </div>
 
-          {/* S6: 谁在用 */}
+          {/* S5: 十大核心功能 */}
+          <div className="rc-land-section gray">
+            <h2 className="rc-land-h2">十大核心功能</h2>
+            <p className="rc-land-intro">从上传到归档的完整闭环</p>
+            <div className="rc-land-features-grid">
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">1</span><strong>OCR 智能识别</strong><p>拍照/上传即识别，基于 TextIn 引擎自动提取表格结构，支持图片、PDF、Excel 多格式混传</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">2</span><strong>文档自动分类</strong><p>AI 基于文件名+内容关键词判断银行流水/企业账簿/辅助数据，准确率高且可手动调整</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">3</span><strong>场景自动推荐</strong><p>根据上传文件内容自动推荐对账场景（银行余额调节/供应商核销等），减少用户决策负担</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">4</span><strong>三轮智能匹配</strong><p>精确匹配（日期+金额完全一致）→ 模糊匹配（容差范围内）→ 语义匹配（描述相似度），逐层递进最大化匹配率</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">5</span><strong>多对一合并匹配</strong><p>智能识别拆分付款、合并付款场景。多笔小额合计等于一笔大额时，自动建立配对关系</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">6</span><strong>人工补配</strong><p>AI 给出匹配建议和置信度，财务人员可逐条确认/拒绝，对未匹配项可手动选择配对</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">7</span><strong>余额调节表</strong><p>自动生成正式银行余额调节表，含银行端调节明细、企业端调节明细、调节后余额验证</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">8</span><strong>异常智能诊断</strong><p>识别数字颠倒、跨月错位、重复入账、小数点位移等10种典型错误，给出原因分析</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">9</span><strong>审批流程</strong><p>内置提交→审核→通过/驳回流程，支持审批意见填写，实现对账到审批的完整闭环</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">10</span><strong>导出与归档</strong><p>支持导出 Excel/PDF 正式报告，历史记录自动归档，随时可追溯查看</p></div>
+            </div>
+          </div>
+
+          {/* S6: 支持的场景与格式 */}
           <div className="rc-land-section">
+            <h2 className="rc-land-h2">支持的场景与格式</h2>
+            <div className="rc-land-support">
+              <div className="rc-land-support-col">
+                <h4>对账场景</h4>
+                <div className="rc-land-support-tags">
+                  <span className="highlight">银行余额调节</span><span className="highlight">银企对账</span><span>供应商往来核销</span>
+                  <span>内部往来对账</span><span>费用报销核对</span><span>多账户归集</span>
+                </div>
+              </div>
+              <div className="rc-land-support-col">
+                <h4>文件格式</h4>
+                <div className="rc-land-support-tags">
+                  <span className="highlight">JPG / PNG 图片</span><span className="highlight">PDF 文档</span><span className="highlight">Excel (.xlsx)</span>
+                  <span className="highlight">CSV 表格</span><span>扫描件</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* S7: 谁在用 */}
+          <div className="rc-land-section gray">
             <h2 className="rc-land-h2">三类人最需要这个功能</h2>
             <div className="rc-land-users">
               <div className="rc-land-user">
