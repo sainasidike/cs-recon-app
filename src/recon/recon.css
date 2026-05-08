@@ -386,7 +386,7 @@ body:has(.rc-landing) {
 .rc-doc-carousel-body {
   padding: 0 12px 12px;
   cursor: pointer;
-  max-height: 180px;
+  max-height: 140px;
   overflow: hidden;
   position: relative;
 }
@@ -457,9 +457,11 @@ body:has(.rc-landing) {
   padding: 8px;
 }
 .rc-doc-zoom-img {
-  width: 100%;
-  max-width: none;
+  width: 92%;
+  max-width: 340px;
+  margin: 0 auto;
   display: block;
+  border-radius: 6px;
 }
 
 .rc-results-upload {
