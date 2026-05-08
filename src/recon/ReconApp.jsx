@@ -735,12 +735,12 @@ export default function ReconApp() {
             <h2 className="rc-land-h2">AI 工作机制</h2>
             <p className="rc-land-intro">从上传到报告，每一步清晰可控</p>
             <div className="rc-land-pipeline">
-              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">1</span><strong>上传文件</strong><p>支持 JPG/PNG/PDF/Excel/CSV，拖拽或点击上传</p></div>
+              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">1</span><strong>上传文件</strong><p>支持 JPG/PNG/PDF/Excel/CSV，拍照或点击上传，多文件同时处理</p></div>
               <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">2</span><strong>OCR 识别</strong><p>TextIn 表格识别引擎，自动提取日期、金额、摘要、对方账户</p></div>
               <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">3</span><strong>智能分类</strong><p>基于文件名+内容关键词，自动区分银行流水/企业账簿/辅助数据</p></div>
-              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">4</span><strong>数据确认</strong><p>预览解析结果、设置对账期间、输入期末余额，异常数据标黄提醒</p></div>
+              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">4</span><strong>数据确认</strong><p>预览解析结果，确认文档分类是否正确，核对提取的条目数据</p></div>
               <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">5</span><strong>三轮匹配</strong><p>精确匹配（日期+金额完全一致）→ 模糊匹配（容差±3天/手续费）→ 语义匹配（描述相似度+多对一合并）</p></div>
-              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">6</span><strong>生成报告</strong><p>余额调节表（银行调节+企业调节明细）、匹配统计、审批流、导出分享</p></div>
+              <div className="rc-land-pipe-step"><span className="rc-land-pipe-num">6</span><strong>生成报告</strong><p>余额调节表（银行调节+企业调节明细）、匹配统计、导出 PDF 分享</p></div>
             </div>
           </div>
 
@@ -753,12 +753,12 @@ export default function ReconApp() {
               <div className="rc-land-feat-card"><span className="rc-land-feat-num">2</span><strong>文档自动分类</strong><p>AI 基于文件名+内容关键词判断银行流水/企业账簿/辅助数据，准确率高且可手动调整</p></div>
               <div className="rc-land-feat-card"><span className="rc-land-feat-num">3</span><strong>场景自动推荐</strong><p>根据上传文件内容自动推荐对账场景（银行余额调节/供应商核销等），减少用户决策负担</p></div>
               <div className="rc-land-feat-card"><span className="rc-land-feat-num">4</span><strong>三轮智能匹配</strong><p>精确匹配（日期+金额完全一致）→ 模糊匹配（容差范围内）→ 语义匹配（描述相似度），逐层递进最大化匹配率</p></div>
-              <div className="rc-land-feat-card"><span className="rc-land-feat-num">5</span><strong>多对一合并匹配</strong><p>智能识别拆分付款、合并付款场景。多笔小额合计等于一笔大额时，自动建立配对关系</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">5</span><strong>多对一合并检测</strong><p>智能识别拆分付款、合并付款场景。多笔小额合计等于一笔大额时，自动标记提醒财务人员确认</p></div>
               <div className="rc-land-feat-card"><span className="rc-land-feat-num">6</span><strong>人工补配</strong><p>AI 给出匹配建议和置信度，财务人员可逐条确认/拒绝，对未匹配项可手动选择配对</p></div>
               <div className="rc-land-feat-card"><span className="rc-land-feat-num">7</span><strong>余额调节表</strong><p>自动生成正式银行余额调节表，含银行端调节明细、企业端调节明细、调节后余额验证</p></div>
               <div className="rc-land-feat-card"><span className="rc-land-feat-num">8</span><strong>异常智能诊断</strong><p>识别数字颠倒、跨月错位、重复入账、小数点位移等10种典型错误，给出原因分析</p></div>
-              <div className="rc-land-feat-card"><span className="rc-land-feat-num">9</span><strong>审批流程</strong><p>内置提交→审核→通过/驳回流程，支持审批意见填写，实现对账到审批的完整闭环</p></div>
-              <div className="rc-land-feat-card"><span className="rc-land-feat-num">10</span><strong>导出与归档</strong><p>支持导出 Excel/PDF 正式报告，历史记录自动归档，随时可追溯查看</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">9</span><strong>AI 对账总结</strong><p>基于匹配结果自动生成差异分析报告，总结未达账原因、给出调账建议</p></div>
+              <div className="rc-land-feat-card"><span className="rc-land-feat-num">10</span><strong>导出与归档</strong><p>支持导出 PDF 正式报告，历史记录自动归档，随时可追溯查看</p></div>
             </div>
           </div>
 
